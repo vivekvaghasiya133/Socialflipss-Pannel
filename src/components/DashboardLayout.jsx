@@ -1,3 +1,7 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// UPDATED DashboardLayout.jsx — replace your existing one
+// Adds HR section in sidebar: Staff, Attendance, Salary, Leaves
+// ─────────────────────────────────────────────────────────────────────────────
 import { useState } from "react";
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import {
@@ -11,31 +15,54 @@ import MenuIcon        from "@mui/icons-material/Menu";
 import LogoutIcon      from "@mui/icons-material/Logout";
 import PersonIcon      from "@mui/icons-material/Person";
 import OpenInNewIcon   from "@mui/icons-material/OpenInNew";
+import GroupsIcon      from "@mui/icons-material/Groups";
+import EventNoteIcon   from "@mui/icons-material/EventNote";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import BeachAccessIcon from "@mui/icons-material/BeachAccess";
 import { useAuth } from "../context/AuthContext";
 
-const DRAWER_WIDTH = 240;
+const DRAWER_WIDTH = 248;
 
-const NAV = [
-  { label: "Dashboard",  icon: <DashboardIcon />, path: "/admin" },
-  { label: "All Clients",icon: <PeopleIcon />,    path: "/admin/clients" },
+const NAV_SECTIONS = [
+  {
+    label: "Clients",
+    items: [
+      { label:"Dashboard",    icon:<DashboardIcon />,  path:"/admin" },
+      { label:"All Clients",  icon:<PeopleIcon />,     path:"/admin/clients" },
+    ],
+  },
+  {
+    label: "HR & Team",
+    items: [
+      { label:"Staff",        icon:<GroupsIcon />,     path:"/admin/staff" },
+      { label:"Attendance",   icon:<EventNoteIcon />,  path:"/admin/attendance" },
+      { label:"Salary",       icon:<AccountBalanceWalletIcon />, path:"/admin/salary" },
+      { label:"Leaves",       icon:<BeachAccessIcon />,path:"/admin/leaves" },
+    ],
+  },
 ];
 
 export default function DashboardLayout() {
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const theme = useTheme();
+  const theme    = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl]     = useState(null);
 
   const handleLogout = () => { logout(); navigate("/login"); };
 
+  const isActive = (path) =>
+    path === "/admin"
+      ? location.pathname === "/admin"
+      : location.pathname.startsWith(path);
+
   const drawer = (
     <Box sx={{ height:"100%", display:"flex", flexDirection:"column" }}>
       {/* Brand */}
-      <Box sx={{ p: 2.5, display:"flex", alignItems:"center", gap:1.5 }}>
+      <Box sx={{ p:2.5, display:"flex", alignItems:"center", gap:1.5 }}>
         <Box sx={{
-          width:36, height:36, borderRadius:"50%",
+          width:38, height:38, borderRadius:"50%",
           background: theme.palette.primary.main,
           display:"flex", alignItems:"center", justifyContent:"center",
           color:"#fff", fontWeight:700, fontSize:14,
@@ -47,43 +74,48 @@ export default function DashboardLayout() {
       </Box>
       <Divider />
 
-      {/* Nav links */}
+      {/* Nav sections */}
       <List sx={{ flex:1, px:1, pt:1 }}>
-        {NAV.map((item) => {
-          const active = location.pathname === item.path ||
-            (item.path !== "/admin" && location.pathname.startsWith(item.path));
-          return (
-            <ListItemButton
-              key={item.path}
-              component={Link}
-              to={item.path}
-              selected={active}
-              sx={{
-                borderRadius:2, mb:0.5,
-                "&.Mui-selected": {
-                  background: theme.palette.primary.light,
-                  color: theme.palette.primary.main,
-                  "& .MuiListItemIcon-root": { color: theme.palette.primary.main },
-                },
-              }}
-            >
-              <ListItemIcon sx={{ minWidth:36 }}>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: active ? 600 : 400, fontSize:14 }} />
-            </ListItemButton>
-          );
-        })}
+        {NAV_SECTIONS.map((section) => (
+          <Box key={section.label}>
+            <Typography variant="caption" sx={{ px:1.5, py:0.75, display:"block", color:"text.disabled", fontWeight:600, textTransform:"uppercase", letterSpacing:"0.06em", fontSize:10 }}>
+              {section.label}
+            </Typography>
+            {section.items.map((item) => {
+              const active = isActive(item.path);
+              return (
+                <ListItemButton
+                  key={item.path}
+                  component={Link}
+                  to={item.path}
+                  selected={active}
+                  sx={{
+                    borderRadius:2, mb:0.25,
+                    "&.Mui-selected": {
+                      background: theme.palette.primary.light,
+                      color: theme.palette.primary.main,
+                      "& .MuiListItemIcon-root": { color: theme.palette.primary.main },
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth:34, color: active ? "primary.main" : "text.secondary" }}>{item.icon}</ListItemIcon>
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{ fontWeight: active ? 600 : 400, fontSize:14 }}
+                  />
+                </ListItemButton>
+              );
+            })}
+            <Box sx={{ mb:1 }} />
+          </Box>
+        ))}
       </List>
 
-      {/* Onboarding form link */}
+      {/* Client form link */}
       <Divider />
-      <Box sx={{ p:1.5 }}>
-        <ListItemButton
-          component="a"
-          href="/onboard"
-          target="_blank"
-          sx={{ borderRadius:2, color:"text.secondary" }}
-        >
-          <ListItemIcon sx={{ minWidth:36 }}><OpenInNewIcon fontSize="small" /></ListItemIcon>
+      <Box sx={{ p:1 }}>
+        <ListItemButton component="a" href="/onboard" target="_blank" sx={{ borderRadius:2, color:"text.secondary" }}>
+          <ListItemIcon sx={{ minWidth:34 }}><OpenInNewIcon fontSize="small" /></ListItemIcon>
           <ListItemText primary="Client Form Link" primaryTypographyProps={{ fontSize:13 }} />
         </ListItemButton>
       </Box>
@@ -92,65 +124,36 @@ export default function DashboardLayout() {
 
   return (
     <Box sx={{ display:"flex", minHeight:"100vh" }}>
-      {/* Sidebar Desktop */}
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: DRAWER_WIDTH, flexShrink:0,
-          display: { xs:"none", md:"block" },
-          "& .MuiDrawer-paper": { width: DRAWER_WIDTH, boxSizing:"border-box", borderRight:"1px solid #e5e7eb" },
-        }}
-      >
+      <Drawer variant="permanent" sx={{ width:DRAWER_WIDTH, flexShrink:0, display:{ xs:"none", md:"block" }, "& .MuiDrawer-paper":{ width:DRAWER_WIDTH, boxSizing:"border-box", borderRight:"1px solid #e5e7eb" } }}>
+        {drawer}
+      </Drawer>
+      <Drawer variant="temporary" open={mobileOpen} onClose={() => setMobileOpen(false)} sx={{ display:{ xs:"block", md:"none" }, "& .MuiDrawer-paper":{ width:DRAWER_WIDTH } }}>
         {drawer}
       </Drawer>
 
-      {/* Sidebar Mobile */}
-      <Drawer
-        variant="temporary"
-        open={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-        sx={{
-          display: { xs:"block", md:"none" },
-          "& .MuiDrawer-paper": { width: DRAWER_WIDTH },
-        }}
-      >
-        {drawer}
-      </Drawer>
-
-      {/* Main content */}
       <Box sx={{ flex:1, display:"flex", flexDirection:"column", minWidth:0 }}>
-        {/* Top AppBar */}
-        <AppBar position="sticky" color="inherit" elevation={0}
-          sx={{ borderBottom:"1px solid #e5e7eb", zIndex:1 }}>
+        <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom:"1px solid #e5e7eb", zIndex:1 }}>
           <Toolbar>
-            <IconButton edge="start" sx={{ mr:1, display:{ md:"none" } }}
-              onClick={() => setMobileOpen(true)}>
+            <IconButton edge="start" sx={{ mr:1, display:{ md:"none" } }} onClick={() => setMobileOpen(true)}>
               <MenuIcon />
             </IconButton>
             <Box sx={{ flex:1 }} />
             <Tooltip title="Account">
               <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-                <Avatar sx={{ width:34, height:34, bgcolor: "primary.main", fontSize:14 }}>
+                <Avatar sx={{ width:34, height:34, bgcolor:"primary.main", fontSize:14 }}>
                   {admin?.name?.[0] || "A"}
                 </Avatar>
               </IconButton>
             </Tooltip>
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
-              <MenuItem disabled>
-                <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
-                {admin?.email}
-              </MenuItem>
+              <MenuItem disabled><ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>{admin?.email}</MenuItem>
               <Divider />
-              <MenuItem onClick={handleLogout}>
-                <ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>
-                Logout
-              </MenuItem>
+              <MenuItem onClick={handleLogout}><ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>Logout</MenuItem>
             </Menu>
           </Toolbar>
         </AppBar>
 
-        {/* Page content */}
-        <Box sx={{ flex:1, p: { xs:2, md:3 }, background:"#f4f6fb" }}>
+        <Box sx={{ flex:1, p:{ xs:2, md:3 }, background:"#f4f6fb" }}>
           <Outlet />
         </Box>
       </Box>
