@@ -5,7 +5,7 @@ export const convertLeadToClient = (id, data) => api.post(`/leads/${id}/convert`
 
 // ── Client Onboarding (public - no auth) ─────────────────────────
 import axios from "axios";
-const BASE = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const BASE = process.env.REACT_APP_API_URL || "https://socialflipss-backend.onrender.com/api";
 export const getOnboardingClient = (clientId)       => axios.get(`${BASE}/clients/onboard/${clientId}`);
 export const submitOnboardingForm = (clientId, data) => axios.post(`${BASE}/clients/onboard/${clientId}`, data);
 
