@@ -13,12 +13,12 @@ const API = process.env.REACT_APP_API_URL || "https://socialflipss-backend.onren
 
 export default function StaffLeaveForm() {
   const { token } = useParams();
-  const [staff, setStaff]   = useState(null);
+  const [staff, setStaff] = useState(null);
   const [notFound, setNotFound] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading]   = useState(true);
-  const [saving, setSaving]     = useState(false);
-  const [error, setError]       = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({
     fromDate: "", toDate: "", leaveType: "full_day", reason: "",
   });
@@ -49,15 +49,15 @@ export default function StaffLeaveForm() {
   };
 
   if (loading) return (
-    <Box sx={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#f4f6fb" }}>
+    <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f4f6fb" }}>
       <CircularProgress />
     </Box>
   );
 
   if (notFound) return (
-    <Box sx={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#f4f6fb", p:2 }}>
-      <Card sx={{ maxWidth:420, width:"100%", textAlign:"center" }}>
-        <CardContent sx={{ p:4 }}>
+    <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f4f6fb", p: 2 }}>
+      <Card sx={{ maxWidth: 420, width: "100%", textAlign: "center" }}>
+        <CardContent sx={{ p: 4 }}>
           <Typography variant="h6" color="error" mb={1}>Invalid Link</Typography>
           <Typography variant="body2" color="text.secondary">
             Aa link invalid chhe ya expire thayi gayi chhe. Admin ne contact karo.
@@ -68,10 +68,10 @@ export default function StaffLeaveForm() {
   );
 
   if (submitted) return (
-    <Box sx={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#f4f6fb", p:2 }}>
-      <Card sx={{ maxWidth:440, width:"100%", textAlign:"center" }}>
-        <CardContent sx={{ p:5 }}>
-          <CheckCircleIcon sx={{ fontSize:64, color:"#0e9f6e", mb:2 }} />
+    <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f4f6fb", p: 2 }}>
+      <Card sx={{ maxWidth: 440, width: "100%", textAlign: "center" }}>
+        <CardContent sx={{ p: 5 }}>
+          <CheckCircleIcon sx={{ fontSize: 64, color: "#0e9f6e", mb: 2 }} />
           <Typography variant="h5" fontWeight={700} mb={1}>Leave Request Submit Thayo!</Typography>
           <Typography variant="body2" color="text.secondary" lineHeight={1.8}>
             Tamari leave request admin ne meli gayi chhe.<br />
@@ -83,58 +83,58 @@ export default function StaffLeaveForm() {
   );
 
   return (
-    <Box sx={{ minHeight:"100vh", background:"#f4f6fb", py:4, px:2 }}>
+    <Box sx={{ minHeight: "100vh", background: "#f4f6fb", py: 4, px: 2 }}>
       {/* Header */}
-      <Box sx={{ maxWidth:560, mx:"auto", mb:3, display:"flex", alignItems:"center", gap:1.5 }}>
-        <Box sx={{ width:40, height:40, borderRadius:"50%", background:"#1a56db", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:700, fontSize:14 }}>SF</Box>
+      <Box sx={{ maxWidth: 560, mx: "auto", mb: 3, display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Box sx={{ width: 40, height: 40, borderRadius: "50%", background: "#1a56db", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 14 }}>SF</Box>
         <Box>
           <Typography variant="h6" lineHeight={1}>SocialFlipss</Typography>
           <Typography variant="caption" color="text.secondary">Leave Request Form</Typography>
         </Box>
       </Box>
 
-      <Card sx={{ maxWidth:560, mx:"auto" }}>
-        <CardContent sx={{ p:{ xs:2.5, sm:4 } }}>
+      <Card sx={{ maxWidth: 560, mx: "auto" }}>
+        <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
           {/* Staff info */}
-          <Box sx={{ display:"flex", alignItems:"center", gap:2, mb:3, p:2, background:"#f0f4ff", borderRadius:2 }}>
-            <Box sx={{ width:44, height:44, borderRadius:"50%", background:"#1a56db", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:700, fontSize:16, flexShrink:0 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3, p: 2, background: "#f0f4ff", borderRadius: 2 }}>
+            <Box sx={{ width: 44, height: 44, borderRadius: "50%", background: "#1a56db", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 700, fontSize: 16, flexShrink: 0 }}>
               {staff.name?.[0]?.toUpperCase()}
             </Box>
             <Box>
               <Typography fontWeight={600}>{staff.name}</Typography>
               <Typography variant="body2" color="text.secondary">{staff.position}</Typography>
             </Box>
-            <Chip icon={<BeachAccessIcon />} label="Leave Request" size="small" color="primary" sx={{ ml:"auto" }} />
+            <Chip icon={<BeachAccessIcon />} label="Leave Request" size="small" color="primary" sx={{ ml: "auto" }} />
           </Box>
 
-          <Divider sx={{ mb:3 }} />
+          <Divider sx={{ mb: 3 }} />
 
-          {error && <Alert severity="error" sx={{ mb:2 }} onClose={() => setError("")}>{error}</Alert>}
+          {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>{error}</Alert>}
 
           {/* From - To dates */}
-          <Box sx={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:2, mb:2.5 }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mb: 2.5 }}>
             <Box>
               <Typography variant="body2" fontWeight={500} mb={0.75}>
-                From Date <span style={{ color:"#e02424" }}>*</span>
+                From Date <span style={{ color: "#e02424" }}>*</span>
               </Typography>
               <TextField
                 fullWidth size="small" type="date"
-                InputLabelProps={{ shrink:true }}
+                InputLabelProps={{ shrink: true }}
                 value={form.fromDate}
                 onChange={(e) => setForm({ ...form, fromDate: e.target.value })}
-                inputProps={{ min: new Date().toISOString().slice(0,10) }}
+                inputProps={{ min: new Date().toISOString().slice(0, 10) }}
               />
             </Box>
             <Box>
               <Typography variant="body2" fontWeight={500} mb={0.75}>
-                To Date <span style={{ color:"#e02424" }}>*</span>
+                To Date <span style={{ color: "#e02424" }}>*</span>
               </Typography>
               <TextField
                 fullWidth size="small" type="date"
-                InputLabelProps={{ shrink:true }}
+                InputLabelProps={{ shrink: true }}
                 value={form.toDate}
                 onChange={(e) => setForm({ ...form, toDate: e.target.value })}
-                inputProps={{ min: form.fromDate || new Date().toISOString().slice(0,10) }}
+                inputProps={{ min: form.fromDate || new Date().toISOString().slice(0, 10) }}
               />
             </Box>
           </Box>
@@ -153,7 +153,7 @@ export default function StaffLeaveForm() {
           {/* Reason */}
           <Box mb={3}>
             <Typography variant="body2" fontWeight={500} mb={0.75}>
-              Reason <span style={{ color:"#e02424" }}>*</span>
+              Reason <span style={{ color: "#e02424" }}>*</span>
             </Typography>
             <TextField
               fullWidth multiline rows={4}

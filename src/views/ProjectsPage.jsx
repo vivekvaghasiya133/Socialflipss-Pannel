@@ -11,9 +11,15 @@ import AddIcon        from "@mui/icons-material/Add";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import DeleteIcon     from "@mui/icons-material/Delete";
 import FolderIcon     from "@mui/icons-material/Folder";
-import { getProjects, createProject, deleteProject, getProjectStats } from "../api/projectsApi";
-import { getClients } from "../api/clientsApi";
-import { useAuth } from "../context/AuthContext";
+import CalendarIcon   from "@mui/icons-material/CalendarMonth";
+
+// ── API imports ───────────────────────────────────────────────────
+import api from "../api";
+const getProjects      = (params)   => api.get("/projects",  { params });
+const createProject    = (data)     => api.post("/projects",  data);
+const deleteProject    = (id)       => api.delete(`/projects/${id}`);
+const getProjectStats  = ()         => api.get("/projects/stats");
+const getClients       = (params)   => api.get("/clients",   { params });
 
 const STATUS_CONFIG = {
   planning:  { label:"Planning",   color:"info" },
@@ -35,11 +41,14 @@ const MONTHS_OPTS = () => {
   return opts;
 };
 
-const EMPTY = { clientId:"", name:"", month:"", description:"", monthlyGoal:"", startDate:"", endDate:"", status:"planning", notes:"" };
+const EMPTY = {
+  clientId:"", name:"", month:"", description:"",
+  monthlyGoal:"", startDate:"", endDate:"",
+  status:"planning", notes:"",
+};
 
 export default function ProjectsPage() {
   const navigate = useNavigate();
-  const { canManage, isAdmin } = useAuth();
 
   const [projects, setProjects] = useState([]);
   const [stats, setStats]       = useState(null);
@@ -56,44 +65,75 @@ export default function ProjectsPage() {
 
   const load = useCallback(() => {
     getProjects({ status: statusFilter })
-      .then(r => { setProjects(r.data.projects); setTotal(r.data.total); });
+      .then(r => {
+        setProjects(r.data.projects || []);
+        setTotal(r.data.total || 0);
+      });
   }, [statusFilter]);
 
   useEffect(() => {
     loadStats();
-    getClients({ limit:100 }).then(r => setClients(r.data.clients));
+    getClients({ limit:100 }).then(r => setClients(r.data.clients || []));
   }, []);
+
   useEffect(() => { load(); }, [load]);
 
   const handleAdd = async () => {
-    if (!form.clientId || !form.name) { setFormError("Client ane project name required chhe."); return; }
+    if (!form.clientId || !form.name) {
+      setFormError("Client ane project name required chhe.");
+      return;
+    }
     setFormError("");
     try {
       await createProject(form);
-      setAddDialog(false); setForm(EMPTY);
-      setToast("Project created!"); load(); loadStats();
-    } catch (err) { setFormError(err.response?.data?.message || "Failed"); }
+      setAddDialog(false);
+      setForm(EMPTY);
+      setToast("Project created!");
+      load();
+      loadStats();
+    } catch (err) {
+      setFormError(err.response?.data?.message || "Failed");
+    }
   };
 
   const handleDelete = async () => {
     await deleteProject(deleteTarget._id);
-    setDeleteTarget(null); setToast("Project deleted."); load(); loadStats();
+    setDeleteTarget(null);
+    setToast("Project deleted.");
+    load();
+    loadStats();
   };
 
-  const f = (key) => ({ fullWidth:true, size:"small", value:form[key]||"", onChange:(e) => setForm({...form,[key]:e.target.value}) });
+  // ── FIX: Use project._id directly, not clientId ───────────────
+  const handleViewProject = (project) => {
+    console.log(project._id);
+    
+    // Navigate to kanban using the project's own _id
+    navigate(`/admin/project-kanban/${project._id}`);
+  };
+
+  const handleShootSchedule = (project) => {
+    navigate(`/admin/projects/${project._id}/shoot`);
+  };
+
+  const f = (key) => ({
+    fullWidth: true,
+    size: "small",
+    value: form[key] || "",
+    onChange: (e) => setForm({ ...form, [key]: e.target.value }),
+  });
 
   return (
     <Box>
+      {/* Header */}
       <Box sx={{ display:"flex", justifyContent:"space-between", alignItems:"center", mb:3 }}>
         <Box>
           <Typography variant="h5">Projects</Typography>
           <Typography variant="body2" color="text.secondary">{total} total projects</Typography>
         </Box>
-        {canManage && (
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setForm(EMPTY); setAddDialog(true); }}>
-            New Project
-          </Button>
-        )}
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => { setForm(EMPTY); setAddDialog(true); }}>
+          New Project
+        </Button>
       </Box>
 
       {/* Stats */}
@@ -106,7 +146,10 @@ export default function ProjectsPage() {
             { label:"Completed", value:stats.completed, color:"#8b5cf6", f:"completed" },
           ].map(c => (
             <Grid item xs={6} sm={3} key={c.label}>
-              <Card onClick={() => setStatus(c.f)} sx={{ cursor:"pointer", "&:hover":{ boxShadow:3 } }}>
+              <Card
+                onClick={() => setStatus(c.f)}
+                sx={{ cursor:"pointer", "&:hover":{ boxShadow:3 } }}
+              >
                 <Box sx={{ p:2 }}>
                   <Typography variant="body2" color="text.secondary">{c.label}</Typography>
                   <Typography variant="h4" fontWeight={700} sx={{ color:c.color }}>{c.value}</Typography>
@@ -123,7 +166,9 @@ export default function ProjectsPage() {
           <InputLabel>Status</InputLabel>
           <Select value={statusFilter} label="Status" onChange={e => setStatus(e.target.value)}>
             <MenuItem value="">All</MenuItem>
-            {Object.entries(STATUS_CONFIG).map(([k,v]) => <MenuItem key={k} value={k}>{v.label}</MenuItem>)}
+            {Object.entries(STATUS_CONFIG).map(([k,v]) => (
+              <MenuItem key={k} value={k}>{v.label}</MenuItem>
+            ))}
           </Select>
         </FormControl>
       </Card>
@@ -141,9 +186,10 @@ export default function ProjectsPage() {
             </TableHead>
             <TableBody>
               {projects.map(p => {
-                const total   = p.contentStats?.total  || 0;
-                const posted  = p.contentStats?.posted || 0;
-                const pct     = total > 0 ? Math.round((posted / total) * 100) : 0;
+                const totalC  = p.contentStats?.total  || 0;
+                const postedC = p.contentStats?.posted || 0;
+                const pct     = totalC > 0 ? Math.round((postedC / totalC) * 100) : 0;
+
                 return (
                   <TableRow key={p._id} hover>
                     <TableCell>
@@ -152,42 +198,82 @@ export default function ProjectsPage() {
                         <Typography variant="body2" fontWeight={500}>{p.name}</Typography>
                       </Box>
                     </TableCell>
-                    <TableCell sx={{ fontSize:13 }}>{p.clientId?.businessName || "—"}</TableCell>
+                    <TableCell sx={{ fontSize:13 }}>
+                      {p.clientId?.businessName || "—"}
+                    </TableCell>
                     <TableCell sx={{ fontSize:12, color:"text.secondary" }}>
-                      {p.month ? new Date(p.month + "-01").toLocaleString("en-IN",{month:"short",year:"numeric"}) : "—"}
+                      {p.month
+                        ? new Date(p.month + "-01").toLocaleString("en-IN", { month:"short", year:"numeric" })
+                        : "—"}
                     </TableCell>
                     <TableCell sx={{ minWidth:140 }}>
                       <Box sx={{ display:"flex", alignItems:"center", gap:1 }}>
-                        <LinearProgress variant="determinate" value={pct} sx={{ flex:1, height:6, borderRadius:3, bgcolor:"#e5e7eb", "& .MuiLinearProgress-bar":{ bgcolor: pct===100?"#0e9f6e":"#1a56db" } }} />
-                        <Typography variant="caption" color="text.secondary">{posted}/{total}</Typography>
+                        <LinearProgress
+                          variant="determinate"
+                          value={pct}
+                          sx={{
+                            flex:1, height:6, borderRadius:3,
+                            bgcolor:"#e5e7eb",
+                            "& .MuiLinearProgress-bar":{
+                              bgcolor: pct === 100 ? "#0e9f6e" : "#1a56db",
+                            },
+                          }}
+                        />
+                        <Typography variant="caption" color="text.secondary">
+                          {postedC}/{totalC}
+                        </Typography>
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Chip label={STATUS_CONFIG[p.status]?.label} color={STATUS_CONFIG[p.status]?.color} size="small" />
+                      <Chip
+                        label={STATUS_CONFIG[p.status]?.label}
+                        color={STATUS_CONFIG[p.status]?.color}
+                        size="small"
+                      />
                     </TableCell>
                     <TableCell sx={{ fontSize:11, color:"text.secondary" }}>
-                      {p.startDate ? new Date(p.startDate).toLocaleDateString("en-IN") : "—"}{" "}
-                      {p.endDate   ? `→ ${new Date(p.endDate).toLocaleDateString("en-IN")}` : ""}
+                      {p.startDate ? new Date(p.startDate).toLocaleDateString("en-IN") : "—"}
+                      {p.endDate   ? ` → ${new Date(p.endDate).toLocaleDateString("en-IN")}` : ""}
                     </TableCell>
                     <TableCell>
-                      <Tooltip title="View / Kanban">
-                        <IconButton size="small" onClick={() => navigate(`/admin/projects/${p._id}`)}>
+                      {/* ── FIX: onClick uses project._id directly ── */}
+                      <Tooltip title="View Kanban Board">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => handleViewProject(p)}
+                        >
                           <VisibilityIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      {isAdmin && (
-                        <Tooltip title="Delete">
-                          <IconButton size="small" color="error" onClick={() => setDeleteTarget(p)}>
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
+                      <Tooltip title="Shoot Schedule">
+                        <IconButton
+                          size="small"
+                          color="secondary"
+                          onClick={() => handleShootSchedule(p)}
+                        >
+                          <CalendarIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => setDeleteTarget(p)}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 );
               })}
               {projects.length === 0 && (
-                <TableRow><TableCell colSpan={7} align="center" sx={{ py:5, color:"text.secondary" }}>Koi project nathi. "+ New Project" click karo.</TableCell></TableRow>
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ py:5, color:"text.secondary" }}>
+                    Koi project nathi. "+ New Project" click karo.
+                  </TableCell>
+                </TableRow>
               )}
             </TableBody>
           </Table>
@@ -203,24 +289,43 @@ export default function ProjectsPage() {
             <Grid item xs={12}>
               <FormControl fullWidth size="small" required>
                 <InputLabel>Client *</InputLabel>
-                <Select value={form.clientId} label="Client *" onChange={e => setForm({...form,clientId:e.target.value})}>
-                  {clients.map(c => <MenuItem key={c._id} value={c._id}>{c.businessName}</MenuItem>)}
+                <Select value={form.clientId} label="Client *"
+                  onChange={e => setForm({...form, clientId:e.target.value})}>
+                  {clients.map(c => (
+                    <MenuItem key={c._id} value={c._id}>{c.businessName}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={8}><TextField {...f("name")} label="Project Name *" placeholder="April 2026 Content Plan" /></Grid>
+            <Grid item xs={12} sm={8}>
+              <TextField {...f("name")} label="Project Name *" placeholder="April 2026 Content Plan" />
+            </Grid>
             <Grid item xs={12} sm={4}>
               <FormControl fullWidth size="small">
                 <InputLabel>Month</InputLabel>
-                <Select value={form.month} label="Month" onChange={e => setForm({...form,month:e.target.value})}>
-                  {MONTHS_OPTS().map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+                <Select value={form.month} label="Month"
+                  onChange={e => setForm({...form, month:e.target.value})}>
+                  {MONTHS_OPTS().map(o => (
+                    <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12}><TextField {...f("monthlyGoal")} label="Monthly Goal" placeholder="20 reels, 12 posts..." /></Grid>
-            <Grid item xs={12} sm={6}><TextField {...f("startDate")} label="Start Date" type="date" InputLabelProps={{ shrink:true }} /></Grid>
-            <Grid item xs={12} sm={6}><TextField {...f("endDate")}   label="End Date"   type="date" InputLabelProps={{ shrink:true }} /></Grid>
-            <Grid item xs={12}><TextField {...f("notes")} label="Notes" multiline rows={2} /></Grid>
+            <Grid item xs={12}>
+              <TextField {...f("monthlyGoal")} label="Monthly Goal"
+                placeholder="20 reels, 12 posts..." />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField {...f("startDate")} label="Start Date" type="date"
+                InputLabelProps={{ shrink:true }} />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField {...f("endDate")} label="End Date" type="date"
+                InputLabelProps={{ shrink:true }} />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField {...f("notes")} label="Notes" multiline rows={2} />
+            </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px:3, pb:2 }}>
@@ -233,7 +338,9 @@ export default function ProjectsPage() {
       <Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)}>
         <DialogTitle>Delete Project</DialogTitle>
         <DialogContent>
-          <Typography><strong>{deleteTarget?.name}</strong> ane eni badhi content permanently delete thashe.</Typography>
+          <Typography>
+            <strong>{deleteTarget?.name}</strong> ane eni badhi content permanently delete thashe.
+          </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>
@@ -241,7 +348,12 @@ export default function ProjectsPage() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={Boolean(toast)} autoHideDuration={3000} onClose={() => setToast("")} message={toast} />
+      <Snackbar
+        open={Boolean(toast)}
+        autoHideDuration={3000}
+        onClose={() => setToast("")}
+        message={toast}
+      />
     </Box>
   );
 }

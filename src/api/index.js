@@ -1,8 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "https://socialflipss-backend.onrender.com/api",
-  // baseURL: process.env.REACT_APP_API_URL || "https://socialflipss-backend.onrender.com/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || "https://socialflipss-backend.onrender.com/api",
 });
 
 // Attach JWT token to every request automatically
