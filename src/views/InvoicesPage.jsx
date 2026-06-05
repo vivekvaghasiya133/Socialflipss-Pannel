@@ -26,14 +26,20 @@ export default function InvoicesPage() {
   const [statusFilter, setStatus] = useState("");
   const [toast, setToast]       = useState("");
 
-  const loadStats = () => getInvoiceStats().then(r => setStats(r.data));
+  const loadStats = useCallback(() => {
+    if (isAdmin) {
+      getInvoiceStats()
+        .then(r => setStats(r.data))
+        .catch(() => {});
+    }
+  }, [isAdmin]);
 
   const load = useCallback(() => {
     getInvoices({ paymentStatus: statusFilter, clientId: clientIdFilter })
       .then(r => { setInvoices(r.data.invoices); setTotal(r.data.total); });
   }, [statusFilter, clientIdFilter]);
 
-  useEffect(() => { loadStats(); }, []);
+  useEffect(() => { loadStats(); }, [loadStats]);
   useEffect(() => { load(); }, [load]);
 
   const handleDelete = async (id) => {
@@ -58,7 +64,7 @@ export default function InvoicesPage() {
       </Box>
 
       {/* Revenue stats */}
-      {stats && (
+      {stats && isAdmin && (
         <Grid container spacing={2} mb={3}>
           {[
             { label:"Total Revenue",    value:`₹${Number(stats.totalRevenue).toLocaleString("en-IN")}`,  color:"#1a56db" },
