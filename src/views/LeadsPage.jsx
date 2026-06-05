@@ -118,7 +118,14 @@ export default function LeadsPage() {
   };
 
   const openWhatsApp = (mobile, name) => {
-    const msg = encodeURIComponent(`Hi ${name}, SocialFlipss team thi baat kari raha hain. Aapko digital marketing services ke baare mein discuss karna tha.`);
+    const msg = encodeURIComponent(
+      `Hi ${name} 👋\n\n` +
+      `This is the SocialFlipss team. We wanted to discuss our digital marketing services with you.\n\n` +
+      `---\n\n` +
+      `નમસ્તે ${name} 👋\n\n` +
+      `હું સોશિયલફ્લિપ્સ ટીમ તરફથી વાત કરી રહ્યો છું. અમારે તમારી સાથે ડિજિટલ માર્કેટિંગ સેવાઓ વિશે ચર્ચા કરવી હતી.\n\n` +
+      `– SocialFlipss Team`
+    );
     window.open(`https://wa.me/91${mobile.replace(/\D/g,"")}?text=${msg}`, "_blank");
   };
 

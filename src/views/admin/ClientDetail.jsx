@@ -86,6 +86,7 @@ export default function ClientDetail() {
   const [autoForm, setAutoForm]         = useState({
     packageAmount:"", packageName:"", gstPercent:"0",
     notes:"", enabled:true,
+    dayOfMonth:"",
     reminders:{ day5:true, day10:true, day15:true },
   });
   const [autoSaving, setAutoSaving]     = useState(false);
@@ -120,6 +121,7 @@ export default function ClientDetail() {
           gstPercent:    acr.data.gstPercent    || "0",
           notes:         acr.data.notes         || "",
           enabled:       acr.data.enabled ?? true,
+          dayOfMonth:    acr.data.dayOfMonth    || "",
           reminders:     acr.data.reminders || { day5:true, day10:true, day15:true },
         });
       } else {
@@ -169,17 +171,31 @@ export default function ClientDetail() {
   const sendPortalWhatsApp = () => {
     if (!client) return;
     const link = `${window.location.origin}/portal/login`;
+    const pwdTextEng = portalPassword ? `Password: ${portalPassword}\n` : "Use OTP login.\n";
+    const pwdTextGuj = portalPassword ? `પાસવર્ડ: ${portalPassword}\n` : "OTP લોગિનનો ઉપયોગ કરો.\n";
+
     const msg  = encodeURIComponent(
       `Hi ${client.ownerName} 👋\n\n` +
       `*SocialFlipss Client Portal Access* 🎉\n\n` +
-      `Tamaro personal portal ready chhe! Tyaa tamne milshhe:\n` +
-      `✅ Tamari reels ane content\n` +
-      `🧾 Invoices ane payment history\n` +
+      `Your personal portal is ready! There you will find:\n` +
+      `✅ Your reels and content\n` +
+      `🧾 Invoices and payment history\n` +
       `📅 Shoot schedule\n` +
-      `🔔 Updates ane notifications\n\n` +
+      `🔔 Updates and notifications\n\n` +
       `Portal Link: ${link}\n` +
       `Email: ${portalEmail}\n` +
-      (portalPassword ? `Password: ${portalPassword}\n` : "OTP login use karo.\n") +
+      pwdTextEng +
+      `\n---\n\n` +
+      `નમસ્તે ${client.ownerName} 👋\n\n` +
+      `*સોશિયલફ્લિપ્સ ક્લાયન્ટ પોર્ટલ એક્સેસ* 🎉\n\n` +
+      `તમારું પર્સનલ પોર્ટલ તૈયાર છે! ત્યાં તમને મળશે:\n` +
+      `✅ તમારી રીલ્સ અને કન્ટેન્ટ\n` +
+      `🧾 ઇન્વોઇસ અને પેમેન્ટ હિસ્ટ્રી\n` +
+      `📅 શૂટ શેડ્યૂલ\n` +
+      `🔔 અપડેટ્સ અને નોટિફિકેશન્સ\n\n` +
+      `પોર્ટલ લિંક: ${link}\n` +
+      `ઇમેઇલ: ${portalEmail}\n` +
+      pwdTextGuj +
       `\n– SocialFlipss Team 🙏`
     );
     window.open(`https://wa.me/91${client.mobile.replace(/\D/g,"")}?text=${msg}`, "_blank");
@@ -213,7 +229,52 @@ export default function ClientDetail() {
 
   const openWhatsApp = () => {
     if (!client) return;
-    const msg = encodeURIComponent(`Hi ${client.ownerName}, SocialFlipss team thi update share karna tha.`);
+    const msg = encodeURIComponent(
+      `Hi ${client.ownerName} 👋\n\n` +
+      `Just wanted to share an update from the SocialFlipss team.\n\n` +
+      `---\n\n` +
+      `નમસ્તે ${client.ownerName} 👋\n\n` +
+      `સોશિયલફ્લિપ્સ ટીમ તરફથી અપડેટ શેર કરવાનું હતું.\n\n` +
+      `– SocialFlipss Team`
+    );
+    window.open(`https://wa.me/91${client.mobile.replace(/\D/g,"")}?text=${msg}`, "_blank");
+  };
+
+  const sendOutstandingWhatsApp = () => {
+    if (!client || !invoices.length) return;
+    const pendingInvoices = invoices.filter(inv => inv.pendingAmount > 0);
+    if (pendingInvoices.length === 0) {
+      setToast("Client nu koi pending invoice nathi. 🎉");
+      return;
+    }
+
+    const totalPendingAmount = pendingInvoices.reduce((s, inv) => s + inv.pendingAmount, 0);
+
+    const itemsTextEng = pendingInvoices.map(inv => 
+      `- Invoice ${inv.invoiceNumber}: ₹${inv.totalAmount.toLocaleString("en-IN")} (Pending: ₹${inv.pendingAmount.toLocaleString("en-IN")})`
+    ).join("\n");
+
+    const itemsTextGuj = pendingInvoices.map(inv => 
+      `- ઇન્વોઇસ ${inv.invoiceNumber}: ₹${inv.totalAmount.toLocaleString("en-IN")} (બાકી: ₹${inv.pendingAmount.toLocaleString("en-IN")})`
+    ).join("\n");
+
+    const msg = encodeURIComponent(
+      `Hi ${client.ownerName} 👋\n\n` +
+      `*SocialFlipss — Outstanding Statement*\n\n` +
+      `Here is a summary of your outstanding invoices:\n` +
+      `${itemsTextEng}\n\n` +
+      `*Total Outstanding: ₹${totalPendingAmount.toLocaleString("en-IN")}*\n` +
+      `Please complete the pending payments. Thank you! 🙏\n\n` +
+      `---\n\n` +
+      `નમસ્તે ${client.ownerName} 👋\n\n` +
+      `*સોશિયલફ્લિપ્સ — બાકી ઇન્વોઇસ વિગત*\n\n` +
+      `તમારા બાકી ઇન્વોઇસની વિગતો નીચે મુજબ છે:\n` +
+      `${itemsTextGuj}\n\n` +
+      `*કુલ બાકી રકમ: ₹${totalPendingAmount.toLocaleString("en-IN")}*\n` +
+      `કૃપા કરીને બાકી ચૂકવણી પૂર્ણ કરવા વિનંતી. આભાર! 🙏\n\n` +
+      `– SocialFlipss Team`
+    );
+
     window.open(`https://wa.me/91${client.mobile.replace(/\D/g,"")}?text=${msg}`, "_blank");
   };
 
@@ -238,6 +299,9 @@ export default function ClientDetail() {
         </Box>
         <Box sx={{ display:"flex", gap:1, flexWrap:"wrap" }}>
           <Button variant="outlined" color="success" size="small" startIcon={<WhatsAppIcon/>} onClick={openWhatsApp}>WhatsApp</Button>
+          {totalPending > 0 && (
+            <Button variant="outlined" color="success" size="small" startIcon={<WhatsAppIcon/>} onClick={sendOutstandingWhatsApp}>WhatsApp Statement</Button>
+          )}
           <Button variant="outlined" size="small" startIcon={<ReceiptIcon/>} onClick={()=>navigate(`/admin/invoices?clientId=${id}`)}>
             Invoices ({invoices.length})
           </Button>
@@ -247,6 +311,41 @@ export default function ClientDetail() {
           <Chip label={STATUS_CONFIG[client.status]?.label} color={STATUS_CONFIG[client.status]?.color} sx={{ fontWeight:600 }}/>
         </Box>
       </Box>
+      {/* Onboarding Link Alert */}
+      {client.status === "onboarding" && (
+        <Alert severity="info" sx={{ mb:3, display:"flex", alignItems:"center", flexWrap:"wrap", gap:2 }}>
+          <Box sx={{ flex:1 }}>
+            <Typography variant="body2" fontWeight={600}>Onboarding form click kari ne fill karvano baaki chhe.</Typography>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ wordBreak:"break-all", mt:0.5 }}>
+              Onboarding Link: <strong>{`${window.location.origin}/onboard-client/${client._id}`}</strong>
+            </Typography>
+          </Box>
+          <Box sx={{ display:"flex", gap:1, mt:1 }}>
+            <Button size="small" variant="outlined" startIcon={<ContentCopyIcon/>} onClick={() => {
+              navigator.clipboard.writeText(`${window.location.origin}/onboard-client/${client._id}`);
+              setToast("Onboarding link copied! Client ne WhatsApp karo. 📋");
+            }}>
+              Copy Link
+            </Button>
+            <Button size="small" variant="contained" color="success" startIcon={<WhatsAppIcon/>} onClick={() => {
+              const link = `${window.location.origin}/onboard-client/${client._id}`;
+              const msg = encodeURIComponent(
+                `Hi ${client.ownerName} 👋\n\n` +
+                `*SocialFlipss — Onboarding Form*\n\n` +
+                `Please click the link below to fill out your onboarding form:\n${link}\n\n` +
+                `---\n\n` +
+                `નમસ્તે ${client.ownerName} 👋\n\n` +
+                `*સોશિયલફ્લિપ્સ — ઓનબોર્ડિંગ ફોર્મ*\n\n` +
+                `કૃપા કરીને તમારું ઓનબોર્ડિંગ ફોર્મ ભરવા માટે નીચેની લિંક પર ક્લિક કરો:\n${link}\n\n` +
+                `– SocialFlipss Team`
+              );
+              window.open(`https://wa.me/91${client.mobile.replace(/\D/g,"")}?text=${msg}`, "_blank");
+            }}>
+              Send on WhatsApp
+            </Button>
+          </Box>
+        </Alert>
+      )}
 
       {/* Revenue summary */}
       {invoices.length > 0 && (
@@ -397,7 +496,9 @@ export default function ClientDetail() {
           {tab === 2 && (
             <SectionCard title="🧾 Auto Invoice Configuration">
               <Alert severity="info" sx={{ mb:2 }}>
-                Client na onboarding date anniversary par ({client.onboardingDate ? new Date(client.onboardingDate).getDate() : "?"} tarikh) automatically invoice generate thashe.
+                {autoConfig?.dayOfMonth
+                  ? `Invoice will automatically generate on day ${autoConfig.dayOfMonth} of every month.`
+                  : `Client na onboarding date anniversary par (${client.onboardingDate ? new Date(client.onboardingDate).getDate() : "?"} tarikh) automatically invoice generate thashe.`}
                 {autoConfig && <><br/><strong>Last generated: {autoConfig.lastGeneratedMonth || "Never"}</strong></>}
               </Alert>
 
@@ -410,7 +511,7 @@ export default function ClientDetail() {
                   <TextField fullWidth size="small" label="Monthly Amount (₹) *" type="number" value={autoForm.packageAmount}
                     onChange={e=>setAutoForm({...autoForm,packageAmount:e.target.value})}/>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={4}>
                   <FormControl fullWidth size="small">
                     <InputLabel>GST %</InputLabel>
                     <Select value={autoForm.gstPercent} label="GST %" onChange={e=>setAutoForm({...autoForm,gstPercent:e.target.value})}>
@@ -418,7 +519,24 @@ export default function ClientDetail() {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={4}>
+                  <TextField fullWidth size="small" label="Auto Generate Day (1-31)" type="number"
+                    value={autoForm.dayOfMonth || ""}
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (val === "" || (Number(val) >= 1 && Number(val) <= 31)) {
+                        setAutoForm({ ...autoForm, dayOfMonth: val });
+                      }
+                    }}
+                    placeholder="Onboarding anniversary"
+                    helperText={
+                      autoForm.dayOfMonth
+                        ? `Invoice will auto-generate on day ${autoForm.dayOfMonth}`
+                        : `Default: Day ${client.onboardingDate ? new Date(client.onboardingDate).getDate() : new Date(client.createdAt).getDate()}`
+                    }
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
                   <FormControlLabel
                     control={<Switch checked={autoForm.enabled} onChange={e=>setAutoForm({...autoForm,enabled:e.target.checked})} color="success"/>}
                     label="Auto invoice enabled"

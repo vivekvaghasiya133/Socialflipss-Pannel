@@ -105,7 +105,7 @@ export default function InvoicesPage() {
                   <TableCell sx={{ fontSize:12, fontFamily:"monospace", fontWeight:600, color:"#1a56db" }}>
                     {inv.invoiceNumber}
                   </TableCell>
-                  <TableCell sx={{ fontWeight:500 }}>{inv.clientId?.businessName || "—"}</TableCell>
+                  <TableCell sx={{ fontWeight:500 }}>{inv.clientId?.businessName || inv.clientBusiness || "—"}</TableCell>
                   <TableCell sx={{ fontSize:12 }}>{inv.month || "—"}</TableCell>
                   <TableCell sx={{ fontWeight:600 }}>₹{Number(inv.totalAmount).toLocaleString("en-IN")}</TableCell>
                   <TableCell sx={{ color:"#0e9f6e", fontWeight:600 }}>₹{Number(inv.paidAmount).toLocaleString("en-IN")}</TableCell>

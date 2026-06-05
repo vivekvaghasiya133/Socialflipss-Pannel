@@ -35,20 +35,25 @@ function buildWhatsAppMessage(slot, client, projectName) {
   const dateObj  = new Date(slot.date + "T00:00:00");
   const dateStr  = dateObj.toLocaleDateString("en-IN", { weekday:"long", day:"numeric", month:"long" });
   const slotInfo = SLOT_COLORS[slot.timeSlot];
+  const slotTimeName = slot.timeSlot.charAt(0).toUpperCase() + slot.timeSlot.slice(1);
 
-  return `Hi ${client?.ownerName} 👋
-
-*SocialFlipss — Shoot Schedule*
-
-📅 Date: *${dateStr}*
-⏰ Time: *${slotInfo.time} (${slot.timeSlot.charAt(0).toUpperCase()+slot.timeSlot.slice(1)})*
-🎬 Reels: *${slot.reelCount} reel${slot.reelCount>1?"s":""}*
-📁 Project: ${projectName}
-
-Aapde aa date ane time par shoot karishhu. Please available rahejo! 🙏
-
-${slot.note ? `📝 Note: ${slot.note}\n` : ""}
-– SocialFlipss Team`;
+  return `Hi ${client?.ownerName || "Client"} 👋\n\n` +
+    `*SocialFlipss — Shoot Schedule*\n\n` +
+    `📅 Date: *${dateStr}*\n` +
+    `⏰ Time: *${slotInfo.time} (${slotTimeName})*\n` +
+    `🎬 Reels: *${slot.reelCount} reel${slot.reelCount > 1 ? "s" : ""}*\n` +
+    `📁 Project: ${projectName}\n\n` +
+    `We have scheduled your shoot for this date and time. Please be available! 🙏\n\n` +
+    `---\n\n` +
+    `નમસ્તે ${client?.ownerName || "ક્લાયન્ટ"} 👋\n\n` +
+    `*સોશિયલફ્લિપ્સ — શૂટ શેડ્યૂલ*\n\n` +
+    `📅 તારીખ: *${dateStr}*\n` +
+    `⏰ સમય: *${slotInfo.time} (${slotTimeName})*\n` +
+    `🎬 રીલ્સ: *${slot.reelCount} રીલ(સ)*\n` +
+    `📁 પ્રોજેક્ટ: ${projectName}\n\n` +
+    `આપણે આ તારીખ અને સમયે શૂટ કરીશું. કૃપા કરીને હાજર રહેશો! 🙏\n\n` +
+    `${slot.note ? `📝 Note: ${slot.note}\n\n` : ""}` +
+    `– SocialFlipss Team`;
 }
 
 export default function ShootSchedulerPage() {

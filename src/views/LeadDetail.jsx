@@ -127,17 +127,34 @@ export default function LeadDetail() {
     const msg = encodeURIComponent(
       `Hi ${lead.contactName} 👋\n\n` +
       `*SocialFlipss — Onboarding Form*\n\n` +
-      `Congratulations! Tamne SocialFlipss Digital Marketing family ma welcome chhe! 🎉\n\n` +
-      `Niche link par click kari ne tamaru onboarding form bharo:\n${onboardingLink}\n\n` +
-      `Aa form ma tamara business ane goals badd basic info bharvu padshe jethhi aapde best strategy taiyar kari shakiye.\n\n` +
-      `Koi sawaal hoy to reply karo! 🙏\n– SocialFlipss Team`
+      `Welcome to the SocialFlipss Digital Marketing family! 🎉\n\n` +
+      `Please click the link below to fill out your onboarding form:\n` +
+      `${onboardingLink}\n\n` +
+      `This form collects details about your business and goals so we can prepare the best strategy for you.\n` +
+      `If you have any questions, feel free to reply! 🙏\n\n` +
+      `---\n\n` +
+      `નમસ્તે ${lead.contactName} 👋\n\n` +
+      `*સોશિયલફ્લિપ્સ — ઓનબોર્ડિંગ ફોર્મ*\n\n` +
+      `સોશિયલફ્લિપ્સ ડિજિટલ માર્કેટિંગ પરિવારમાં તમારું સ્વાગત છે! 🎉\n\n` +
+      `કૃપા કરીને તમારું ઓનબોર્ડિંગ ફોર્મ ભરવા માટે નીચેની લિંક પર ક્લિક કરો:\n` +
+      `${onboardingLink}\n\n` +
+      `આ ફોર્મ તમારા વ્યવસાય અને ધ્યેયો વિશે વિગતો એકત્રિત કરવામાં મદદ કરશે જેથી અમે તમારા માટે શ્રેષ્ઠ વ્યૂહરચના તૈયાર કરી શકીએ.\n` +
+      `જો કોઈ પ્રશ્ન હોય, તો નિઃસંકોચ સંપર્ક કરો! 🙏\n\n` +
+      `– SocialFlipss Team`
     );
     window.open(`https://wa.me/91${lead.mobile.replace(/\D/g,"")}?text=${msg}`, "_blank");
   };
 
   const openWhatsApp = () => {
     if (!lead) return;
-    const msg = encodeURIComponent(`Hi ${lead.contactName}, SocialFlipss team thi baat kar rahe hain.`);
+    const msg = encodeURIComponent(
+      `Hi ${lead.contactName} 👋\n\n` +
+      `This is the SocialFlipss team.\n\n` +
+      `---\n\n` +
+      `નમસ્તે ${lead.contactName} 👋\n\n` +
+      `સોશિયલફ્લિપ્સ ટીમ તરફથી વાત કરી રહ્યા છીએ.\n\n` +
+      `– SocialFlipss Team`
+    );
     window.open(`https://wa.me/91${lead.mobile.replace(/\D/g,"")}?text=${msg}`, "_blank");
   };
 

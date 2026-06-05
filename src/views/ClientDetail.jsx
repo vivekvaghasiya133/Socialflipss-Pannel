@@ -116,7 +116,52 @@ export default function ClientDetail() {
 
   const openWhatsApp = () => {
     if (!client) return;
-    const msg = encodeURIComponent(`Hi ${client.ownerName}, SocialFlipss team thi update share karna tha.`);
+    const msg = encodeURIComponent(
+      `Hi ${client.ownerName} 👋\n\n` +
+      `Just wanted to share an update from the SocialFlipss team.\n\n` +
+      `---\n\n` +
+      `નમસ્તે ${client.ownerName} 👋\n\n` +
+      `સોશિયલફ્લિપ્સ ટીમ તરફથી અપડેટ શેર કરવાનું હતું.\n\n` +
+      `– SocialFlipss Team`
+    );
+    window.open(`https://wa.me/91${client.mobile.replace(/\D/g,"")}?text=${msg}`, "_blank");
+  };
+
+  const sendOutstandingWhatsApp = () => {
+    if (!client || !invoices.length) return;
+    const pendingInvoices = invoices.filter(inv => inv.pendingAmount > 0);
+    if (pendingInvoices.length === 0) {
+      setToast("Client nu koi pending invoice nathi. 🎉");
+      return;
+    }
+
+    const totalPendingAmount = pendingInvoices.reduce((s, inv) => s + inv.pendingAmount, 0);
+
+    const itemsTextEng = pendingInvoices.map(inv => 
+      `- Invoice ${inv.invoiceNumber}: ₹${inv.totalAmount.toLocaleString("en-IN")} (Pending: ₹${inv.pendingAmount.toLocaleString("en-IN")})`
+    ).join("\n");
+
+    const itemsTextGuj = pendingInvoices.map(inv => 
+      `- ઇન્વોઇસ ${inv.invoiceNumber}: ₹${inv.totalAmount.toLocaleString("en-IN")} (બાકી: ₹${inv.pendingAmount.toLocaleString("en-IN")})`
+    ).join("\n");
+
+    const msg = encodeURIComponent(
+      `Hi ${client.ownerName} 👋\n\n` +
+      `*SocialFlipss — Outstanding Statement*\n\n` +
+      `Here is a summary of your outstanding invoices:\n` +
+      `${itemsTextEng}\n\n` +
+      `*Total Outstanding: ₹${totalPendingAmount.toLocaleString("en-IN")}*\n` +
+      `Please complete the pending payments. Thank you! 🙏\n\n` +
+      `---\n\n` +
+      `નમસ્તે ${client.ownerName} 👋\n\n` +
+      `*સોશિયલફ્લિપ્સ — બાકી ઇન્વોઇસ વિગત*\n\n` +
+      `તમારા બાકી ઇન્વોઇસની વિગતો નીચે મુજબ છે:\n` +
+      `${itemsTextGuj}\n\n` +
+      `*કુલ બાકી રકમ: ₹${totalPendingAmount.toLocaleString("en-IN")}*\n` +
+      `કૃપા કરીને બાકી ચૂકવણી પૂર્ણ કરવા વિનંતી. આભાર! 🙏\n\n` +
+      `– SocialFlipss Team`
+    );
+
     window.open(`https://wa.me/91${client.mobile.replace(/\D/g,"")}?text=${msg}`, "_blank");
   };
 
@@ -148,6 +193,11 @@ export default function ClientDetail() {
           <Button variant="outlined" color="success" size="small" startIcon={<WhatsAppIcon />} onClick={openWhatsApp}>
             WhatsApp
           </Button>
+          {totalPending > 0 && (
+            <Button variant="outlined" color="success" size="small" startIcon={<WhatsAppIcon />} onClick={sendOutstandingWhatsApp}>
+              WhatsApp Statement
+            </Button>
+          )}
           <Button variant="outlined" size="small" startIcon={<ReceiptIcon />}
             onClick={() => navigate(`/admin/invoices?clientId=${id}`)}>
             Invoices ({invoices.length})

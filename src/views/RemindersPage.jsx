@@ -79,7 +79,13 @@ export default function RemindersPage() {
     const mobile = reminder.clientId?.mobile || reminder.leadId?.mobile;
     const name   = reminder.clientId?.ownerName || reminder.leadId?.contactName || "";
     if (!mobile) { setToast("Mobile number nathi milo."); return; }
-    const msg = encodeURIComponent(reminder.whatsappMessage || `Hi ${name}, SocialFlipss team thi yaad dila raha hun.`);
+    const defaultMsg = `Hi ${name} 👋\n\n` +
+      `Just a reminder from the SocialFlipss team.\n\n` +
+      `---\n\n` +
+      `નમસ્તે ${name} 👋\n\n` +
+      `સોશિયલફ્લિપ્સ ટીમ તરફથી આ યાદ અપાવવા માટે છે.\n\n` +
+      `– SocialFlipss Team`;
+    const msg = encodeURIComponent(reminder.whatsappMessage || defaultMsg);
     window.open(`https://wa.me/91${mobile.replace(/\D/g,"")}?text=${msg}`, "_blank");
   };
 

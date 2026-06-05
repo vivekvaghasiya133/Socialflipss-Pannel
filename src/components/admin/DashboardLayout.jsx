@@ -72,6 +72,7 @@ export default function DashboardLayout() {
         { label:"Staff",            icon:<GroupsIcon />,    path:"/admin/staff",            roles:["admin","manager"] },
         { label:"Attendance",       icon:<EventNoteIcon />, path:"/admin/attendance",       roles:["admin","manager"] },
         { label:"Salary",           icon:<WalletIcon />,    path:"/admin/salary",           roles:["admin"] },
+        { label:"Hisab / Ledger",   icon:<WalletIcon />,    path:"/admin/hisab",            roles:["admin"] },
         { label:"Leaves",           icon:<BeachIcon />,     path:"/admin/leaves",           roles:["admin","manager"] },
         { label:"Work Logs",        icon:<WorkIcon />,      path:"/admin/worklogs",         roles:["admin","manager","team"] },
       ],
@@ -138,9 +139,9 @@ export default function DashboardLayout() {
           <ListItemIcon sx={{ minWidth:34, color:"#0e9f6e" }}><PortalIcon fontSize="small"/></ListItemIcon>
           <ListItemText primary="Client Portal" primaryTypographyProps={{ fontSize:13, fontWeight:500 }}/>
         </ListItemButton>
-        <ListItemButton component="a" href="/onboard" target="_blank" sx={{ borderRadius:2, color:"text.secondary", py:0.75 }}>
+        <ListItemButton component="a" href="/lead" target="_blank" sx={{ borderRadius:2, color:"text.secondary", py:0.75 }}>
           <ListItemIcon sx={{ minWidth:34 }}><OpenInNewIcon fontSize="small"/></ListItemIcon>
-          <ListItemText primary="Client Form" primaryTypographyProps={{ fontSize:13 }}/>
+          <ListItemText primary="Lead Form" primaryTypographyProps={{ fontSize:13 }}/>
         </ListItemButton>
       </Box>
     </Box>

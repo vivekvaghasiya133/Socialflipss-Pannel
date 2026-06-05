@@ -29,7 +29,7 @@ export const getMe = () => api.get("/auth/me");
 export const changePassword = (data) => api.put("/auth/change-password", data);
 
 // ── Clients ───────────────────────────────────────
-export const submitClientForm = (data) => api.post("/clients/submit", data);
+export const submitClientForm = (data) => api.post("/leads/submit", data);
 export const getClients = (params) => api.get("/clients", { params });
 export const getClientStats = () => api.get("/clients/stats");
 export const getClientById = (id) => api.get(`/clients/${id}`);

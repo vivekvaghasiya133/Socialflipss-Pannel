@@ -14,6 +14,7 @@ import NotifIcon        from "@mui/icons-material/NotificationsActive";
 import WhatsAppIcon     from "@mui/icons-material/WhatsApp";
 import ArrowRightIcon   from "@mui/icons-material/ArrowForwardIos";
 import { getDashboardAnalytics } from "../api/analyticsApi";
+import { getHisabStats } from "../api/hisabApi";
 import { useAuth } from "../context/AuthContext";
 
 const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -76,6 +77,7 @@ export default function DashboardHome() {
   const navigate = useNavigate();
   const { isAdmin, canManage, user } = useAuth();
   const [data, setData]     = useState(null);
+  const [hisabStats, setHisabStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]   = useState("");
 
@@ -84,7 +86,13 @@ export default function DashboardHome() {
       .then(r => setData(r.data))
       .catch(() => setError("Dashboard load thayo nahi. Backend check karo."))
       .finally(() => setLoading(false));
-  }, []);
+
+    if (user?.role === "admin") {
+      getHisabStats()
+        .then(r => setHisabStats(r.data))
+        .catch(() => {});
+    }
+  }, [user]);
 
   if (loading) return <Box sx={{ display:"flex", justifyContent:"center", pt:8 }}><CircularProgress /></Box>;
   if (error)   return <Alert severity="error">{error}</Alert>;
@@ -120,7 +128,7 @@ export default function DashboardHome() {
           <strong>{counts.overdueReminders} reminder{counts.overdueReminders>1?"s":""}</strong> overdue chhe!
         </Alert>
       )}
-      {counts.pendingInvoices > 0 && (
+      {counts.pendingInvoices > 0 && isAdmin && (
         <Alert severity="info" sx={{ mb:2, cursor:"pointer" }}
           onClick={() => navigate("/admin/invoices?paymentStatus=pending")}
           action={<Button size="small" color="inherit" endIcon={<ArrowRightIcon sx={{ fontSize:12 }} />}>View</Button>}>
@@ -131,98 +139,148 @@ export default function DashboardHome() {
 
       {/* Top stat cards */}
       <Grid container spacing={2} mb={3}>
-        <Grid item xs={6} sm={4} md={2}>
-          <StatCard icon={<TrendingUpIcon />} label="Total Leads"    value={counts.totalLeads}    color="#1a56db" onClick={() => navigate("/admin/leads")} sub={`${counts.newLeads} new`} />
-        </Grid>
-        <Grid item xs={6} sm={4} md={2}>
-          <StatCard icon={<PeopleIcon />}    label="Active Clients" value={counts.activeClients}  color="#0e9f6e" onClick={() => navigate("/admin/clients")} sub={`${counts.totalClients} total`} />
-        </Grid>
-        <Grid item xs={6} sm={4} md={2}>
-          <StatCard icon={<ReceiptIcon />}   label="Revenue"        value={`₹${Math.round(revenue.paid/1000)}k`} color="#8b5cf6" onClick={() => navigate("/admin/invoices")} sub={`₹${Math.round(revenue.pending/1000)}k pending`} alert={counts.pendingInvoices > 0 ? `${counts.pendingInvoices}` : null} />
-        </Grid>
-        <Grid item xs={6} sm={4} md={2}>
+        {isAdmin && (
+          <Grid item xs={6} sm={4} md={2}>
+            <StatCard icon={<TrendingUpIcon />} label="Total Leads"    value={counts.totalLeads}    color="#1a56db" onClick={() => navigate("/admin/leads")} sub={`${counts.newLeads} new`} />
+          </Grid>
+        )}
+        {isAdmin && (
+          <Grid item xs={6} sm={4} md={2}>
+            <StatCard icon={<PeopleIcon />}    label="Active Clients" value={counts.activeClients}  color="#0e9f6e" onClick={() => navigate("/admin/clients")} sub={`${counts.totalClients} total`} />
+          </Grid>
+        )}
+        {isAdmin && (
+          <Grid item xs={6} sm={4} md={2}>
+            <StatCard icon={<ReceiptIcon />}   label="Revenue"        value={`₹${Math.round(revenue.paid/1000)}k`} color="#8b5cf6" onClick={() => navigate("/admin/invoices")} sub={`₹${Math.round(revenue.pending/1000)}k pending`} alert={counts.pendingInvoices > 0 ? `${counts.pendingInvoices}` : null} />
+          </Grid>
+        )}
+        <Grid item xs={6} sm={4} md={isAdmin ? 2 : 4}>
           <StatCard icon={<VideoIcon />}     label="Content Posted" value={counts.postedContent}   color="#f59e0b" onClick={() => navigate("/admin/content-calendar")} sub={`${counts.pendingContent} in pipeline`} />
         </Grid>
-        <Grid item xs={6} sm={4} md={2}>
+        <Grid item xs={6} sm={4} md={isAdmin ? 2 : 4}>
           <StatCard icon={<FolderIcon />}    label="Active Projects" value={counts.activeProjects} color="#06b6d4" onClick={() => navigate("/admin/projects")} sub={`${counts.totalProjects} total`} />
         </Grid>
-        <Grid item xs={6} sm={4} md={2}>
+        <Grid item xs={6} sm={4} md={isAdmin ? 2 : 4}>
           <StatCard icon={<NotifIcon />}     label="Due Reminders"  value={counts.overdueReminders} color="#e02424" onClick={() => navigate("/admin/reminders")} sub="action needed" alert={counts.overdueReminders > 0 ? "!" : null} />
         </Grid>
       </Grid>
 
       {/* Revenue cards */}
-      <Grid container spacing={2} mb={3}>
-        {[
-          { label:"Total Revenue",    value:`₹${Number(revenue.total).toLocaleString("en-IN")}`,              color:"#1a56db" },
-          { label:"Total Collected",  value:`₹${Number(revenue.paid).toLocaleString("en-IN")}`,               color:"#0e9f6e" },
-          { label:"Pending",          value:`₹${Number(revenue.pending).toLocaleString("en-IN")}`,            color:"#e02424" },
-          { label:"This Month",       value:`₹${Number(revenue.thisMonth?.total||0).toLocaleString("en-IN")}`, color:"#8b5cf6" },
-        ].map(c => (
-          <Grid item xs={6} sm={3} key={c.label}>
-            <Card><Box sx={{ p:2 }}>
-              <Typography variant="caption" color="text.secondary">{c.label}</Typography>
-              <Typography variant="h5" fontWeight={700} sx={{ color:c.color }}>{c.value}</Typography>
-            </Box></Card>
+      {isAdmin && (
+        <Grid container spacing={2} mb={3}>
+          {[
+            { label:"Total Revenue",    value:`₹${Number(revenue.total).toLocaleString("en-IN")}`,              color:"#1a56db" },
+            { label:"Total Collected",  value:`₹${Number(revenue.paid).toLocaleString("en-IN")}`,               color:"#0e9f6e" },
+            { label:"Pending",          value:`₹${Number(revenue.pending).toLocaleString("en-IN")}`,            color:"#e02424" },
+            { label:"This Month",       value:`₹${Number(revenue.thisMonth?.total||0).toLocaleString("en-IN")}`, color:"#8b5cf6" },
+          ].map(c => (
+            <Grid item xs={6} sm={3} key={c.label}>
+              <Card><Box sx={{ p:2 }}>
+                <Typography variant="caption" color="text.secondary">{c.label}</Typography>
+                <Typography variant="h5" fontWeight={700} sx={{ color:c.color }}>{c.value}</Typography>
+              </Box></Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      {/* Partner Balances */}
+      {isAdmin && hisabStats && hisabStats.people && hisabStats.people.length > 0 && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h6" fontWeight={700} mb={1.5}>Partner Collected Balances (In Hand)</Typography>
+          <Grid container spacing={2}>
+            {hisabStats.people.map(p => (
+              <Grid item xs={12} sm={6} md={4} key={p.person}>
+                <Card sx={{ borderLeft: `4px solid ${p.balance > 0 ? "#10b981" : p.balance < 0 ? "#ef4444" : "#6b7280"}` }}>
+                  <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1, alignItems: "center" }}>
+                      <Typography variant="subtitle2" fontWeight={700}>{p.person}</Typography>
+                      <Typography variant="subtitle2" fontWeight={700} color={p.balance > 0 ? "success.main" : p.balance < 0 ? "error.main" : "text.secondary"}>
+                        ₹{p.balance.toLocaleString("en-IN")}
+                      </Typography>
+                    </Box>
+                    <Divider sx={{ my: 1 }} />
+                    <Grid container spacing={1}>
+                      {Object.entries(p.collected).map(([method, amount]) => (
+                        <Grid item xs={6} key={method}>
+                          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                            <Typography variant="caption" sx={{ textTransform: "uppercase", color: "text.secondary" }}>
+                              {method}:
+                            </Typography>
+                            <Typography variant="caption" fontWeight={600}>
+                              ₹{amount.toLocaleString("en-IN")}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
           </Grid>
-        ))}
-      </Grid>
+        </Box>
+      )}
 
-      <Grid container spacing={2} mb={3}>
-        {/* Monthly Revenue Chart */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height:"100%" }}>
-            <CardContent>
-              <Typography variant="h6" mb={0.5}>Monthly Revenue</Typography>
-              <Typography variant="caption" color="text.secondary">Last 6 months</Typography>
-              <Divider sx={{ my:1.5 }} />
-              <MiniBarChart
-                data={charts.monthlyRevenue}
-                valueKey="paid"
-                labelFn={d => MONTHS_SHORT[(d._id?.m||1)-1]}
-                color="#1a56db"
-                height={120}
-              />
-            </CardContent>
-          </Card>
-        </Grid>
+      {isAdmin && (
+        <Grid container spacing={2} mb={3}>
+          {/* Monthly Revenue Chart */}
+          <Grid item xs={12} md={6}>
+            <Card sx={{ height:"100%" }}>
+              <CardContent>
+                <Typography variant="h6" mb={0.5}>Monthly Revenue</Typography>
+                <Typography variant="caption" color="text.secondary">Last 6 months</Typography>
+                <Divider sx={{ my:1.5 }} />
+                <MiniBarChart
+                  data={charts.monthlyRevenue}
+                  valueKey="paid"
+                  labelFn={d => MONTHS_SHORT[(d._id?.m||1)-1]}
+                  color="#1a56db"
+                  height={120}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
 
-        {/* Monthly Leads Chart */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height:"100%" }}>
-            <CardContent>
-              <Typography variant="h6" mb={0.5}>Monthly Leads</Typography>
-              <Typography variant="caption" color="text.secondary">Last 6 months</Typography>
-              <Divider sx={{ my:1.5 }} />
-              <MiniBarChart
-                data={charts.monthlyLeads}
-                valueKey="count"
-                labelFn={d => MONTHS_SHORT[(d._id?.m||1)-1]}
-                color="#0e9f6e"
-                height={120}
-              />
-            </CardContent>
-          </Card>
+          {/* Monthly Leads Chart */}
+          <Grid item xs={12} md={6}>
+            <Card sx={{ height:"100%" }}>
+              <CardContent>
+                <Typography variant="h6" mb={0.5}>Monthly Leads</Typography>
+                <Typography variant="caption" color="text.secondary">Last 6 months</Typography>
+                <Divider sx={{ my:1.5 }} />
+                <MiniBarChart
+                  data={charts.monthlyLeads}
+                  valueKey="count"
+                  labelFn={d => MONTHS_SHORT[(d._id?.m||1)-1]}
+                  color="#0e9f6e"
+                  height={120}
+                />
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
-      </Grid>
+      )}
 
       <Grid container spacing={2} mb={3}>
         {/* Lead Funnel */}
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height:"100%" }}>
-            <CardContent>
-              <Typography variant="h6" mb={1.5}>Lead Funnel</Typography>
-              <Divider sx={{ mb:2 }} />
-              <PipelineBar label="New"           value={leadFunnelMap["new"]||0}            total={counts.totalLeads} color="#0891b2" />
-              <PipelineBar label="Follow Up"     value={leadFunnelMap["follow_up"]||0}      total={counts.totalLeads} color="#f59e0b" />
-              <PipelineBar label="Converted"     value={leadFunnelMap["converted"]||0}      total={counts.totalLeads} color="#0e9f6e" />
-              <PipelineBar label="Not Interested" value={leadFunnelMap["not_interested"]||0} total={counts.totalLeads} color="#9ca3af" />
-            </CardContent>
-          </Card>
-        </Grid>
+        {isAdmin && (
+          <Grid item xs={12} md={4}>
+            <Card sx={{ height:"100%" }}>
+              <CardContent>
+                <Typography variant="h6" mb={1.5}>Lead Funnel</Typography>
+                <Divider sx={{ mb:2 }} />
+                <PipelineBar label="New"           value={leadFunnelMap["new"]||0}            total={counts.totalLeads} color="#0891b2" />
+                <PipelineBar label="Follow Up"     value={leadFunnelMap["follow_up"]||0}      total={counts.totalLeads} color="#f59e0b" />
+                <PipelineBar label="Converted"     value={leadFunnelMap["converted"]||0}      total={counts.totalLeads} color="#0e9f6e" />
+                <PipelineBar label="Not Interested" value={leadFunnelMap["not_interested"]||0} total={counts.totalLeads} color="#9ca3af" />
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
 
         {/* Content Pipeline This Month */}
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={isAdmin ? 4 : 12}>
           <Card sx={{ height:"100%" }}>
             <CardContent>
               <Typography variant="h6" mb={1.5}>Content This Month</Typography>
@@ -244,57 +302,61 @@ export default function DashboardHome() {
         </Grid>
 
         {/* Top Clients */}
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height:"100%" }}>
-            <CardContent>
-              <Typography variant="h6" mb={1.5}>Top Clients by Revenue</Typography>
-              <Divider sx={{ mb:1 }} />
-              {charts.topClients?.length === 0 && (
-                <Typography variant="body2" color="text.secondary">No invoice data yet.</Typography>
-              )}
-              {charts.topClients?.map((c, i) => (
-                <Box key={c._id} sx={{ display:"flex", alignItems:"center", gap:1.5, py:1, borderBottom:"0.5px solid #f3f4f6" }}>
-                  <Avatar sx={{ width:28, height:28, fontSize:12, bgcolor:["#1a56db","#0e9f6e","#8b5cf6","#f59e0b","#e02424"][i]+"22", color:["#1a56db","#0e9f6e","#8b5cf6","#f59e0b","#e02424"][i], fontWeight:700 }}>
-                    {i+1}
-                  </Avatar>
-                  <Box sx={{ flex:1 }}>
-                    <Typography variant="body2" fontWeight={500}>{c.name}</Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      ₹{Number(c.totalPaid).toLocaleString("en-IN")} collected
+        {isAdmin && (
+          <Grid item xs={12} md={4}>
+            <Card sx={{ height:"100%" }}>
+              <CardContent>
+                <Typography variant="h6" mb={1.5}>Top Clients by Revenue</Typography>
+                <Divider sx={{ mb:1 }} />
+                {charts.topClients?.length === 0 && (
+                  <Typography variant="body2" color="text.secondary">No invoice data yet.</Typography>
+                )}
+                {charts.topClients?.map((c, i) => (
+                  <Box key={c._id} sx={{ display:"flex", alignItems:"center", gap:1.5, py:1, borderBottom:"0.5px solid #f3f4f6" }}>
+                    <Avatar sx={{ width:28, height:28, fontSize:12, bgcolor:["#1a56db","#0e9f6e","#8b5cf6","#f59e0b","#e02424"][i]+"22", color:["#1a56db","#0e9f6e","#8b5cf6","#f59e0b","#e02424"][i], fontWeight:700 }}>
+                      {i+1}
+                    </Avatar>
+                    <Box sx={{ flex:1 }}>
+                      <Typography variant="body2" fontWeight={500}>{c.name}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        ₹{Number(c.totalPaid).toLocaleString("en-IN")} collected
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" fontWeight={600} color="#0e9f6e">
+                      ₹{Math.round(c.totalPaid/1000)}k
                     </Typography>
                   </Box>
-                  <Typography variant="body2" fontWeight={600} color="#0e9f6e">
-                    ₹{Math.round(c.totalPaid/1000)}k
-                  </Typography>
-                </Box>
-              ))}
-            </CardContent>
-          </Card>
-        </Grid>
+                ))}
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
       </Grid>
 
       {/* Lead Sources */}
       <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" mb={1.5}>Lead Sources</Typography>
-              <Divider sx={{ mb:2 }} />
-              {charts.leadSources?.map(s => (
-                <PipelineBar
-                  key={s._id}
-                  label={s._id?.replace("_"," ")?.toUpperCase() || "Unknown"}
-                  value={s.count}
-                  total={counts.totalLeads}
-                  color="#1a56db"
-                />
-              ))}
-            </CardContent>
-          </Card>
-        </Grid>
+        {isAdmin && (
+          <Grid item xs={12} md={6}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" mb={1.5}>Lead Sources</Typography>
+                <Divider sx={{ mb:2 }} />
+                {charts.leadSources?.map(s => (
+                  <PipelineBar
+                    key={s._id}
+                    label={s._id?.replace("_"," ")?.toUpperCase() || "Unknown"}
+                    value={s.count}
+                    total={counts.totalLeads}
+                    color="#1a56db"
+                  />
+                ))}
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
 
         {/* Quick Actions */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={isAdmin ? 6 : 12}>
           <Card>
             <CardContent>
               <Typography variant="h6" mb={1.5}>Quick Actions</Typography>
