@@ -9,6 +9,7 @@ import ArrowLeftIcon  from "@mui/icons-material/ChevronLeft";
 import ArrowRightIcon from "@mui/icons-material/ChevronRight";
 import { getStaffById }  from "../api/hrApi";
 import { getAttendance } from "../api/hrApi";
+import { getWorkLogs, getWorkLogStats } from "../api/analyticsApi";
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const DAYS   = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -38,6 +39,8 @@ export default function StaffCalendarView() {
   const [staff, setStaff]       = useState(null);
   const [records, setRecords]   = useState([]);
   const [loading, setLoading]   = useState(true);
+  const [workLogs, setWorkLogs] = useState([]);
+  const [workStats, setWorkStats] = useState(null);
 
   // Load staff info
   useEffect(() => {
@@ -51,6 +54,19 @@ export default function StaffCalendarView() {
       .then((r) => setRecords(r.data))
       .finally(() => setLoading(false));
   }, [id, year, month]);
+
+  // Load work logs for selected month
+  useEffect(() => {
+    if (staff?.email) {
+      const targetMonth = monthStr(year, month);
+      getWorkLogs({ email: staff.email, month: targetMonth })
+        .then((r) => setWorkLogs(r.data))
+        .catch(() => {});
+      getWorkLogStats({ email: staff.email, month: targetMonth })
+        .then((r) => setWorkStats(r.data))
+        .catch(() => {});
+    }
+  }, [staff, year, month]);
 
   const prevMonth = () => {
     if (month === 0) { setYear(y => y - 1); setMonth(11); }
@@ -280,6 +296,77 @@ export default function StaffCalendarView() {
           )}
         </Grid>
       </Grid>
+
+      {/* Monthly Work Logs Section */}
+      <Card sx={{ mt: 3 }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, flexWrap: "wrap", gap: 2 }}>
+            <Box>
+              <Typography variant="h6" fontWeight={700}>📝 Month Work Logs & Production</Typography>
+              <Typography variant="caption" color="text.secondary">Work records for {MONTHS[month]} {year}</Typography>
+            </Box>
+            {workStats && (
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                <Chip icon={<span>🎬</span>} label={`Videos Made: ${workStats.totalVideos || 0}`} variant="outlined" size="small" />
+                <Chip icon={<span>✍️</span>} label={`Videos Edited: ${workStats.totalVideosEdited || 0}`} variant="outlined" size="small" />
+                <Chip icon={<span>🎨</span>} label={`Posts Designed: ${workStats.totalPosts || 0}`} variant="outlined" size="small" />
+                <Chip icon={<span>⏱️</span>} label={`Hours: ${workStats.totalHours || 0}h`} variant="outlined" size="small" />
+              </Box>
+            )}
+          </Box>
+          <Divider sx={{ mb: 2 }} />
+
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ background: "#f9fafb" }}>
+                  {["Date", "Work Type", "Description", "Videos (Made/Edited)", "Posts", "Hours", "Client"].map((h) => (
+                    <TableCell key={h} sx={{ fontWeight: 600, fontSize: 12, color: "text.secondary", py: 1.5 }}>
+                      {h}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {workLogs.map((log) => (
+                  <TableRow key={log._id} hover>
+                    <TableCell sx={{ fontSize: 12 }}>{new Date(log.date + "T00:00:00").toLocaleDateString("en-IN")}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={log.workType?.replace("_", " ")?.toUpperCase()}
+                        size="small"
+                        sx={{ fontSize: 10, bgcolor: "primary.light", color: "primary.main", fontWeight: 600 }}
+                      />
+                    </TableCell>
+                    <TableCell sx={{ fontSize: 12, maxWidth: 250 }}>
+                      <Typography variant="caption" sx={{ overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient:"vertical" }}>
+                        {log.description}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {log.videosCreated > 0 || log.videosEdited > 0 ? (
+                        <Chip label={`🎬 ${log.videosCreated || 0} / ✍️ ${log.videosEdited || 0}`} size="small" sx={{ fontSize: 11 }} />
+                      ) : (
+                        <Typography variant="caption" color="text.secondary">—</Typography>
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: 12 }}>{log.postsDesigned || "—"}</TableCell>
+                    <TableCell sx={{ fontSize: 12 }}>{log.hoursWorked ? `${log.hoursWorked}h` : "—"}</TableCell>
+                    <TableCell sx={{ fontSize: 12, color: "text.secondary" }}>{log.clientId?.businessName || "—"}</TableCell>
+                  </TableRow>
+                ))}
+                {workLogs.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                      Aa month ma koi work log record nathi.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
     </Box>
   );
 }

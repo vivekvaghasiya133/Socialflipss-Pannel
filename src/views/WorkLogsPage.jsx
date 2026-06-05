@@ -47,7 +47,7 @@ function monthOptions() {
 const EMPTY = {
   date: new Date().toISOString().slice(0,10),
   workType: "video_editing", description:"",
-  videosCreated:0, postsDesigned:0, hoursWorked:0,
+  videosCreated:0, videosEdited:0, postsDesigned:0, hoursWorked:0,
   clientId:"", projectId:"", userId:"",
 };
 
@@ -56,6 +56,7 @@ export default function WorkLogsPage() {
   const [logs, setLogs]     = useState([]);
   const [stats, setStats]   = useState(null);
   const [month, setMonth]   = useState(monthOptions()[0].value);
+  const [userFilter, setUserFilter] = useState("");
   const [clients, setClients]   = useState([]);
   const [projects, setProjects] = useState([]);
   const [users, setUsers]       = useState([]);
@@ -64,18 +65,20 @@ export default function WorkLogsPage() {
   const [formError, setFormError] = useState("");
   const [toast, setToast]   = useState("");
 
-  const loadStats = () => getWorkLogStats({ month }).then(r => setStats(r.data));
+  const loadStats = useCallback(() => {
+    getWorkLogStats({ month, userId: userFilter }).then(r => setStats(r.data));
+  }, [month, userFilter]);
 
   const load = useCallback(() => {
-    getWorkLogs({ month }).then(r => setLogs(r.data));
-  }, [month]);
+    getWorkLogs({ month, userId: userFilter }).then(r => setLogs(r.data));
+  }, [month, userFilter]);
 
   useEffect(() => {
     getClients({ limit:100 }).then(r => setClients(r.data.clients));
     getProjects({ limit:100 }).then(r => setProjects(r.data.projects));
     if (isAdmin || canManage) getUsers().then(r => setUsers(r.data));
-  }, []);
-  useEffect(() => { load(); loadStats(); }, [load, month]);
+  }, [isAdmin, canManage]);
+  useEffect(() => { load(); loadStats(); }, [load, loadStats]);
 
   const handleAdd = async () => {
     if (!form.description || !form.date) { setFormError("Date ane description required chhe."); return; }
@@ -104,6 +107,13 @@ export default function WorkLogsPage() {
           <Typography variant="body2" color="text.secondary">Daily team productivity tracking</Typography>
         </Box>
         <Box sx={{ display:"flex", gap:1.5, alignItems:"center" }}>
+          {(isAdmin || canManage) && (
+            <select value={userFilter} onChange={e => setUserFilter(e.target.value)}
+              style={{ padding:"8px 12px", borderRadius:8, border:"1px solid #d1d5db", fontSize:14, fontFamily:"inherit", background:"#fff", cursor:"pointer" }}>
+              <option value="">All Team Members</option>
+              {users.map(u => <option key={u._id} value={u._id}>{u.name}</option>)}
+            </select>
+          )}
           <select value={month} onChange={e => setMonth(e.target.value)}
             style={{ padding:"8px 12px", borderRadius:8, border:"1px solid #d1d5db", fontSize:14, fontFamily:"inherit", background:"#fff", cursor:"pointer" }}>
             {monthOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -119,11 +129,12 @@ export default function WorkLogsPage() {
         <Grid container spacing={2} mb={3}>
           {[
             { label:"Total Videos",    value:stats.totalVideos,  color:"#8b5cf6", icon:"🎬" },
+            { label:"Videos Edited",   value:stats.totalVideosEdited || 0, color:"#ff8800", icon:"✍️" },
             { label:"Posts Designed",  value:stats.totalPosts,   color:"#0891b2", icon:"🎨" },
             { label:"Hours Worked",    value:stats.totalHours,   color:"#0e9f6e", icon:"⏱️" },
             { label:"Work Entries",    value:stats.totalLogs,    color:"#1a56db", icon:"📝" },
           ].map(c => (
-            <Grid item xs={6} sm={3} key={c.label}>
+            <Grid item xs={6} sm={4} md={2.4} key={c.label}>
               <Card><Box sx={{ p:2 }}>
                 <Typography variant="body2" color="text.secondary">{c.icon} {c.label}</Typography>
                 <Typography variant="h4" fontWeight={700} sx={{ color:c.color }}>{c.value}</Typography>
@@ -139,7 +150,7 @@ export default function WorkLogsPage() {
           <Table size="small">
             <TableHead>
               <TableRow sx={{ background:"#f9fafb" }}>
-                {["Date","Team Member","Work Type","Description","Videos","Posts","Hours","Client","Actions"].map(h => (
+                {["Date","Team Member","Work Type","Description","Videos (Made/Edited)","Posts","Hours","Client","Actions"].map(h => (
                   <TableCell key={h} sx={{ fontWeight:600, fontSize:12, color:"text.secondary", py:1.5 }}>{h}</TableCell>
                 ))}
               </TableRow>
@@ -169,9 +180,11 @@ export default function WorkLogsPage() {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    {log.videosCreated > 0
-                      ? <Chip label={`🎬 ${log.videosCreated}`} size="small" sx={{ fontSize:11 }} />
-                      : <Typography variant="caption" color="text.secondary">—</Typography>}
+                    {log.videosCreated > 0 || log.videosEdited > 0 ? (
+                      <Chip label={`🎬 ${log.videosCreated || 0} / ✍️ ${log.videosEdited || 0}`} size="small" sx={{ fontSize:11 }} />
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">—</Typography>
+                    )}
                   </TableCell>
                   <TableCell>
                     {log.postsDesigned > 0
@@ -228,9 +241,10 @@ export default function WorkLogsPage() {
             <Grid item xs={12}>
               <TextField {...f("description")} label="Work Description *" multiline rows={2} placeholder="Aaj shu kaam karyu — video edit, reel banaya, client meeting..." />
             </Grid>
-            <Grid item xs={4}><TextField {...f("videosCreated")} label="Videos Made" type="number" /></Grid>
-            <Grid item xs={4}><TextField {...f("postsDesigned")} label="Posts Made" type="number" /></Grid>
-            <Grid item xs={4}><TextField {...f("hoursWorked")}   label="Hours Worked" type="number" /></Grid>
+            <Grid item xs={3}><TextField {...f("videosCreated")} label="Videos Made" type="number" /></Grid>
+            <Grid item xs={3}><TextField {...f("videosEdited")}  label="Videos Edited" type="number" /></Grid>
+            <Grid item xs={3}><TextField {...f("postsDesigned")} label="Posts Made" type="number" /></Grid>
+            <Grid item xs={3}><TextField {...f("hoursWorked")}   label="Hours Worked" type="number" /></Grid>
             <Grid item xs={6}>
               <FormControl fullWidth size="small">
                 <InputLabel>Client (optional)</InputLabel>
