@@ -24,7 +24,7 @@ export default function LoginPage() {
     try {
       const res = await loginAdmin(form);
       login(res.data.token, res.data.user);
-      navigate("/admin");
+      window.location.href = "/admin";
     } catch (err) {
       setError(err.response?.data?.message || "Login failed. Please try again.");
     } finally {

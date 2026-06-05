@@ -28,7 +28,7 @@ export default function PortalLogin() {
   const saveAndRedirect = (data) => {
     localStorage.setItem("sf_portal_token",  data.token);
     localStorage.setItem("sf_portal_client", JSON.stringify(data.client));
-    navigate("/portal");
+    window.location.href = "/portal";
   };
 
   const handlePasswordLogin = async (e) => {
