@@ -320,7 +320,7 @@ export default function StaffCalendarView() {
             <Table size="small">
               <TableHead>
                 <TableRow sx={{ background: "#f9fafb" }}>
-                  {["Date", "Work Type", "Description", "Videos (Made/Edited)", "Posts", "Hours", "Client"].map((h) => (
+                  {["Date", "Work Type", "Description", "Work Items / Outputs"].map((h) => (
                     <TableCell key={h} sx={{ fontWeight: 600, fontSize: 12, color: "text.secondary", py: 1.5 }}>
                       {h}
                     </TableCell>
@@ -344,20 +344,42 @@ export default function StaffCalendarView() {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      {log.videosCreated > 0 || log.videosEdited > 0 ? (
-                        <Chip label={`🎬 ${log.videosCreated || 0} / ✍️ ${log.videosEdited || 0}`} size="small" sx={{ fontSize: 11 }} />
-                      ) : (
-                        <Typography variant="caption" color="text.secondary">—</Typography>
-                      )}
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                        {log.items && log.items.length > 0 ? (
+                          log.items.map((item, idx) => (
+                            <Chip
+                              key={idx}
+                              label={`${item.name}: 🎬 ${item.videosCreated || 0} / ✍️ ${item.videosEdited || 0}`}
+                              size="small"
+                              sx={{ fontSize: 10, bgcolor: "rgba(0, 0, 0, 0.04)" }}
+                            />
+                          ))
+                        ) : (
+                          <>
+                            {log.videosCreated > 0 || log.videosEdited > 0 ? (
+                              <Chip label={`🎬 ${log.videosCreated || 0} / ✍️ ${log.videosEdited || 0}`} size="small" sx={{ fontSize: 10 }} />
+                            ) : null}
+                            {log.postsDesigned > 0 ? (
+                              <Chip label={`🎨 ${log.postsDesigned}`} size="small" sx={{ fontSize: 10 }} />
+                            ) : null}
+                            {log.hoursWorked > 0 ? (
+                              <Chip label={`⏱️ ${log.hoursWorked}h`} size="small" sx={{ fontSize: 10 }} />
+                            ) : null}
+                            {log.clientId?.businessName ? (
+                              <Chip label={`Client: ${log.clientId.businessName}`} size="small" sx={{ fontSize: 10 }} />
+                            ) : null}
+                            {!log.videosCreated && !log.videosEdited && !log.postsDesigned && !log.hoursWorked && !log.clientId && (
+                              <Typography variant="caption" color="text.secondary">—</Typography>
+                            )}
+                          </>
+                        )}
+                      </Box>
                     </TableCell>
-                    <TableCell sx={{ fontSize: 12 }}>{log.postsDesigned || "—"}</TableCell>
-                    <TableCell sx={{ fontSize: 12 }}>{log.hoursWorked ? `${log.hoursWorked}h` : "—"}</TableCell>
-                    <TableCell sx={{ fontSize: 12, color: "text.secondary" }}>{log.clientId?.businessName || "—"}</TableCell>
                   </TableRow>
                 ))}
                 {workLogs.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                    <TableCell colSpan={4} align="center" sx={{ py: 4, color: "text.secondary" }}>
                       Aa month ma koi work log record nathi.
                     </TableCell>
                   </TableRow>

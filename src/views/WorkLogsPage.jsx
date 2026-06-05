@@ -47,8 +47,8 @@ function monthOptions() {
 const EMPTY = {
   date: new Date().toISOString().slice(0,10),
   workType: "video_editing", description:"",
-  videosCreated:0, videosEdited:0, postsDesigned:0, hoursWorked:0,
-  clientId:"", projectId:"", userId:"",
+  items: [{ name: "", videosCreated: 0, videosEdited: 0 }],
+  userId:"",
 };
 
 export default function WorkLogsPage() {
@@ -80,13 +80,37 @@ export default function WorkLogsPage() {
   }, [isAdmin, canManage]);
   useEffect(() => { load(); loadStats(); }, [load, loadStats]);
 
+  const handleAddItem = () => {
+    setForm({
+      ...form,
+      items: [...form.items, { name: "", videosCreated: 0, videosEdited: 0 }]
+    });
+  };
+
+  const handleRemoveItem = (index) => {
+    const updated = form.items.filter((_, idx) => idx !== index);
+    setForm({ ...form, items: updated });
+  };
+
+  const handleItemChange = (index, field, val) => {
+    const updated = form.items.map((item, idx) => {
+      if (idx === index) return { ...item, [field]: val };
+      return item;
+    });
+    setForm({ ...form, items: updated });
+  };
+
   const handleAdd = async () => {
     if (!form.description || !form.date) { setFormError("Date ane description required chhe."); return; }
+    const hasEmptyName = form.items.some(item => !item.name.trim());
+    if (hasEmptyName) { setFormError("Darek item ma Name / Client lakhvo jaruri chhe."); return; }
+
     setFormError("");
     try {
       const payload = { ...form, userId: form.userId || user._id };
       await createWorkLog(payload);
-      setAddDialog(false); setForm({ ...EMPTY, date: new Date().toISOString().slice(0,10) });
+      setAddDialog(false); 
+      setForm({ ...EMPTY, date: new Date().toISOString().slice(0,10) });
       setToast("Work log added!"); load(); loadStats();
     } catch (err) { setFormError(err.response?.data?.message || "Failed"); }
   };
@@ -150,7 +174,7 @@ export default function WorkLogsPage() {
           <Table size="small">
             <TableHead>
               <TableRow sx={{ background:"#f9fafb" }}>
-                {["Date","Team Member","Work Type","Description","Videos (Made/Edited)","Posts","Hours","Client","Actions"].map(h => (
+                {["Date","Team Member","Work Type","Description","Work Items / Outputs","Actions"].map(h => (
                   <TableCell key={h} sx={{ fontWeight:600, fontSize:12, color:"text.secondary", py:1.5 }}>{h}</TableCell>
                 ))}
               </TableRow>
@@ -180,19 +204,37 @@ export default function WorkLogsPage() {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    {log.videosCreated > 0 || log.videosEdited > 0 ? (
-                      <Chip label={`🎬 ${log.videosCreated || 0} / ✍️ ${log.videosEdited || 0}`} size="small" sx={{ fontSize:11 }} />
-                    ) : (
-                      <Typography variant="caption" color="text.secondary">—</Typography>
-                    )}
+                    <Box sx={{ display:"flex", flexWrap:"wrap", gap:0.5 }}>
+                      {log.items && log.items.length > 0 ? (
+                        log.items.map((item, idx) => (
+                          <Chip
+                            key={idx}
+                            label={`${item.name}: 🎬 ${item.videosCreated || 0} / ✍️ ${item.videosEdited || 0}`}
+                            size="small"
+                            sx={{ fontSize: 10, bgcolor: "rgba(0, 0, 0, 0.04)" }}
+                          />
+                        ))
+                      ) : (
+                        <>
+                          {log.videosCreated > 0 || log.videosEdited > 0 ? (
+                            <Chip label={`🎬 ${log.videosCreated || 0} / ✍️ ${log.videosEdited || 0}`} size="small" sx={{ fontSize: 10 }} />
+                          ) : null}
+                          {log.postsDesigned > 0 ? (
+                            <Chip label={`🎨 ${log.postsDesigned}`} size="small" sx={{ fontSize: 10 }} />
+                          ) : null}
+                          {log.hoursWorked > 0 ? (
+                            <Chip label={`⏱️ ${log.hoursWorked}h`} size="small" sx={{ fontSize: 10 }} />
+                          ) : null}
+                          {log.clientId?.businessName ? (
+                            <Chip label={`Client: ${log.clientId.businessName}`} size="small" sx={{ fontSize: 10 }} />
+                          ) : null}
+                          {!log.videosCreated && !log.videosEdited && !log.postsDesigned && !log.hoursWorked && !log.clientId && (
+                            <Typography variant="caption" color="text.secondary">—</Typography>
+                          )}
+                        </>
+                      )}
+                    </Box>
                   </TableCell>
-                  <TableCell>
-                    {log.postsDesigned > 0
-                      ? <Chip label={`🎨 ${log.postsDesigned}`} size="small" sx={{ fontSize:11 }} />
-                      : <Typography variant="caption" color="text.secondary">—</Typography>}
-                  </TableCell>
-                  <TableCell sx={{ fontSize:12 }}>{log.hoursWorked > 0 ? `${log.hoursWorked}h` : "—"}</TableCell>
-                  <TableCell sx={{ fontSize:12, color:"text.secondary" }}>{log.clientId?.businessName || "—"}</TableCell>
                   <TableCell>
                     <Tooltip title="Delete">
                       <IconButton size="small" color="error" onClick={() => handleDelete(log._id)}>
@@ -203,7 +245,7 @@ export default function WorkLogsPage() {
                 </TableRow>
               ))}
               {logs.length === 0 && (
-                <TableRow><TableCell colSpan={9} align="center" sx={{ py:5, color:"text.secondary" }}>
+                <TableRow><TableCell colSpan={6} align="center" sx={{ py:5, color:"text.secondary" }}>
                   Aa month ma koi work log nathi.
                 </TableCell></TableRow>
               )}
@@ -241,27 +283,58 @@ export default function WorkLogsPage() {
             <Grid item xs={12}>
               <TextField {...f("description")} label="Work Description *" multiline rows={2} placeholder="Aaj shu kaam karyu — video edit, reel banaya, client meeting..." />
             </Grid>
-            <Grid item xs={3}><TextField {...f("videosCreated")} label="Videos Made" type="number" /></Grid>
-            <Grid item xs={3}><TextField {...f("videosEdited")}  label="Videos Edited" type="number" /></Grid>
-            <Grid item xs={3}><TextField {...f("postsDesigned")} label="Posts Made" type="number" /></Grid>
-            <Grid item xs={3}><TextField {...f("hoursWorked")}   label="Hours Worked" type="number" /></Grid>
-            <Grid item xs={6}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Client (optional)</InputLabel>
-                <Select value={form.clientId} label="Client (optional)" onChange={e => setForm({...form,clientId:e.target.value})}>
-                  <MenuItem value="">None</MenuItem>
-                  {clients.map(c => <MenuItem key={c._id} value={c._id}>{c.businessName}</MenuItem>)}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={6}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Project (optional)</InputLabel>
-                <Select value={form.projectId} label="Project (optional)" onChange={e => setForm({...form,projectId:e.target.value})}>
-                  <MenuItem value="">None</MenuItem>
-                  {projects.map(p => <MenuItem key={p._id} value={p._id}>{p.name}</MenuItem>)}
-                </Select>
-              </FormControl>
+            {/* Dynamic Items List */}
+            <Grid item xs={12}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1, mt: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Work Items (Clients / Videos)</Typography>
+                <Button size="small" startIcon={<AddIcon />} onClick={handleAddItem} variant="outlined">
+                  Add Item
+                </Button>
+              </Box>
+              {form.items?.map((item, idx) => (
+                <Grid container spacing={1} alignItems="center" key={idx} sx={{ mb: 1 }}>
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Client / Video Name *"
+                      placeholder="e.g. Vivek / Client A"
+                      value={item.name}
+                      onChange={(e) => handleItemChange(idx, "name", e.target.value)}
+                    />
+                  </Grid>
+                  <Grid item xs={2.5}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Videos Made"
+                      type="number"
+                      value={item.videosCreated || ""}
+                      onChange={(e) => handleItemChange(idx, "videosCreated", parseInt(e.target.value) || 0)}
+                    />
+                  </Grid>
+                  <Grid item xs={2.5}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Videos Edited"
+                      type="number"
+                      value={item.videosEdited || ""}
+                      onChange={(e) => handleItemChange(idx, "videosEdited", parseInt(e.target.value) || 0)}
+                    />
+                  </Grid>
+                  <Grid item xs={1} sx={{ textAlign: "center" }}>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => handleRemoveItem(idx)}
+                      disabled={form.items.length <= 1}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Grid>
+                </Grid>
+              ))}
             </Grid>
           </Grid>
         </DialogContent>
