@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const BASE = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || "https://socialflipss-backend.onrender.com/api";
 
 // Client portal uses separate token
 const portalApi = axios.create({ baseURL: BASE });
