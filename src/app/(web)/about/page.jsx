@@ -25,61 +25,53 @@ const values = [
     icon: FiEye,
     title: "Conversion Aesthetics",
     desc: "Design is completely useless if it doesn't perform. Every visual asset, carousel structure, reel format, and typography choice we craft is engineered with strict conversion logic to guide viewers into pipelines.",
-    color: "#9B6EF3"
+    color: "#7B3FE4"
   },
   {
     icon: FiActivity,
     title: "Data Over Speculation",
     desc: "We completely banish assumptions. Every strategy blueprint, target audience parameter, and ad dollar allocation is dictated by rigorous backend metrics and growth audits.",
-    color: "#B084FF"
+    color: "#7B3FE4"
   }
 ];
 
 const teamMembers = [
   {
     name: "Vivek Vaghasiya",
-    role: "Strategic Growth Lead",
+    role: "Founder",
     tool: "Algorithmic Ad Bidding Arrays",
     motto: "Scale budgets aggressively, eliminate funnel friction.",
     avatar: "VV",
     color: "#7B3FE4"
   },
   {
-    name: "Aman Patel",
-    role: "Content Forge Director",
+    name: "Kuldeep Vaghasiya",
+    role: "Founder",
     tool: "High-Retention Hook Frameworks",
-    motto: "Seize screen time, build undeniable market authority.",
-    avatar: "AP",
-    color: "#9B6EF3"
-  },
-  {
-    name: "Karan Shah",
-    role: "Conversion Science Lead",
-    tool: "Next.js High-Performance Systems",
-    motto: "Optimize page edge speeds under 500ms.",
-    avatar: "KS",
-    color: "#B084FF"
+    motto: "Build brands that dominate. Seize screen time, build undeniable market authority.",
+    avatar: "KV",
+    color: "#7B3FE4"
   }
 ];
 
 const milestones = [
   { 
-    year: "2024", 
-    title: "Protocol Conception", 
-    desc: "SocialFlipss was forged in a garage lab with a single mandate: to replace generic templates and slow agencies with high-velocity ROI systems.",
+    year: "2022", 
+    title: "Agency Founded", 
+    desc: "SocialFlipss was built with a single mandate: to replace generic templates and slow agencies with high-velocity creative and growth systems.",
     color: "#7B3FE4"
   },
   { 
-    year: "2025", 
-    title: "The Velocity Spike", 
-    desc: "Scaled over 100+ Indian & Global direct-to-consumer and SaaS brands, generating over 50M+ views and tripling typical ROI coefficients.",
-    color: "#9B6EF3"
+    year: "2024", 
+    title: "The Growth Spike", 
+    desc: "Scaled over 100+ Indian & Global brands, generating over 50M+ views and tripling typical ROI coefficients across social platforms.",
+    color: "#7B3FE4"
   },
   { 
     year: "2026", 
-    title: "Autonomous Qualifiers HUD", 
-    desc: "Integrated real-time metric calculators, phone reel showcases, and diagnostic terminal systems directly into our platform infrastructure.",
-    color: "#B084FF"
+    title: "Full-Scale Growth Forge", 
+    desc: "Integrated real-time metric systems, diagnostic tools, and AI-powered content workflows to scale brands faster than ever before.",
+    color: "#7B3FE4"
   }
 ];
 
@@ -87,12 +79,12 @@ export default function AboutPage() {
   const [hoveredArchitect, setHoveredArchitect] = useState(null);
 
   return (
-    <div className="bg-[#020202] text-white min-h-screen relative font-sans overflow-x-hidden pt-24 pb-12">
+    <div className="bg-black text-white min-h-screen relative overflow-x-hidden pt-24 pb-12" style={{ fontFamily: "'Inter', sans-serif" }}>
       
       {/* Ambient background glows */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[20%] left-[-15%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[150px]" />
-        <div className="absolute bottom-[20%] right-[-15%] w-[600px] h-[600px] bg-accent/5 rounded-full blur-[150px]" />
+        <div className="absolute top-[20%] left-[-15%] w-[600px] h-[600px] rounded-full blur-[150px]" style={{ background: "rgba(123,63,228,0.06)" }} />
+        <div className="absolute bottom-[20%] right-[-15%] w-[600px] h-[600px] rounded-full blur-[150px]" style={{ background: "rgba(123,63,228,0.04)" }} />
       </div>
 
       {/* ── 1. CINEMATIC HERO TITLE ── */}
@@ -104,53 +96,54 @@ export default function AboutPage() {
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center justify-center md:justify-start gap-4 mb-4"
             >
-              <span className="h-px w-10 bg-primary" />
-              <span className="text-xs font-bold tracking-[0.5em] uppercase text-primary">Our Mission</span>
+              <span className="h-px w-10 bg-[#7B3FE4]" />
+              <span className="text-xs font-semibold tracking-[0.4em] uppercase" style={{ color: "#7B3FE4" }}>Our Mission</span>
             </motion.div>
             
             <motion.h1 
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.8 }}
-              className="text-[clamp(2.2rem,6vw,5rem)] font-black text-white tracking-tighter uppercase leading-[0.95] mb-6"
+              className="font-black text-white leading-[0.92] mb-6"
+              style={{ fontSize: "clamp(2.5rem, 7vw, 6rem)", letterSpacing: "-0.03em" }}
             >
-              THE GROWTH ARCHITECTS <br />
-              <span className="text-gradient-primary">OF DIGITAL DOMINANCE.</span>
+              The Growth Architects<br />
+              <span style={{ color: "#7B3FE4" }}>of Digital Dominance.</span>
             </motion.h1>
 
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.8 }}
-              className="text-white/40 font-light text-base md:text-lg max-w-2xl leading-relaxed mt-6"
+              className="text-white/45 text-base md:text-lg max-w-2xl leading-relaxed mt-6 font-normal"
             >
-              Traditional agency frameworks are broken. They rely on slow retainers, generic templates, and metric speculations. 
-              SocialFlipss was forged with a single, uncompromising mandate: **to engineer the conversion and creative infrastructure that positions our partners as the defaults in their industries.**
+              Traditional agency frameworks are broken. They rely on slow retainers, generic templates, and guesswork.
+              SocialFlipss was built with one mandate: to engineer the creative infrastructure that positions our partners as the default choice in their industry.
             </motion.p>
           </div>
         </div>
       </section>
 
       {/* ── 2. MEET THE ARCHITECTS PROFILE CONSOLE ── */}
-      <section className="py-20 relative z-10 border-t border-white/5 bg-[#020202]">
+      <section className="py-20 relative z-10 border-t border-white/8 bg-black">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="max-w-3xl mb-16 text-center md:text-left">
-            <span className="text-[10px] font-bold text-primary tracking-[0.6em] uppercase mb-4 block">The Team</span>
-            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight">
-              MEET THE <span className="text-gradient-primary">GROWTH ARCHITECTS.</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.4em] mb-4 block" style={{ color: "#7B3FE4" }}>The Team</span>
+            <h2 className="text-3xl md:text-5xl font-black leading-tight" style={{ letterSpacing: "-0.02em" }}>
+              Meet the <span style={{ color: "#7B3FE4" }}>Growth Architects</span>
             </h2>
-            <p className="text-white/40 font-light text-sm mt-4">
-              Hover over any profile to scrutinize their primary tactical tools and core operational motto.
+            <p className="text-white/40 text-sm mt-4 font-normal">
+              Hover over any profile to see their primary tools and core motto.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {teamMembers.map((member, idx) => (
               <div
                 key={idx}
                 onMouseEnter={() => setHoveredArchitect(idx)}
                 onMouseLeave={() => setHoveredArchitect(null)}
-                className="group relative p-8 rounded-[2rem] bg-zinc-950/40 border border-white/5 backdrop-blur-md shadow-xl flex flex-col justify-between hover:bg-zinc-900/40 transition-all duration-500 min-h-[340px] overflow-hidden"
+                className="group relative p-8 rounded-[24px] bg-[#0a0a0a] border border-white/10 flex flex-col justify-between hover:border-white/20 transition-all duration-400 min-h-[320px] overflow-hidden cursor-pointer"
               >
                 {/* Glow Aura specific to color */}
                 <div 
@@ -217,17 +210,17 @@ export default function AboutPage() {
       </section>
 
       {/* ── 3. INTERACTIVE CORE MILESTONES TIMELINE ── */}
-      <section className="py-24 relative z-10 border-t border-white/5 bg-[#020202]">
+      <section className="py-24 relative z-10 border-t border-white/8 bg-black">
         <div className="container mx-auto px-6 max-w-7xl">
-          <div className="max-w-3xl mb-24 text-center md:text-left">
-            <span className="text-[10px] font-bold text-primary tracking-[0.6em] uppercase mb-4 block">Historical Records</span>
-            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight">
-              THE ASCENSION <span className="text-gradient-primary">MILESTONES.</span>
+          <div className="max-w-3xl mb-16 text-center md:text-left">
+            <span className="text-xs font-semibold uppercase tracking-[0.4em] mb-4 block" style={{ color: "#7B3FE4" }}>Our Journey</span>
+            <h2 className="text-3xl md:text-5xl font-black" style={{ letterSpacing: "-0.02em" }}>
+              The Ascension <span style={{ color: "#7B3FE4" }}>Milestones</span>
             </h2>
           </div>
 
           <div className="relative">
-            <div className="absolute left-8 top-4 bottom-4 w-px bg-gradient-to-b from-primary/50 via-zinc-900 to-accent/50 hidden md:block" />
+            <div className="absolute left-8 top-4 bottom-4 w-px hidden md:block" style={{ background: "linear-gradient(to bottom, rgba(123,63,228,0.5), rgba(123,63,228,0.1))" }} />
 
             <div className="space-y-20">
               {milestones.map((m, index) => (
@@ -273,42 +266,35 @@ export default function AboutPage() {
       </section>
 
       {/* ── 4. NARRATIVE & VALUES GRID ── */}
-      <section className="py-24 relative z-10 border-t border-white/5 bg-[#020202]">
+      <section className="py-24 relative z-10 border-t border-white/8 bg-black">
         <div className="container mx-auto px-6 max-w-7xl">
-          <div className="max-w-3xl mb-20 text-center md:text-left">
-            <span className="text-[10px] font-bold text-primary tracking-[0.6em] uppercase mb-4 block">Core Values</span>
-            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight">
-              GROWTH BELIEFS & <span className="text-gradient-primary">COMMITMENTS.</span>
+          <div className="max-w-3xl mb-16 text-center md:text-left">
+            <span className="text-xs font-semibold uppercase tracking-[0.4em] mb-4 block" style={{ color: "#7B3FE4" }}>Core Values</span>
+            <h2 className="text-3xl md:text-5xl font-black" style={{ letterSpacing: "-0.02em" }}>
+              Our Values: The Secret <span style={{ color: "#7B3FE4" }}>Sauce</span>
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {values.map((v, index) => {
               const ValueIcon = v.icon;
               return (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ y: -6 }}
-                  className="group p-8 rounded-3xl bg-zinc-950/40 border border-white/5 flex flex-col justify-between hover:border-primary/20 transition-all duration-500 shadow-xl"
+                  transition={{ delay: index * 0.08 }}
+                  className="group p-8 rounded-[24px] bg-[#0a0a0a] border border-white/10 hover:border-white/20 transition-all duration-400"
                 >
                   <div>
-                    <div 
-                      className="mb-8 p-4 w-fit rounded-2xl bg-white/5 border border-white/10 group-hover:scale-105 group-hover:border-primary/20 transition-all duration-500"
-                    >
+                    <div className="mb-6 w-12 h-12 rounded-xl bg-[#7B3FE4]/10 flex items-center justify-center group-hover:bg-[#7B3FE4]/20 transition-colors">
                       <ValueIcon className="w-6 h-6" style={{ color: v.color }} />
                     </div>
                     
-                    <h4 className="text-xl font-bold text-white uppercase tracking-tight mb-4">
-                      {v.title}
-                    </h4>
+                    <h4 className="text-lg font-bold text-white mb-3">{v.title}</h4>
                     
-                    <p className="text-white/40 text-sm leading-relaxed font-light group-hover:text-white/60 transition-colors duration-300">
-                      {v.desc}
-                    </p>
+                    <p className="text-white/45 text-sm leading-relaxed">{v.desc}</p>
                   </div>
                 </motion.div>
               );
@@ -318,31 +304,29 @@ export default function AboutPage() {
       </section>
 
       {/* ── 5. ULTIMATE CALL TO ACTION BANNER ── */}
-      <section className="py-32 relative z-10 border-t border-white/5 bg-[#020202] overflow-hidden">
-        <div className="absolute inset-0 bg-grid-white opacity-[0.03] pointer-events-none" />
+      <section className="py-24 relative z-10 border-t border-white/8 bg-black overflow-hidden">
+        <div className="absolute inset-0 bg-grid-white opacity-20 pointer-events-none" />
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-primary/10 rounded-full blur-[150px]" />
+          <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[150px]" style={{ background: "rgba(123,63,228,0.08)" }} />
         </div>
 
-        <div className="container mx-auto px-6 max-w-5xl relative z-10 text-center space-y-10">
-          <h2 className="text-4xl md:text-7xl font-black uppercase tracking-tighter leading-none">
-            READY TO OUTSCALE <br />
-            <span className="text-gradient-primary">YOUR COMPETITION?</span>
+        <div className="container mx-auto px-6 max-w-4xl relative z-10 text-center">
+          <h2 className="text-4xl md:text-6xl font-black text-white leading-tight mb-4" style={{ letterSpacing: "-0.03em" }}>
+            Ready to Outscale<br />
+            <span style={{ color: "#7B3FE4" }}>Your Competition?</span>
           </h2>
           
-          <p className="text-white/40 font-light text-base md:text-lg max-w-lg mx-auto leading-relaxed">
+          <p className="text-white/40 text-base max-w-md mx-auto leading-relaxed mb-10">
             Contact our strategic leads to schedule a session, audit marketing friction, and unlock massive ROI loops.
           </p>
 
-          <div className="flex flex-wrap justify-center gap-6 pt-4">
-            <Link
-              href="/contact"
-              className="group relative inline-flex items-center justify-center h-16 px-10 text-xs font-black bg-white text-black hover:bg-primary hover:text-white transition-all duration-500 rounded-full uppercase tracking-widest shadow-2xl cursor-pointer"
-            >
-              Initiate Growth Audit
-              <FiArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1.5 transition-transform" />
-            </Link>
-          </div>
+          <Link
+            href="/contact"
+            className="inline-flex items-center gap-3 px-8 py-4 bg-[#7B3FE4] text-white rounded-full font-semibold text-sm hover:bg-[#6030c0] transition-all cursor-pointer"
+          >
+            Request a Growth Audit
+            <FiArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </section>
 

@@ -33,7 +33,7 @@ const steps = [
     title: "Creative Content Forge",
     desc: "Our creative team engineers high-end visual and narrative assets tailored to capture and hold screen attention. From high-retention short-form reels and dynamic graphical templates to hyper-persuasive ad copy, we forge assets that position your brand as a market leader.",
     icon: FiEdit,
-    color: "#9B6EF3",
+    color: "#7B3FE4",
     duration: "Days 6 - 15",
     inputs: ["Raw Client Brand Media Assets", "Product Value Proposition Core", "High-Resolution Logotypes"],
     outputs: ["12 Optimized Short-form Reel Assets", "Custom High-Contrast Visual Templates", "High-intent Conversion Copy Arrays"]
@@ -43,7 +43,7 @@ const steps = [
     title: "Systematic Distribution Protocol",
     desc: "We launch your campaigns using highly optimized scheduling arrays, algorithm-triggering hashtag indices, and precision-targeted paid advertising. We continuously test visual logic and ad placements to drive high-velocity lead pipelines and massive organic reach.",
     icon: FiZap,
-    color: "#B084FF",
+    color: "#9B6EF3",
     duration: "Days 16 - 25",
     inputs: ["Approved Content Assets Forge", "Target Monthly Marketing Budgets", "Whitelisted Social Handles"],
     outputs: ["Active Precision Ads Campaigns", "Automated Comment Qualifying DM Bots", "Optimized Daily Distribution Arrays"]
@@ -74,12 +74,12 @@ export default function ProtocolPage() {
   const progressPercent = Math.floor((completedCount / checklist.length) * 100);
 
   return (
-    <div className="bg-[#020202] text-white min-h-screen relative font-sans overflow-x-hidden pt-24 pb-12">
+    <div className="bg-black text-white min-h-screen relative  overflow-x-hidden pt-24 pb-12">
       
       {/* Background Glows */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[15%] right-[-10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[180px]" />
-        <div className="absolute bottom-[15%] left-[-10%] w-[500px] h-[500px] bg-accent/5 rounded-full blur-[150px]" />
+        <div className="absolute top-[15%] right-[-10%] w-[600px] h-[600px] bg-[#7B3FE4]/8 rounded-full blur-[180px]" />
+        <div className="absolute bottom-[15%] left-[-10%] w-[500px] h-[500px] bg-[#9B6EF3]/5 rounded-full blur-[150px]" />
       </div>
 
       {/* ── 1. CINEMATIC HERO TITLE ── */}
@@ -92,7 +92,7 @@ export default function ProtocolPage() {
               className="flex items-center justify-center md:justify-start gap-4 mb-4"
             >
               <span className="h-px w-10 bg-primary" />
-              <span className="text-xs font-bold tracking-[0.5em] uppercase text-primary">The Protocol</span>
+              <span className="text-xs font-bold tracking-[0.5em] uppercase text-[#7B3FE4]">The Protocol</span>
             </motion.div>
             
             <motion.h1 
@@ -102,7 +102,7 @@ export default function ProtocolPage() {
               className="text-[clamp(2.2rem,6vw,5rem)] font-black text-white tracking-tighter uppercase leading-[0.95] mb-6"
             >
               SYSTEMATIC <br />
-              <span className="text-gradient-primary">ASCENSION PROTOCOLS.</span>
+              <span className="text-[#7B3FE4]">ASCENSION PROTOCOLS.</span>
             </motion.h1>
 
             <motion.p 
@@ -118,12 +118,12 @@ export default function ProtocolPage() {
       </section>
 
       {/* ── 2. INTERACTIVE MILESTONES BLUEPRINT HUD ── */}
-      <section className="py-20 relative z-10 border-t border-white/5 bg-[#020202]">
+      <section className="py-20 relative z-10 border-t border-white/10 bg-black">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="max-w-3xl mb-16 text-center md:text-left">
-            <span className="text-[10px] font-bold text-primary tracking-[0.6em] uppercase mb-4 block">Process Dashboard</span>
+            <span className="text-[10px] font-bold text-[#7B3FE4] tracking-[0.6em] uppercase mb-4 block">Process Dashboard</span>
             <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight">
-              ASCENSION <span className="text-gradient-primary">MILESTONES HUD.</span>
+              ASCENSION <span className="text-[#7B3FE4]">MILESTONES HUD.</span>
             </h2>
             <p className="text-white/40 font-light text-sm mt-4">
               Select an active phase below to explore direct strategy targets, timelines, required inputs, and compiled strategic outputs.
@@ -138,14 +138,14 @@ export default function ProtocolPage() {
                 <button
                   key={index}
                   onClick={() => setActiveStep(index)}
-                  className={`w-full text-left p-6 rounded-3xl border transition-all duration-500 flex items-start gap-5 group cursor-pointer ${
+                  className={`w-full text-left p-6 rounded-[24px] border transition-all duration-500 flex items-start gap-5 group cursor-pointer ${
                     activeStep === index 
-                      ? "bg-primary/5 border-primary/40 shadow-[0_0_20px_rgba(123,63,228,0.08)] scale-[1.01]" 
-                      : "bg-zinc-950/20 border-white/5 hover:border-white/10 hover:bg-zinc-950/40"
+                      ? "bg-[#7B3FE4]/5 border-[#7B3FE4]/40 shadow-[0_0_20px_rgba(123,63,228,0.08)] scale-[1.01]" 
+                      : "bg-[#0a0a0a] border-white/10 hover:border-white/10 hover:bg-[#0a0a0a]"
                   }`}
                 >
                   <div className={`p-3 rounded-2xl border transition-colors shrink-0 ${
-                    activeStep === index ? "bg-primary/10 border-primary/20 text-primary" : "bg-white/5 border-white/10 text-white/40 group-hover:text-white"
+                    activeStep === index ? "bg-[#7B3FE4]/8 border-[#7B3FE4]/20 text-[#7B3FE4]" : "bg-white/5 border-white/10 text-white/40 group-hover:text-white"
                   }`}>
                     {index + 1}
                   </div>
@@ -159,18 +159,18 @@ export default function ProtocolPage() {
 
             {/* Right details HUD panel */}
             <div className="lg:col-span-7">
-              <div className="h-full rounded-[2.5rem] bg-zinc-950/60 border border-white/5 p-8 md:p-10 flex flex-col justify-between shadow-2xl relative min-h-[420px]">
+              <div className="h-full rounded-[28px] bg-[#0a0a0a] border border-white/10 p-8 md:p-10 flex flex-col justify-between shadow-2xl relative min-h-[420px]">
                 
                 {/* HUD Header */}
-                <div className="flex justify-between items-center border-b border-white/5 pb-5 mb-6">
+                <div className="flex justify-between items-center border-b border-white/10 pb-5 mb-6">
                   <div className="flex items-center gap-3">
-                    <FiCpu className="w-5 h-5 text-primary animate-pulse" />
+                    <FiCpu className="w-5 h-5 text-[#7B3FE4] animate-pulse" />
                     <div>
                       <h4 className="text-[10px] font-bold uppercase tracking-wider text-white">ASCENSION PROTOCOL METRICS</h4>
-                      <span className="text-[7px] font-bold tracking-widest text-primary uppercase">Security Timeline HUD</span>
+                      <span className="text-[7px] font-bold tracking-widest text-[#7B3FE4] uppercase">Security Timeline HUD</span>
                     </div>
                   </div>
-                  <span className="text-[9px] font-mono font-bold text-primary px-3 py-1 rounded-full border border-primary/20 bg-primary/5">
+                  <span className="text-[9px] font-mono font-bold text-[#7B3FE4] px-3 py-1 rounded-full border border-[#7B3FE4]/20 bg-[#7B3FE4]/5">
                     {steps[activeStep].duration}
                   </span>
                 </div>
@@ -183,7 +183,7 @@ export default function ProtocolPage() {
                     <p className="text-white/40 text-xs font-light leading-relaxed mt-2">{steps[activeStep].desc}</p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-white/5 pt-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-white/10 pt-5">
                     {/* Inputs */}
                     <div className="space-y-3">
                       <span className="text-[9px] font-bold text-white/20 tracking-[0.2em] uppercase font-mono block">Required Protocol Inputs</span>
@@ -213,10 +213,10 @@ export default function ProtocolPage() {
                 </div>
 
                 {/* HUD CTA */}
-                <div className="border-t border-white/5 pt-6 mt-6 flex justify-end font-sans">
+                <div className="border-t border-white/10 pt-6 mt-6 flex justify-end ">
                   <Link
                     href="/contact"
-                    className="px-8 h-12 rounded-full bg-white hover:bg-primary text-black hover:text-white text-xs font-black uppercase tracking-widest flex items-center gap-2 cursor-pointer transition-all duration-500 shadow-xl"
+                    className="px-8 h-12 rounded-full bg-white hover:bg-[#6030c0] text-black hover:text-white text-xs font-black uppercase tracking-widest flex items-center gap-2 cursor-pointer transition-all duration-500 shadow-xl"
                   >
                     Initiate Audit Pipeline
                     <FiArrowRight className="w-3.5 h-3.5" />
@@ -230,16 +230,16 @@ export default function ProtocolPage() {
       </section>
 
       {/* ── 3. INTERACTIVE SYSTEM ASCENSION CHECKLIST ── */}
-      <section className="py-24 relative z-10 border-t border-white/5 bg-[#020202]">
+      <section className="py-24 relative z-10 border-t border-white/10 bg-black">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
             
             {/* Left side: Checklist content */}
             <div className="lg:col-span-7 space-y-8">
               <div className="space-y-4">
-                <span className="text-[10px] font-bold text-primary tracking-[0.6em] uppercase block">Interactive Diagnostics</span>
+                <span className="text-[10px] font-bold text-[#7B3FE4] tracking-[0.6em] uppercase block">Interactive Diagnostics</span>
                 <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tight">
-                  DOMINANCE <span className="text-gradient-primary">CHECKLIST MATRIX.</span>
+                  DOMINANCE <span className="text-[#7B3FE4]">CHECKLIST MATRIX.</span>
                 </h3>
                 <p className="text-white/40 font-light text-sm leading-relaxed max-w-xl">
                   Select your current pipeline checkpoints to diagnose your scaling safety index. Clicking items computes active scaling benchmarks in real-time.
@@ -261,7 +261,7 @@ export default function ProtocolPage() {
                     className={`w-full text-left p-5 rounded-2xl border transition-all duration-300 flex items-center gap-4 cursor-pointer select-none ${
                       checklist[idx] 
                         ? "bg-emerald-500/5 border-emerald-500/30" 
-                        : "bg-zinc-950/20 border-white/5 hover:border-white/10"
+                        : "bg-[#0a0a0a] border-white/10 hover:border-white/10"
                     }`}
                   >
                     <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors shrink-0 ${
@@ -281,7 +281,7 @@ export default function ProtocolPage() {
 
             {/* Right side: Circular progress gauge */}
             <div className="lg:col-span-5 flex justify-center">
-              <div className="p-8 md:p-10 rounded-[3rem] bg-zinc-950/40 border border-white/5 flex flex-col items-center text-center shadow-2xl relative w-full max-w-sm">
+              <div className="p-8 md:p-10 rounded-[3rem] bg-[#0a0a0a] border border-white/10 flex flex-col items-center text-center shadow-2xl relative w-full max-w-sm">
                 
                 {/* SVG Progress Ring */}
                 <div className="relative w-48 h-48 mb-8">
@@ -342,12 +342,12 @@ export default function ProtocolPage() {
       </section>
 
       {/* ── 4. DETAILED TIMELINE DIRECTORY ── */}
-      <section className="py-24 relative z-10 border-t border-white/5 bg-[#020202]">
+      <section className="py-24 relative z-10 border-t border-white/10 bg-black">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="max-w-3xl mb-24 text-center md:text-left">
-            <span className="text-[10px] font-bold text-primary tracking-[0.6em] uppercase mb-4 block">Ascension Sequence</span>
+            <span className="text-[10px] font-bold text-[#7B3FE4] tracking-[0.6em] uppercase mb-4 block">Ascension Sequence</span>
             <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight">
-              THE ASCENSION <span className="text-gradient-primary">TIMELINE PATH.</span>
+              THE ASCENSION <span className="text-[#7B3FE4]">TIMELINE PATH.</span>
             </h2>
           </div>
 
@@ -378,7 +378,7 @@ export default function ProtocolPage() {
                       <span className="font-bold text-[9px] tracking-[0.4em] uppercase mb-2 block" style={{ color: step.color }}>
                         {step.phase} • {step.duration}
                       </span>
-                      <h4 className="text-2xl md:text-3xl font-black text-white tracking-tight uppercase mb-4 transition-colors duration-300 group-hover:text-primary">
+                      <h4 className="text-2xl md:text-3xl font-black text-white tracking-tight uppercase mb-4 transition-colors duration-300 group-hover:text-[#7B3FE4]">
                         {step.title}
                       </h4>
                       <p className="text-white/40 text-base md:text-lg font-light max-w-3xl leading-relaxed group-hover:text-white/60 transition-colors duration-300">

@@ -40,7 +40,7 @@ const chartData = {
     title: "Precision Paid Ads ROAS Spike (multipliers)",
     unit: "X",
     values: [1.2, 2.0, 2.8, 3.4, 3.8, 4.5],
-    color: "#9B6EF3",
+    color: "#7B3FE4",
     milestones: [
       "Secured API pixel auditing and tracking parameters to clear funnel leaks.",
       "Initial high-intent lookalike audience ad sets deployed across Meta manager.",
@@ -54,7 +54,7 @@ const chartData = {
     title: "Strategic Cost-Per-Lead (CPL) Minimization Index (%)",
     unit: "%",
     values: [100, 85, 70, 52, 45, 38],
-    color: "#B084FF",
+    color: "#9B6EF3",
     milestones: [
       "Baseline audits completed. Eliminated bid hemorrhaging on broad audiences.",
       "Audience profiling narrowed to high-intent segments. Initial CPL reductions occur.",
@@ -94,7 +94,7 @@ export default function ResultsPage() {
   const currentChart = chartData[activeMetric];
 
   return (
-    <div className="bg-[#020202] text-white min-h-screen relative font-sans overflow-x-hidden pt-24 pb-12">
+    <div className="bg-black text-white min-h-screen relative  overflow-x-hidden pt-24 pb-12">
       
       {/* Background Glows */}
       <div className="absolute inset-0 bg-grid-white opacity-[0.4] pointer-events-none" />
@@ -110,7 +110,7 @@ export default function ResultsPage() {
               className="flex items-center justify-center md:justify-start gap-4 mb-4"
             >
               <span className="h-px w-10 bg-primary" />
-              <span className="text-xs font-bold tracking-[0.5em] uppercase text-primary">Proven Metrics</span>
+              <span className="text-xs font-bold tracking-[0.5em] uppercase text-[#7B3FE4]">Proven Metrics</span>
             </motion.div>
             
             <motion.h1 
@@ -120,7 +120,7 @@ export default function ResultsPage() {
               className="text-[clamp(2.2rem,6vw,5rem)] font-black text-white tracking-tighter uppercase leading-[0.95] mb-6"
             >
               SECURED METRICS. <br />
-              <span className="text-gradient-primary">ABSOLUTE DOMINANCE.</span>
+              <span className="text-[#7B3FE4]">ABSOLUTE DOMINANCE.</span>
             </motion.h1>
 
             <motion.p 
@@ -136,12 +136,12 @@ export default function ResultsPage() {
       </section>
 
       {/* ── 2. INTERACTIVE RESULTS CHART SIMULATOR ── */}
-      <section className="py-20 relative z-10 border-y border-white/5 bg-[#020202]">
+      <section className="py-20 relative z-10 border-y border-white/10 bg-black">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="max-w-3xl mb-16 text-center md:text-left">
-            <span className="text-[10px] font-bold text-primary tracking-[0.6em] uppercase mb-4 block">Growth Simulator</span>
+            <span className="text-[10px] font-bold text-[#7B3FE4] tracking-[0.6em] uppercase mb-4 block">Growth Simulator</span>
             <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight">
-              THE BRAND SCALE <span className="text-gradient-primary">SIMULATOR ENGINE.</span>
+              THE BRAND SCALE <span className="text-[#7B3FE4]">SIMULATOR ENGINE.</span>
             </h2>
             <p className="text-white/40 font-light text-sm mt-4">
               Tap the filter keys below to chart real client acquisition parameters over our typical 6-month ascension curve, and select any bar to scrutinize its milestone.
@@ -156,13 +156,13 @@ export default function ResultsPage() {
               <div className="flex flex-col gap-3">
                 <button
                   onClick={() => { setActiveMetric("follower"); setSelectedMonth(5); }}
-                  className={`w-full text-left p-6 rounded-3xl border transition-all duration-300 flex items-center gap-4 cursor-pointer ${
+                  className={`w-full text-left p-6 rounded-[24px] border transition-all duration-300 flex items-center gap-4 cursor-pointer ${
                     activeMetric === "follower"
-                      ? "bg-primary/5 border-primary/40 shadow-[0_0_20px_rgba(123,63,228,0.08)] scale-[1.01]"
-                      : "bg-zinc-950/20 border-white/5 hover:border-white/10"
+                      ? "bg-[#7B3FE4]/5 border-[#7B3FE4]/40 shadow-[0_0_20px_rgba(123,63,228,0.08)] scale-[1.01]"
+                      : "bg-[#0a0a0a] border-white/10 hover:border-white/10"
                   }`}
                 >
-                  <FiTrendingUp className={activeMetric === "follower" ? "text-primary text-lg animate-pulse" : "text-white/30 text-lg"} />
+                  <FiTrendingUp className={activeMetric === "follower" ? "text-[#7B3FE4] text-lg animate-pulse" : "text-white/30 text-lg"} />
                   <div>
                     <h4 className="text-xs font-black uppercase text-white tracking-wider">Organic Feed Scale</h4>
                     <span className="text-[10px] text-white/40 font-light">Projected Follower Spike</span>
@@ -171,13 +171,13 @@ export default function ResultsPage() {
 
                 <button
                   onClick={() => { setActiveMetric("roas"); setSelectedMonth(5); }}
-                  className={`w-full text-left p-6 rounded-3xl border transition-all duration-300 flex items-center gap-4 cursor-pointer ${
+                  className={`w-full text-left p-6 rounded-[24px] border transition-all duration-300 flex items-center gap-4 cursor-pointer ${
                     activeMetric === "roas"
-                      ? "bg-primary/5 border-primary/40 shadow-[0_0_20px_rgba(123,63,228,0.08)] scale-[1.01]"
-                      : "bg-zinc-950/20 border-white/5 hover:border-white/10"
+                      ? "bg-[#7B3FE4]/5 border-[#7B3FE4]/40 shadow-[0_0_20px_rgba(123,63,228,0.08)] scale-[1.01]"
+                      : "bg-[#0a0a0a] border-white/10 hover:border-white/10"
                   }`}
                 >
-                  <FiTarget className={activeMetric === "roas" ? "text-primary text-lg animate-pulse" : "text-white/30 text-lg"} />
+                  <FiTarget className={activeMetric === "roas" ? "text-[#7B3FE4] text-lg animate-pulse" : "text-white/30 text-lg"} />
                   <div>
                     <h4 className="text-xs font-black uppercase text-white tracking-wider">Paid Ads ROAS Spike</h4>
                     <span className="text-[10px] text-white/40 font-light">Guaranteed Spend Spikes</span>
@@ -186,13 +186,13 @@ export default function ResultsPage() {
 
                 <button
                   onClick={() => { setActiveMetric("cpl"); setSelectedMonth(5); }}
-                  className={`w-full text-left p-6 rounded-3xl border transition-all duration-300 flex items-center gap-4 cursor-pointer ${
+                  className={`w-full text-left p-6 rounded-[24px] border transition-all duration-300 flex items-center gap-4 cursor-pointer ${
                     activeMetric === "cpl"
-                      ? "bg-primary/5 border-primary/40 shadow-[0_0_20px_rgba(123,63,228,0.08)] scale-[1.01]"
-                      : "bg-zinc-950/20 border-white/5 hover:border-white/10"
+                      ? "bg-[#7B3FE4]/5 border-[#7B3FE4]/40 shadow-[0_0_20px_rgba(123,63,228,0.08)] scale-[1.01]"
+                      : "bg-[#0a0a0a] border-white/10 hover:border-white/10"
                   }`}
                 >
-                  <FiActivity className={activeMetric === "cpl" ? "text-primary text-lg animate-pulse" : "text-white/30 text-lg"} />
+                  <FiActivity className={activeMetric === "cpl" ? "text-[#7B3FE4] text-lg animate-pulse" : "text-white/30 text-lg"} />
                   <div>
                     <h4 className="text-xs font-black uppercase text-white tracking-wider">CPL Minimization</h4>
                     <span className="text-[10px] text-white/40 font-light">Qualifying Cost Control</span>
@@ -201,7 +201,7 @@ export default function ResultsPage() {
               </div>
 
               {/* Monthly milestone output */}
-              <div className="p-6 rounded-[2rem] bg-zinc-950/40 border border-white/5 backdrop-blur-xl space-y-4">
+              <div className="p-6 rounded-[2rem] bg-[#0a0a0a] border border-white/10 backdrop-blur-xl space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-[9px] font-bold text-white/20 tracking-[0.2em] uppercase font-mono">Audited Milestone</span>
                   <span className="text-xs font-black text-white px-3 py-1 rounded-full border border-white/10 bg-white/5 font-mono">
@@ -222,15 +222,15 @@ export default function ResultsPage() {
 
             {/* Right chart column */}
             <div className="lg:col-span-7">
-              <div className="h-full rounded-[2.5rem] bg-zinc-950/60 border border-white/5 p-8 md:p-10 flex flex-col justify-between shadow-2xl relative min-h-[380px]">
+              <div className="h-full rounded-[28px] bg-[#0a0a0a] border border-white/10 p-8 md:p-10 flex flex-col justify-between shadow-2xl relative min-h-[380px]">
                 
                 {/* Chart Title HUD */}
-                <div className="flex justify-between items-center border-b border-white/5 pb-4 mb-8">
-                  <div className="flex items-center gap-3 font-sans">
-                    <FiAward className="w-5 h-5 text-primary animate-pulse" />
+                <div className="flex justify-between items-center border-b border-white/10 pb-4 mb-8">
+                  <div className="flex items-center gap-3 ">
+                    <FiAward className="w-5 h-5 text-[#7B3FE4] animate-pulse" />
                     <div>
                       <h4 className="text-[10px] font-bold uppercase tracking-wider text-white">SYSTEMS VISUAL DATA ENGINE</h4>
-                      <span className="text-[7px] font-bold tracking-widest text-primary uppercase">Active Metric Matrix</span>
+                      <span className="text-[7px] font-bold tracking-widest text-[#7B3FE4] uppercase">Active Metric Matrix</span>
                     </div>
                   </div>
                 </div>
@@ -272,7 +272,7 @@ export default function ResultsPage() {
                         </div>
                         {/* Label Month */}
                         <span className={`text-[8px] font-mono font-bold tracking-wider ${
-                          selectedMonth === idx ? "text-primary" : "text-white/20 group-hover/bar:text-white/60"
+                          selectedMonth === idx ? "text-[#7B3FE4]" : "text-white/20 group-hover/bar:text-white/60"
                         }`}>
                           M_0{idx + 1}
                         </span>
@@ -282,9 +282,9 @@ export default function ResultsPage() {
                 </div>
 
                 {/* Chart Y-Axis legend HUD */}
-                <div className="border-t border-white/5 pt-6 mt-8 flex justify-between items-center text-[9px] font-bold text-white/25 uppercase tracking-widest font-mono">
+                <div className="border-t border-white/10 pt-6 mt-8 flex justify-between items-center text-[9px] font-bold text-white/25 uppercase tracking-widest font-mono">
                   <span>Start Pipeline</span>
-                  <span className="text-primary font-black">Peak Performance delta: {currentChart.values[5]}{currentChart.unit}</span>
+                  <span className="text-[#7B3FE4] font-black">Peak Performance delta: {currentChart.values[5]}{currentChart.unit}</span>
                   <span>Month 6 Stabilized</span>
                 </div>
 
@@ -295,15 +295,15 @@ export default function ResultsPage() {
       </section>
 
       {/* ── 3. TESTIMONIAL DIRECTORY ── */}
-      <section className="py-24 relative z-10 border-b border-white/5 bg-[#020202]">
+      <section className="py-24 relative z-10 border-b border-white/10 bg-black">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="max-w-4xl mb-20 text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-4 mb-4">
               <span className="h-px w-10 bg-primary" />
-              <span className="text-xs font-bold tracking-[0.5em] uppercase text-primary font-sans">Endorsements</span>
+              <span className="text-xs font-bold tracking-[0.5em] uppercase text-[#7B3FE4] ">Endorsements</span>
             </div>
             <h3 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">
-              WHAT OUR ELITE <span className="text-gradient-primary">PARTNERS</span> SAY.
+              WHAT OUR ELITE <span className="text-[#7B3FE4]">PARTNERS</span> SAY.
             </h3>
           </div>
 
@@ -315,10 +315,10 @@ export default function ResultsPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.08 }}
-                className="group p-8 rounded-3xl bg-zinc-950/40 border border-white/5 flex flex-col justify-between hover:bg-zinc-900/30 hover:border-primary/10 transition-all duration-500 shadow-xl"
+                className="group p-8 rounded-[24px] bg-[#0a0a0a] border border-white/10 flex flex-col justify-between hover:bg-zinc-900/30 hover:border-[#7B3FE4]/10 transition-all duration-500 shadow-xl"
               >
                 <div>
-                  <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center font-black text-sm text-primary mb-6 group-hover:scale-105 transition-transform duration-500">
+                  <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center font-black text-sm text-[#7B3FE4] mb-6 group-hover:scale-105 transition-transform duration-500">
                     {t.avatar}
                   </div>
                   
@@ -327,9 +327,9 @@ export default function ResultsPage() {
                   </p>
                 </div>
 
-                <div className="border-t border-white/5 pt-6">
+                <div className="border-t border-white/10 pt-6">
                   <h4 className="font-bold text-white uppercase text-sm">{t.name}</h4>
-                  <span className="text-xs font-bold text-primary tracking-[0.1em] mt-1 block">{t.company}</span>
+                  <span className="text-xs font-bold text-[#7B3FE4] tracking-[0.1em] mt-1 block">{t.company}</span>
                 </div>
               </motion.div>
             ))}
@@ -338,7 +338,7 @@ export default function ResultsPage() {
       </section>
 
       {/* ── 4. FROSTED GLASS STATS RESULTS ── */}
-      <section className="py-24 relative z-10 bg-[#020202]">
+      <section className="py-24 relative z-10 bg-black">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat, index) => (
@@ -348,13 +348,13 @@ export default function ResultsPage() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.05 }}
-                className="group relative p-8 rounded-3xl bg-zinc-950/40 border border-white/5 flex flex-col items-center justify-center text-center backdrop-blur-md hover:border-primary/20 transition-all duration-500 shadow-lg"
+                className="group relative p-8 rounded-[24px] bg-[#0a0a0a] border border-white/10 flex flex-col items-center justify-center text-center backdrop-blur-md hover:border-[#7B3FE4]/20 transition-all duration-500 shadow-lg"
               >
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-[0.02] bg-primary transition-opacity rounded-3xl pointer-events-none" />
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-[0.02] bg-primary transition-opacity rounded-[24px] pointer-events-none" />
                 <h4 className="text-4xl md:text-6xl font-black text-white tracking-tighter group-hover:scale-105 transition-transform duration-500">
                   {stat.value}
                 </h4>
-                <span className="text-[10px] font-bold text-white/30 tracking-[0.2em] uppercase mt-4 group-hover:text-primary transition-colors duration-300">
+                <span className="text-[10px] font-bold text-white/30 tracking-[0.2em] uppercase mt-4 group-hover:text-[#7B3FE4] transition-colors duration-300">
                   {stat.label}
                 </span>
                 <p className="text-[10px] text-white/40 font-light mt-3 leading-relaxed max-w-[160px]">
