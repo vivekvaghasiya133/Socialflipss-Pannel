@@ -9,7 +9,7 @@ import {
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import BeachAccessIcon from "@mui/icons-material/BeachAccess";
 
-const API = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const API = process.env.REACT_APP_API_URL || "https://socialflipss-backend.onrender.com/api";
 
 export default function StaffLeaveForm() {
   const { token } = useParams();
