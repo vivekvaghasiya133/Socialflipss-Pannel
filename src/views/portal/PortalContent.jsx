@@ -26,7 +26,7 @@ const TYPE_EMOJI = { reel:"🎬", post:"📸", story:"📖", carousel:"🖼️",
 
 function ContentCard({ item, onApprove }) {
   const stage = STAGE_STYLE[item.stage] || STAGE_STYLE.idea;
-  const needsApproval = !item.clientApproved && item.stage === "client_approval";
+  const needsApproval = !item.clientApproved && (item.stage === "client_approval" || item.stage === "script");
 
   return (
     <Card sx={{ border: needsApproval ? "2px solid #d97706" : "1px solid #e5e7eb", position:"relative" }}>
@@ -163,12 +163,12 @@ export default function PortalContent() {
 
   // Filter content by tab
   const displayContent = tab === 1
-    ? content.filter(c => !c.clientApproved && c.stage === "client_approval")
+    ? content.filter(c => !c.clientApproved && (c.stage === "client_approval" || c.stage === "script"))
     : tab === 2
       ? content.filter(c => c.stage === "posted")
       : content;
 
-  const pendingCount = content.filter(c => !c.clientApproved && c.stage === "client_approval").length;
+  const pendingCount = content.filter(c => !c.clientApproved && (c.stage === "client_approval" || c.stage === "script")).length;
 
   return (
     <Box>
