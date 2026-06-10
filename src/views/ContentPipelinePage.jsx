@@ -370,7 +370,7 @@ export default function ContentPipelinePage() {
         <Box sx={{ display: "flex", justifyContent: "center", pt: 6 }}><CircularProgress /></Box>
       ) : (
         /* Kanban Board Grid */
-        <Box sx={{ display: "flex", gap: 2, overflowX: "auto", pb: 2, flex: 1, minHeight: 450, alignItems: "flex-start" }}>
+        <Box sx={{ display: "flex", gap: 2, overflowX: "auto", pb: 2, flex: 1, minHeight: 450, alignItems: "flex-start", width: "100%", maxWidth: "100%" }}>
           {columns.map(col => (
             <Box
               key={col.key}

@@ -26,17 +26,33 @@ body {
   font-family: 'Inter', sans-serif;
   overflow-x: hidden;
   scroll-behavior: smooth;
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
 }
 
+/* Custom Sleek Scrollbar styling */
 ::-webkit-scrollbar {
-  display: none !important;
+  width: 6px;
+  height: 6px;
 }
 
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(123, 63, 228, 0.35);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(123, 63, 228, 0.6);
+}
+
+/* Firefox fallback styling */
 * {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(123, 63, 228, 0.35) rgba(0, 0, 0, 0.03);
 }
 
 /* ── HOS Utility classes ── */

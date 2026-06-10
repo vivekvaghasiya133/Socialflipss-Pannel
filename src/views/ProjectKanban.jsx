@@ -374,7 +374,7 @@ export default function ProjectKanban() {
       {error && <Alert severity="error" sx={{ mb:2 }} onClose={() => setError("")}>{error}</Alert>}
 
       {/* Kanban Board */}
-      <Box sx={{ display:"flex", gap:2, overflowX:"auto", pb:2, alignItems:"flex-start" }}>
+      <Box sx={{ display:"flex", gap:2, overflowX:"auto", pb:2, alignItems:"flex-start", width: "100%", maxWidth: "100%" }}>
         {columns.map(col => (
           <Box
             key={col.key}
