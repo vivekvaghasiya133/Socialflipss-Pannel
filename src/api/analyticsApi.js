@@ -1,7 +1,14 @@
 import api from "./index";
 
-// ── Analytics ─────────────────────────────────────────────────────
+// ── Dashboard / System Analytics ──────────────────────────────────
 export const getDashboardAnalytics = () => api.get("/analytics/dashboard");
+
+// ── Content Analytics (SocialFlips OS) ─────────────────────────────
+export const getAnalyticsList = (params) => api.get("/content-analytics", { params });
+export const getAnalyticsById = (id)     => api.get(`/content-analytics/${id}`);
+export const createAnalytics  = (data)   => api.post("/content-analytics", data);
+export const updateAnalytics  = (id, data) => api.put(`/content-analytics/${id}`, data);
+export const deleteAnalytics  = (id)     => api.delete(`/content-analytics/${id}`);
 
 // ── Reminders ─────────────────────────────────────────────────────
 export const getReminderStats = ()           => api.get("/reminders/stats");

@@ -13,18 +13,20 @@ import LinkIcon     from "@mui/icons-material/OpenInNew";
 import { getPortalContent, approvePortalContent } from "../../api/portalApi";
 
 const STAGE_STYLE = {
-  idea:     { bg:"#f3f4f6", color:"#374151",  label:"Idea" },
-  approved: { bg:"#e0f2fe", color:"#0369a1",  label:"Approved" },
-  shooting: { bg:"#ede9fe", color:"#6d28d9",  label:"Shooting" },
-  editing:  { bg:"#fef3c7", color:"#92400e",  label:"Editing" },
-  posted:   { bg:"#d1fae5", color:"#065f46",  label:"Posted ✓" },
+  idea:            { bg:"#f3f4f6", color:"#374151",  label:"Idea" },
+  script:          { bg:"#e0f2fe", color:"#0369a1",  label:"Script Outlines" },
+  shoot:           { bg:"#ede9fe", color:"#6d28d9",  label:"Shooting" },
+  edit:            { bg:"#fef3c7", color:"#92400e",  label:"Editing" },
+  qc:              { bg:"#dcfce7", color:"#03543f",  label:"QC Check" },
+  client_approval: { bg:"#e1effe", color:"#1e40af",  label:"Waiting Approval" },
+  posted:          { bg:"#d1fae5", color:"#065f46",  label:"Posted ✓" },
 };
 
 const TYPE_EMOJI = { reel:"🎬", post:"📸", story:"📖", carousel:"🖼️", youtube:"▶️", other:"📄" };
 
 function ContentCard({ item, onApprove }) {
   const stage = STAGE_STYLE[item.stage] || STAGE_STYLE.idea;
-  const needsApproval = !item.clientApproved && ["approved","editing"].includes(item.stage);
+  const needsApproval = !item.clientApproved && item.stage === "client_approval";
 
   return (
     <Card sx={{ border: needsApproval ? "2px solid #d97706" : "1px solid #e5e7eb", position:"relative" }}>
@@ -130,6 +132,13 @@ export default function PortalContent() {
       .finally(() => setLoading(false));
   }, [tab]);
 
+  useEffect(() => {
+    const filter = searchParams.get("filter");
+    const stage = searchParams.get("stage");
+    if (filter === "pending") setTab(1);
+    else if (stage === "posted") setTab(2);
+  }, [searchParams]);
+
   useEffect(() => { load(); }, [load]);
 
   const openApproval = (item, status) => {
@@ -154,12 +163,12 @@ export default function PortalContent() {
 
   // Filter content by tab
   const displayContent = tab === 1
-    ? content.filter(c => !c.clientApproved && ["approved","editing"].includes(c.stage))
+    ? content.filter(c => !c.clientApproved && c.stage === "client_approval")
     : tab === 2
       ? content.filter(c => c.stage === "posted")
       : content;
 
-  const pendingCount = content.filter(c => !c.clientApproved && ["approved","editing"].includes(c.stage)).length;
+  const pendingCount = content.filter(c => !c.clientApproved && c.stage === "client_approval").length;
 
   return (
     <Box>

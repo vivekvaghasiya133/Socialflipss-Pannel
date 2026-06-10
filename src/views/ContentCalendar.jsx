@@ -13,11 +13,18 @@ const MONTHS = ["January","February","March","April","May","June","July","August
 const DAYS   = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
 const STAGE_STYLE = {
-  idea:     { bg:"#f3f4f6", color:"#374151",  label:"Idea",     border:"#d1d5db" },
-  approved: { bg:"#e0f2fe", color:"#0369a1",  label:"Approved", border:"#7dd3fc" },
-  shooting: { bg:"#ede9fe", color:"#6d28d9",  label:"Shooting", border:"#c4b5fd" },
-  editing:  { bg:"#fef3c7", color:"#92400e",  label:"Editing",  border:"#fcd34d" },
-  posted:   { bg:"#d1fae5", color:"#065f46",  label:"Posted",   border:"#6ee7b7" },
+  idea:            { bg:"#f3f4f6", color:"#374151", label:"Idea",             border:"#d1d5db" },
+  script:          { bg:"#e0f2fe", color:"#0369a1", label:"Script Outlines",  border:"#7dd3fc" },
+  shoot:           { bg:"#ede9fe", color:"#6d28d9", label:"Shooting",         border:"#c4b5fd" },
+  edit:            { bg:"#fef3c7", color:"#92400e", label:"Editing",          border:"#fcd34d" },
+  qc:              { bg:"#dcfce7", color:"#03543f", label:"QC Check",         border:"#6ee7b7" },
+  client_approval: { bg:"#e1effe", color:"#1e40af", label:"Waiting Approval", border:"#3f83f8" },
+  posted:          { bg:"#d1fae5", color:"#065f46", label:"Posted ✓",         border:"#6ee7b7" },
+
+  // Legacy fallbacks:
+  approved:        { bg:"#e0f2fe", color:"#0369a1", label:"Approved",         border:"#7dd3fc" },
+  shooting:        { bg:"#ede9fe", color:"#6d28d9", label:"Shooting",         border:"#c4b5fd" },
+  editing:         { bg:"#fef3c7", color:"#92400e", label:"Editing",          border:"#fcd34d" },
 };
 
 const TYPE_EMOJI = { reel:"🎬", post:"📸", story:"📖", carousel:"🖼️", youtube:"▶️", other:"📄" };
@@ -102,14 +109,16 @@ export default function ContentCalendar() {
       {stats && (
         <Grid container spacing={1.5} mb={3}>
           {[
-            { label:"Total",    value:stats.total,    color:"#1a56db" },
-            { label:"Idea",     value:stats.idea,     color:"#6b7280" },
-            { label:"Approved", value:stats.approved, color:"#0891b2" },
-            { label:"Shooting", value:stats.shooting, color:"#7c3aed" },
-            { label:"Editing",  value:stats.editing,  color:"#d97706" },
-            { label:"Posted",   value:stats.posted,   color:"#059669" },
+            { label:"Total",    value:stats.total,          color:"#1a56db" },
+            { label:"Idea",     value:stats.idea,           color:"#6b7280" },
+            { label:"Script",   value:stats.script,         color:"#0891b2" },
+            { label:"Shoot",    value:stats.shoot,          color:"#7c3aed" },
+            { label:"Edit",     value:stats.edit,           color:"#d97706" },
+            { label:"QC",       value:stats.qc,             color:"#03543f" },
+            { label:"Approval", value:stats.clientApproval, color:"#1e40af" },
+            { label:"Posted",   value:stats.posted,         color:"#059669" },
           ].map(s => (
-            <Grid item xs={4} sm={2} key={s.label}>
+            <Grid item xs={6} sm={3} md={1.5} key={s.label}>
               <Card><Box sx={{ p:1.5, textAlign:"center" }}>
                 <Typography variant="caption" color="text.secondary">{s.label}</Typography>
                 <Typography variant="h5" fontWeight={700} sx={{ color:s.color }}>{s.value}</Typography>
@@ -173,9 +182,9 @@ export default function ContentCalendar() {
                           {day}
                         </Typography>
                         {items.slice(0,3).map(item => {
-                          const s = STAGE_STYLE[item.stage];
+                          const s = STAGE_STYLE[item.stage] || STAGE_STYLE.idea;
                           return (
-                            <Tooltip key={item._id} title={`${item.title} · ${item.stage}`} arrow>
+                            <Tooltip key={item._id} title={`${item.title} · ${s.label}`} arrow>
                               <Box sx={{
                                 fontSize:9, fontWeight:600, color:s.color, bgcolor:s.bg,
                                 border:`1px solid ${s.border}`, borderRadius:0.75,
@@ -197,12 +206,14 @@ export default function ContentCalendar() {
 
               {/* Legend */}
               <Box sx={{ display:"flex", gap:1, flexWrap:"wrap", mt:2, pt:2, borderTop:"1px solid #f3f4f6" }}>
-                {Object.entries(STAGE_STYLE).map(([k,s]) => (
-                  <Box key={k} sx={{ display:"flex", alignItems:"center", gap:0.5 }}>
-                    <Box sx={{ width:10, height:10, borderRadius:1, bgcolor:s.bg, border:`1px solid ${s.border}` }} />
-                    <Typography variant="caption" color="text.secondary">{s.label}</Typography>
-                  </Box>
-                ))}
+                {Object.entries(STAGE_STYLE)
+                  .filter(([k]) => !["approved", "shooting", "editing"].includes(k))
+                  .map(([k,s]) => (
+                    <Box key={k} sx={{ display:"flex", alignItems:"center", gap:0.5 }}>
+                      <Box sx={{ width:10, height:10, borderRadius:1, bgcolor:s.bg, border:`1px solid ${s.border}` }} />
+                      <Typography variant="caption" color="text.secondary">{s.label}</Typography>
+                    </Box>
+                  ))}
               </Box>
             </CardContent>
           </Card>
@@ -221,7 +232,7 @@ export default function ContentCalendar() {
                 {selectedContent.length === 0 ? (
                   <Typography variant="body2" color="text.secondary">Aa date par koi content schedule nathi.</Typography>
                 ) : selectedContent.map(item => {
-                  const s = STAGE_STYLE[item.stage];
+                  const s = STAGE_STYLE[item.stage] || STAGE_STYLE.idea;
                   return (
                     <Box key={item._id} sx={{ mb:1.5, p:1.5, bgcolor:s.bg, borderRadius:2, border:`1px solid ${s.border}` }}>
                       <Box sx={{ display:"flex", justifyContent:"space-between", mb:0.5 }}>
@@ -257,7 +268,7 @@ export default function ContentCalendar() {
               {unscheduled.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">Badha content schedule thayi gaya!</Typography>
               ) : unscheduled.slice(0,8).map(item => {
-                const s = STAGE_STYLE[item.stage];
+                const s = STAGE_STYLE[item.stage] || STAGE_STYLE.idea;
                 return (
                   <Box key={item._id} sx={{ display:"flex", alignItems:"center", gap:1, mb:1, p:1, bgcolor:"#f9fafb", borderRadius:1.5 }}>
                     <Typography sx={{ fontSize:14 }}>{TYPE_EMOJI[item.type]}</Typography>

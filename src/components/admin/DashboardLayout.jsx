@@ -24,6 +24,12 @@ import CalendarIcon from "@mui/icons-material/CalendarMonth";
 import NotifIcon from "@mui/icons-material/NotificationsActive";
 import WorkIcon from "@mui/icons-material/WorkHistory";
 import PortalIcon from "@mui/icons-material/OpenInBrowser";
+import VideoIcon from "@mui/icons-material/VideoLibrary";
+import ListAltIcon from "@mui/icons-material/ListAlt";
+import LightbulbIcon from "@mui/icons-material/Lightbulb";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
+import AssignmentIcon from "@mui/icons-material/Assignment";
 import { useAuth } from "../../context/AuthContext";
 import NotificationBell from "./../admin/NotificationBell";
 
@@ -48,7 +54,8 @@ export default function DashboardLayout() {
     {
       label: "Overview",
       items: [
-        { label: "Dashboard", icon: <DashboardIcon />, path: "/admin", roles: ["admin", "manager", "team"] },
+        { label: "CEO Dashboard", icon: <DashboardIcon />, path: "/admin", roles: ["admin", "manager"] },
+        { label: "Team Dashboard", icon: <AssignmentIcon />, path: "/admin/team-dashboard", roles: ["admin", "manager", "team"] },
       ],
     },
     {
@@ -62,8 +69,18 @@ export default function DashboardLayout() {
     {
       label: "Production",
       items: [
+        { label: "Content Pipeline", icon: <ListAltIcon />, path: "/admin/content-pipeline", roles: ["admin", "manager", "team"] },
         { label: "Projects", icon: <FolderIcon />, path: "/admin/projects", roles: ["admin", "manager", "team"] },
         { label: "Content Calendar", icon: <CalendarIcon />, path: "/admin/content-calendar", roles: ["admin", "manager", "team"] },
+        { label: "Reels Delivery", icon: <VideoIcon />, path: "/admin/reels-delivery", roles: ["admin", "manager", "team"] },
+        { label: "Strategy Vault", icon: <LightbulbIcon />, path: "/admin/strategy-vault", roles: ["admin", "manager", "team"] },
+        { label: "Content Analytics", icon: <BarChartIcon />, path: "/admin/analytics", roles: ["admin", "manager", "team"] },
+      ],
+    },
+    {
+      label: "Resources",
+      items: [
+        { label: "SOP Library", icon: <MenuBookIcon />, path: "/admin/sop-library", roles: ["admin", "manager", "team"] },
       ],
     },
     {

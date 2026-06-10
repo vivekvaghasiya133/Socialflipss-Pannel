@@ -69,6 +69,19 @@ export default function ClientDetail() {
   // Admin controls
   const [adminForm, setAdminForm] = useState({ status:"onboarding", internalNotes:"" });
 
+  // Client Overview & Strategy template
+  const [overviewForm, setOverviewForm] = useState({
+    clientOverview: "",
+    description: "",
+    goal: "",
+    targetAudience: "",
+    mainOffer: "",
+    competitors: "",
+    contentPillars: "",
+    notes: "",
+  });
+  const [savingOverview, setSavingOverview] = useState(false);
+
   // Package
   const [pkgForm, setPkgForm]     = useState({ name:"", amount:"", startDate:"", endDate:"" });
   const [deliverables, setDeliverables] = useState([]);
@@ -103,6 +116,16 @@ export default function ClientDetail() {
       const c = cr.data;
       setClient(c);
       setAdminForm({ status: c.status||"onboarding", internalNotes: c.internalNotes||"" });
+      setOverviewForm({
+        clientOverview: c.clientOverview || "",
+        description: c.description || "",
+        goal: c.goal || "",
+        targetAudience: c.targetAudience || "",
+        mainOffer: c.mainOffer || "",
+        competitors: c.competitors || "",
+        contentPillars: c.contentPillars || "",
+        notes: c.notes || "",
+      });
       setPkgForm({
         name:      c.package?.name      || "",
         amount:    c.package?.amount    || "",
@@ -148,6 +171,15 @@ export default function ClientDetail() {
       setToast("Saved!"); load();
     } catch { setToast("Save failed."); }
     finally { setSaving(false); }
+  };
+
+  const handleSaveOverview = async () => {
+    setSavingOverview(true);
+    try {
+      await updateClient(id, overviewForm);
+      setToast("Overview Saved! ✅"); load();
+    } catch { setToast("Save failed."); }
+    finally { setSavingOverview(false); }
   };
 
   // Setup portal access
@@ -391,6 +423,122 @@ export default function ClientDetail() {
                   <Grid item xs={6}><InfoRow label="Industry"   value={client.industry}/></Grid>
                   <Grid item xs={6}><InfoRow label="Website"    value={client.website}/></Grid>
                   <Grid item xs={6}><InfoRow label="Instagram"  value={client.instagramPage}/></Grid>
+                </Grid>
+              </SectionCard>
+
+              <SectionCard 
+                title="Client Overview Profile"
+                action={
+                  canManage && (
+                    <Button 
+                      size="small" 
+                      variant="contained" 
+                      color="primary"
+                      onClick={handleSaveOverview} 
+                      disabled={savingOverview}
+                    >
+                      {savingOverview ? "Saving..." : "Save Overview"}
+                    </Button>
+                  )
+                }
+              >
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={2}
+                      label="Client Overview"
+                      placeholder="What is the general overview of this client?"
+                      value={overviewForm.clientOverview}
+                      onChange={e => setOverviewForm({ ...overviewForm, clientOverview: e.target.value })}
+                      disabled={!canManage}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={2}
+                      label="What does this client do?"
+                      placeholder="Describe what the client's business does"
+                      value={overviewForm.description}
+                      onChange={e => setOverviewForm({ ...overviewForm, description: e.target.value })}
+                      disabled={!canManage}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={2}
+                      label="What is the goal?"
+                      placeholder="e.g. Authority / Sales / Hybrid content goal"
+                      value={overviewForm.goal}
+                      onChange={e => setOverviewForm({ ...overviewForm, goal: e.target.value })}
+                      disabled={!canManage}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={2}
+                      label="Who is the audience?"
+                      placeholder="Describe target audience profile"
+                      value={overviewForm.targetAudience}
+                      onChange={e => setOverviewForm({ ...overviewForm, targetAudience: e.target.value })}
+                      disabled={!canManage}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={2}
+                      label="Main Offer"
+                      placeholder="What is the main product or service offer?"
+                      value={overviewForm.mainOffer}
+                      onChange={e => setOverviewForm({ ...overviewForm, mainOffer: e.target.value })}
+                      disabled={!canManage}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={2}
+                      label="Competitors"
+                      placeholder="Key competitors list"
+                      value={overviewForm.competitors}
+                      onChange={e => setOverviewForm({ ...overviewForm, competitors: e.target.value })}
+                      disabled={!canManage}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={3}
+                      label="Content Pillars"
+                      placeholder="What are the main content pillars/themes?"
+                      value={overviewForm.contentPillars}
+                      onChange={e => setOverviewForm({ ...overviewForm, contentPillars: e.target.value })}
+                      disabled={!canManage}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={3}
+                      label="Notes"
+                      placeholder="General notes and directions"
+                      value={overviewForm.notes}
+                      onChange={e => setOverviewForm({ ...overviewForm, notes: e.target.value })}
+                      disabled={!canManage}
+                    />
+                  </Grid>
                 </Grid>
               </SectionCard>
 

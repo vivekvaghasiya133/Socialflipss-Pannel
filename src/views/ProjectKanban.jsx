@@ -26,11 +26,13 @@ const deleteContent   = (id)        => api.delete(`/content/${id}`);
 const getUsers        = ()          => api.get("/auth/users");
 
 const STAGES = [
-  { key:"idea",     label:"💡 Idea",      color:"#6b7280", bg:"#f3f4f6" },
-  { key:"approved", label:"✅ Approved",  color:"#0891b2", bg:"#e0f2fe" },
-  { key:"shooting", label:"🎬 Shooting",  color:"#7c3aed", bg:"#ede9fe" },
-  { key:"editing",  label:"✂️ Editing",   color:"#d97706", bg:"#fef3c7" },
-  { key:"posted",   label:"🚀 Posted",    color:"#059669", bg:"#d1fae5" },
+  { key:"idea",            label:"💡 Idea",            color:"#6b7280", bg:"#f3f4f6" },
+  { key:"script",          label:"✍️ Script",          color:"#0891b2", bg:"#e0f2fe" },
+  { key:"shoot",           label:"🎥 Shoot",           color:"#7c3aed", bg:"#ede9fe" },
+  { key:"edit",            label:"🎬 Edit",            color:"#d97706", bg:"#fef3c7" },
+  { key:"qc",              label:"✅ QC",              color:"#0e9f6e", bg:"#dcfce7" },
+  { key:"client_approval", label:"👤 Client Approval", color:"#3f83f8", bg:"#e1effe" },
+  { key:"posted",          label:"🚀 Posted",          color:"#059669", bg:"#d1fae5" },
 ];
 
 const TYPE_COLORS = {
@@ -69,6 +71,29 @@ function ContentCard({ item, onEdit, onDelete, onDragStart, onDragEnd, dragging 
           <Chip label={item.priority} color={PRIORITY_COLORS[item.priority]} size="small"
             sx={{ fontSize:10, height:18 }} />
         </Box>
+
+        {/* Client Approval status badge */}
+        {(item.clientApproved || item.clientApprovalStatus === "rejected" || item.clientApprovalStatus === "changes_requested") && (
+          <Box sx={{ mb: 1, display: "flex", flexDirection: "column", gap: 0.5 }}>
+            {item.clientApproved && (
+              <Chip label="✓ Approved by Client" size="small"
+                sx={{ fontSize: 9.5, height: 18, bgcolor: "#d1fae5", color: "#03543f", fontWeight: 700, width: "fit-content" }} />
+            )}
+            {item.clientApprovalStatus === "rejected" && (
+              <Chip label="✕ Rejected by Client" size="small"
+                sx={{ fontSize: 9.5, height: 18, bgcolor: "#fde8e8", color: "#9b1c1c", fontWeight: 700, width: "fit-content" }} />
+            )}
+            {item.clientApprovalStatus === "changes_requested" && (
+              <Chip label="⚠ Changes Requested" size="small"
+                sx={{ fontSize: 9.5, height: 18, bgcolor: "#fef3c7", color: "#92400e", fontWeight: 700, width: "fit-content" }} />
+            )}
+            {item.approvalNote && (
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ fontStyle: "italic", fontSize: 10, pl: 0.5 }}>
+                Note: "{item.approvalNote}"
+              </Typography>
+            )}
+          </Box>
+        )}
 
         {/* Title */}
         <Typography variant="body2" fontWeight={600} mb={0.5} sx={{ lineHeight:1.4 }}>

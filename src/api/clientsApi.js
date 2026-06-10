@@ -17,3 +17,5 @@ export const updateInvoice    = (id, data)            => api.put(`/invoices/${id
 export const deleteInvoice    = (id)                  => api.delete(`/invoices/${id}`);
 export const recordPayment    = (id, data)            => api.post(`/invoices/${id}/payment`, data);
 export const deletePayment    = (invoiceId, payId)    => api.delete(`/invoices/${invoiceId}/payment/${payId}`);
+export const getReelsDelivery   = (params)              => api.get("/clients/reels-delivery", { params });
+
