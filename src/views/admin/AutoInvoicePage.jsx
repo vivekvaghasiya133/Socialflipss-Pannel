@@ -82,7 +82,7 @@ export default function AutoInvoicePage() {
     <Box>
       <Typography variant="h5" mb={0.5}>Auto Invoice Management</Typography>
       <Typography variant="body2" color="text.secondary" mb={3}>
-        Client onboarding anniversary par auto invoice + WhatsApp send
+        Auto invoice + WhatsApp sending on client onboarding anniversary
       </Typography>
 
       {/* Action cards */}
@@ -91,7 +91,7 @@ export default function AutoInvoicePage() {
           <Card sx={{ p:2.5, height:"100%", border:"1px solid #e5e7eb" }}>
             <Typography variant="h6" mb={1}>🤖 Run Auto Invoice</Typography>
             <Typography variant="body2" color="text.secondary" mb={2}>
-              Aaj jeni anniversary chhe aena badha clients ne invoice generate karo.
+              Generate invoices for all clients whose anniversary is today.
             </Typography>
             <Button fullWidth variant="contained" startIcon={<AutoIcon />}
               onClick={handleRunAuto} disabled={running}>
@@ -103,7 +103,7 @@ export default function AutoInvoicePage() {
           <Card sx={{ p:2.5, height:"100%", border:"1px solid #e5e7eb" }}>
             <Typography variant="h6" mb={1}>⚠️ Payment Reminders</Typography>
             <Typography variant="body2" color="text.secondary" mb={2}>
-              5/10/15 din thi pending invoices maate WhatsApp reminder moko.
+              Send WhatsApp reminders for invoices pending for 5, 10, or 15 days.
             </Typography>
             <Button fullWidth variant="outlined" color="warning" startIcon={<NotifIcon />}
               onClick={handleReminders} disabled={reminding}>
@@ -115,7 +115,7 @@ export default function AutoInvoicePage() {
           <Card sx={{ p:2.5, height:"100%", border:"1px solid #e5e7eb" }}>
             <Typography variant="h6" mb={1}>📅 Daily Cron Setup</Typography>
             <Typography variant="body2" color="text.secondary" mb={1}>
-              Server par daily 9am par auto-run karo.
+              Auto-run daily at 9:00 AM on the server.
             </Typography>
             <Box sx={{ bgcolor:"#1e1e1e", borderRadius:1.5, p:1.5, fontFamily:"monospace", fontSize:11, color:"#4ade80", lineHeight:1.8 }}>
               # crontab -e<br/>
@@ -137,9 +137,9 @@ export default function AutoInvoicePage() {
           <Box sx={{ display:"flex", justifyContent:"center", py:4 }}><CircularProgress /></Box>
         ) : configs.length === 0 ? (
           <Box sx={{ py:5, textAlign:"center" }}>
-            <Typography color="text.secondary">Koi client configured nathi.</Typography>
+            <Typography color="text.secondary">No clients are configured.</Typography>
             <Typography variant="body2" color="text.secondary" mt={0.5}>
-              Client detail → "Auto Invoice" tab par configure karo.
+              Configure in Client detail → \"Auto Invoice\" tab.
             </Typography>
           </Box>
         ) : (
@@ -238,7 +238,7 @@ export default function AutoInvoicePage() {
                 </Button>
               ) : (
                 <Alert severity="warning">
-                  Client no mobile number nathi — WhatsApp unavailable. Client detail ma mobile add karo.
+                  Client has no mobile number — WhatsApp unavailable. Please add a mobile number in client details.
                 </Alert>
               )}
             </Box>
@@ -252,7 +252,7 @@ export default function AutoInvoicePage() {
               </Alert>
               {runResult.results?.length === 0 ? (
                 <Typography color="text.secondary" variant="body2">
-                  Aaj koi anniversary nathi — koi invoice generate nathi thayo.
+                  No anniversary today — no invoices generated.
                 </Typography>
               ) : runResult.results.map((r, i) => (
                 <Box key={i} sx={{ mb:2, p:2, border:"1px solid #e5e7eb", borderRadius:2 }}>
@@ -276,7 +276,7 @@ export default function AutoInvoicePage() {
                           Send WhatsApp to {r.client}
                         </Button>
                       ) : (
-                        <Typography variant="caption" color="text.secondary">Mobile nathi — WhatsApp unavailable</Typography>
+                        <Typography variant="caption" color="text.secondary">No mobile number — WhatsApp unavailable</Typography>
                       )}
                     </>
                   )}
@@ -290,7 +290,7 @@ export default function AutoInvoicePage() {
             <Box>
               <Alert severity="info" sx={{ mb:2 }}>{remindResult.message}</Alert>
               {!remindResult.reminderLinks?.length ? (
-                <Typography color="text.secondary" variant="body2">Koi reminder due nathi haji.</Typography>
+                <Typography color="text.secondary" variant="body2">No reminders due yet.</Typography>
               ) : remindResult.reminderLinks.map((r, i) => (
                 <Box key={i} sx={{ mb:1.5, p:2, border:"1px solid #e5e7eb", borderRadius:2 }}>
                   <Box sx={{ display:"flex", justifyContent:"space-between", mb:0.5 }}>

@@ -185,7 +185,7 @@ export default function PortalContent() {
 
       {pendingCount > 0 && (
         <Alert severity="warning" sx={{ mb:2 }} action={<Button size="small" color="inherit" onClick={()=>setTab(1)}>View →</Button>}>
-          <strong>{pendingCount} content{pendingCount>1?"s":""}</strong> tamari approval maagi rahya chhe!
+          <strong>{pendingCount} content item{pendingCount>1?"s":""}</strong> awaiting your approval!
         </Alert>
       )}
 
@@ -201,7 +201,7 @@ export default function PortalContent() {
         <Box sx={{ display:"flex", justifyContent:"center", pt:6 }}><CircularProgress /></Box>
       ) : displayContent.length === 0 ? (
         <Card><Box sx={{ py:6, textAlign:"center", color:"text.secondary" }}>
-          <Typography>Koi content nathi.</Typography>
+          <Typography>No content found.</Typography>
         </Box></Card>
       ) : (
         <Grid container spacing={2}>
@@ -225,9 +225,9 @@ export default function PortalContent() {
           </Typography>
           <TextField fullWidth multiline rows={3} label="Comment (optional)"
             placeholder={
-              approvalStatus === "approved" ? "Koi positive feedback..." :
-              approvalStatus === "rejected" ? "Kem reject karu chhu — reason..." :
-              "Shu change joiye chhe exactly..."
+              approvalStatus === "approved" ? "Any positive feedback..." :
+              approvalStatus === "rejected" ? "Reason for rejection..." :
+              "Specify what changes are required..."
             }
             value={comment} onChange={e=>setComment(e.target.value)} />
         </DialogContent>

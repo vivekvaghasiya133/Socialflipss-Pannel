@@ -230,7 +230,7 @@ export default function ContentCalendar() {
                 </Typography>
                 <Divider sx={{ mb:1.5 }} />
                 {selectedContent.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary">Aa date par koi content schedule nathi.</Typography>
+                  <Typography variant="body2" color="text.secondary">No content scheduled for this date.</Typography>
                 ) : selectedContent.map(item => {
                   const s = STAGE_STYLE[item.stage] || STAGE_STYLE.idea;
                   return (
@@ -266,7 +266,7 @@ export default function ContentCalendar() {
               </Typography>
               <Divider sx={{ mb:1.5 }} />
               {unscheduled.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">Badha content schedule thayi gaya!</Typography>
+                <Typography variant="body2" color="text.secondary">All content has been scheduled!</Typography>
               ) : unscheduled.slice(0,8).map(item => {
                 const s = STAGE_STYLE[item.stage] || STAGE_STYLE.idea;
                 return (

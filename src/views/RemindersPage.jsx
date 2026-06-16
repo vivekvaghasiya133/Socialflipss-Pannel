@@ -56,7 +56,7 @@ export default function RemindersPage() {
   useEffect(() => { load(); }, [load]);
 
   const handleAdd = async () => {
-    if (!form.title || !form.dueDate) { setFormError("Title ane due date required chhe."); return; }
+    if (!form.title || !form.dueDate) { setFormError("Title and due date are required."); return; }
     setFormError("");
     try {
       await createReminder(form);
@@ -78,7 +78,7 @@ export default function RemindersPage() {
   const openWhatsApp = (reminder) => {
     const mobile = reminder.clientId?.mobile || reminder.leadId?.mobile;
     const name   = reminder.clientId?.ownerName || reminder.leadId?.contactName || "";
-    if (!mobile) { setToast("Mobile number nathi milo."); return; }
+    if (!mobile) { setToast("Mobile number not found."); return; }
     const defaultMsg = `Hi ${name} 👋\n\n` +
       `Just a reminder from the SocialFlipss team.\n\n` +
       `---\n\n` +
@@ -127,7 +127,7 @@ export default function RemindersPage() {
       {/* Overdue alert */}
       {stats?.overdue > 0 && tab === 0 && (
         <Alert severity="error" sx={{ mb:2 }} icon={<NotifIcon />}>
-          <strong>{stats.overdue} reminder{stats.overdue>1?"s":""}</strong> overdue chhe — turant action lo!
+          <strong>{stats.overdue} reminder{stats.overdue>1?"s":""}</strong> overdue — take action immediately!
         </Alert>
       )}
 
@@ -203,7 +203,7 @@ export default function RemindersPage() {
               })}
               {reminders.length === 0 && (
                 <TableRow><TableCell colSpan={5} align="center" sx={{ py:5, color:"text.secondary" }}>
-                  {tab === 0 ? "Koi pending reminder nathi. 🎉" : "Koi completed reminder nathi."}
+                  {tab === 0 ? "No pending reminders found. 🎉" : "No completed reminders found."}
                 </TableCell></TableRow>
               )}
             </TableBody>

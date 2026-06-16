@@ -126,7 +126,7 @@ export default function PortalLogin() {
                   <TextField fullWidth label="Email or Mobile Number" margin="normal" autoFocus
                     value={otpContact} onChange={e=>setOtpContact(e.target.value)}
                     placeholder="your@email.com or 9876543210"
-                    helperText="Tamara registered email ya mobile number nakho" />
+                    helperText="Enter your registered email or mobile number" />
                   <Button fullWidth variant="contained" size="large" sx={{ mt:2.5 }}
                     onClick={handleSendOTP} disabled={loading || !otpContact}>
                     {loading ? <CircularProgress size={22} color="inherit"/> : "Send OTP"}
@@ -135,7 +135,7 @@ export default function PortalLogin() {
               ) : (
                 <>
                   <Typography variant="body2" color="text.secondary" mb={2}>
-                    {otpContact} par OTP mokyun chhe.
+                    OTP has been sent to {otpContact}.
                   </Typography>
                   <TextField fullWidth label="Enter 6-digit OTP" margin="normal" autoFocus
                     value={otp} onChange={e=>setOtp(e.target.value.replace(/\D/g,"").slice(0,6))}

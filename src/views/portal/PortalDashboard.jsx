@@ -44,7 +44,7 @@ export default function PortalDashboard() {
   useEffect(() => {
     getPortalDashboard()
       .then(r => setData(r.data))
-      .catch(() => setError("Dashboard load thayo nahi."))
+      .catch(() => setError("Failed to load dashboard."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -64,7 +64,7 @@ export default function PortalDashboard() {
         <Alert severity="warning" sx={{ mb:2, cursor:"pointer" }} icon={<PendingIcon />}
           onClick={() => navigate("/portal/content?filter=pending")}
           action={<Button size="small" color="inherit">Review →</Button>}>
-          <strong>{data.pendingApproval} content{data.pendingApproval>1?"s":""}</strong> tamari approval ni wait kar chhe!
+          <strong>{data.pendingApproval} content item{data.pendingApproval>1?"s":""}</strong> awaiting your approval!
         </Alert>
       )}
 
@@ -118,7 +118,7 @@ export default function PortalDashboard() {
                   <Button size="small" component={Link} to="/portal/schedule" sx={{ mt:1.5 }}>View Full Schedule →</Button>
                 </Box>
               ) : (
-                <Typography variant="body2" color="text.secondary">Koi upcoming shoot schedule nathi.</Typography>
+                <Typography variant="body2" color="text.secondary">No upcoming shoot schedules.</Typography>
               )}
             </Box>
           </Card>
@@ -134,7 +134,7 @@ export default function PortalDashboard() {
               </Box>
               <Divider sx={{ mb:2 }} />
               {data.recentInvoices.length === 0
-                ? <Typography variant="body2" color="text.secondary">Koi invoice nathi yet.</Typography>
+                ? <Typography variant="body2" color="text.secondary">No invoices yet.</Typography>
                 : data.recentInvoices.map(inv => (
                   <Box key={inv._id} component={Link} to={`/portal/invoices/${inv._id}`}
                     sx={{ display:"flex", justifyContent:"space-between", alignItems:"center", py:1.25, borderBottom:"0.5px solid #f3f4f6", textDecoration:"none", "&:hover":{ background:"#f9fafb" }, px:0.5, borderRadius:1 }}>

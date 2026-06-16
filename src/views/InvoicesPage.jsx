@@ -143,7 +143,7 @@ export default function InvoicesPage() {
               {invoices.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={9} align="center" sx={{ py:5, color:"text.secondary" }}>
-                    Koi invoice nathi. "+ Create Invoice" click karo.
+                    No invoices found. Click "+ Create Invoice".
                   </TableCell>
                 </TableRow>
               )}

@@ -101,9 +101,9 @@ export default function WorkLogsPage() {
   };
 
   const handleAdd = async () => {
-    if (!form.description || !form.date) { setFormError("Date ane description required chhe."); return; }
+    if (!form.description || !form.date) { setFormError("Date and description are required."); return; }
     const hasEmptyName = form.items.some(item => !item.name.trim());
-    if (hasEmptyName) { setFormError("Darek item ma Name / Client lakhvo jaruri chhe."); return; }
+    if (hasEmptyName) { setFormError("A name or client is required for each item."); return; }
 
     setFormError("");
     try {
@@ -246,7 +246,7 @@ export default function WorkLogsPage() {
               ))}
               {logs.length === 0 && (
                 <TableRow><TableCell colSpan={6} align="center" sx={{ py:5, color:"text.secondary" }}>
-                  Aa month ma koi work log nathi.
+                  No work logs found for this month.
                 </TableCell></TableRow>
               )}
             </TableBody>
@@ -281,7 +281,7 @@ export default function WorkLogsPage() {
               </Grid>
             )}
             <Grid item xs={12}>
-              <TextField {...f("description")} label="Work Description *" multiline rows={2} placeholder="Aaj shu kaam karyu — video edit, reel banaya, client meeting..." />
+              <TextField {...f("description")} label="Work Description *" multiline rows={2} placeholder="What work did you do today? (e.g., video editing, reel creation, client meeting...)" />
             </Grid>
             {/* Dynamic Items List */}
             <Grid item xs={12}>

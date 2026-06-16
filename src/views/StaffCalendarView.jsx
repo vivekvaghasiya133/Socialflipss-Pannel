@@ -380,7 +380,7 @@ export default function StaffCalendarView() {
                 {workLogs.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                      Aa month ma koi work log record nathi.
+                      No work log records found for this month.
                     </TableCell>
                   </TableRow>
                 )}

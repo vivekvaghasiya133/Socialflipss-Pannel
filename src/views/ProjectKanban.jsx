@@ -221,7 +221,7 @@ export default function ProjectKanban() {
         notes:       pr.data.notes || "",
       });
     } catch (err) {
-      setError("Project load thayo nahi. Back karo ane retry karo.");
+      setError("Project failed to load. Please go back and try again.");
     } finally {
       setLoading(false);
     }
@@ -271,7 +271,7 @@ export default function ProjectKanban() {
   };
 
   const handleSave = async () => {
-    if (!form.title) { setFormError("Title required chhe."); return; }
+    if (!form.title) { setFormError("Title is required."); return; }
     setFormError("");
     try {
       if (editTarget) {

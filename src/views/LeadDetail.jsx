@@ -119,7 +119,7 @@ export default function LeadDetail() {
 
   const copyLink = () => {
     navigator.clipboard.writeText(onboardingLink);
-    setToast("Onboarding link copied! Client ne WhatsApp karo. 📋");
+    setToast("Onboarding link copied! Please send to client. 📋");
   };
 
   const sendOnboardingWhatsApp = () => {
@@ -132,14 +132,6 @@ export default function LeadDetail() {
       `${onboardingLink}\n\n` +
       `This form collects details about your business and goals so we can prepare the best strategy for you.\n` +
       `If you have any questions, feel free to reply! 🙏\n\n` +
-      `---\n\n` +
-      `નમસ્તે ${lead.contactName} 👋\n\n` +
-      `*સોશિયલફ્લિપ્સ — ઓનબોર્ડિંગ ફોર્મ*\n\n` +
-      `સોશિયલફ્લિપ્સ ડિજિટલ માર્કેટિંગ પરિવારમાં તમારું સ્વાગત છે! 🎉\n\n` +
-      `કૃપા કરીને તમારું ઓનબોર્ડિંગ ફોર્મ ભરવા માટે નીચેની લિંક પર ક્લિક કરો:\n` +
-      `${onboardingLink}\n\n` +
-      `આ ફોર્મ તમારા વ્યવસાય અને ધ્યેયો વિશે વિગતો એકત્રિત કરવામાં મદદ કરશે જેથી અમે તમારા માટે શ્રેષ્ઠ વ્યૂહરચના તૈયાર કરી શકીએ.\n` +
-      `જો કોઈ પ્રશ્ન હોય, તો નિઃસંકોચ સંપર્ક કરો! 🙏\n\n` +
       `– SocialFlipss Team`
     );
     window.open(`https://wa.me/91${lead.mobile.replace(/\D/g,"")}?text=${msg}`, "_blank");
@@ -150,9 +142,6 @@ export default function LeadDetail() {
     const msg = encodeURIComponent(
       `Hi ${lead.contactName} 👋\n\n` +
       `This is the SocialFlipss team.\n\n` +
-      `---\n\n` +
-      `નમસ્તે ${lead.contactName} 👋\n\n` +
-      `સોશિયલફ્લિપ્સ ટીમ તરફથી વાત કરી રહ્યા છીએ.\n\n` +
       `– SocialFlipss Team`
     );
     window.open(`https://wa.me/91${lead.mobile.replace(/\D/g,"")}?text=${msg}`, "_blank");
@@ -208,7 +197,7 @@ export default function LeadDetail() {
       {/* Converted banner */}
       {isConverted && (
         <Alert severity="success" sx={{ mb:2 }} icon={<ConvertIcon />}>
-          Aa lead convert thayi chhe. <strong>{lead.convertedToClient?.businessName || "Client"}</strong> — onboarding in progress.
+          This lead has been converted. <strong>{lead.convertedToClient?.businessName || "Client"}</strong> — onboarding in progress.
         </Alert>
       )}
 
@@ -262,13 +251,13 @@ export default function LeadDetail() {
                     <Grid item xs={12}>
                       <TextField fullWidth size="small" multiline rows={2} label="Note *"
                         value={actForm.note} onChange={e=>setActForm({...actForm,note:e.target.value})}
-                        placeholder="Call ma shu vaat thi? Next step?" />
+                        placeholder="What was discussed on the call? Next step?" />
                     </Grid>
                   </Grid>
                 </Paper>
               )}
               {(lead.activities||[]).length === 0
-                ? <Typography variant="body2" color="text.secondary" sx={{ py:2, textAlign:"center" }}>Haji koi activity nathi.</Typography>
+                ? <Typography variant="body2" color="text.secondary" sx={{ py:2, textAlign:"center" }}>No activities recorded yet.</Typography>
                 : (
                   <List dense>
                     {[...lead.activities].reverse().map(act=>(
@@ -349,7 +338,7 @@ export default function LeadDetail() {
         <DialogTitle>Convert Lead to Client</DialogTitle>
         <DialogContent>
           <Alert severity="info" sx={{ mb:2 }}>
-            <strong>{lead.businessName}</strong> ne client ma convert karvama avshhe. Ek unique onboarding form link generate thashe.
+            <strong>{lead.businessName}</strong> will be converted to a client. A unique onboarding form link will be generated.
           </Alert>
           <Grid container spacing={2} sx={{ mt:0.5 }}>
             <Grid item xs={12}>
@@ -377,7 +366,7 @@ export default function LeadDetail() {
         <DialogTitle>🎉 Client Converted! Onboarding Link Ready</DialogTitle>
         <DialogContent>
           <Alert severity="success" sx={{ mb:2 }}>
-            Lead successfully converted! Aa unique link client ne moko — te form bharshe aetle data automatically client record ma aavi jaashhe.
+            Lead successfully converted! Send this unique link to the client — once they fill the form, their data will automatically update the client record.
           </Alert>
           <Box sx={{ p:2, background:"#f9fafb", borderRadius:2, border:"1px solid #e5e7eb", mb:2 }}>
             <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>Onboarding Form Link:</Typography>

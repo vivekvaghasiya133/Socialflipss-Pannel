@@ -64,7 +64,7 @@ export default function StaffPage() {
 
   const handleSave = async () => {
     if (!form.name || !form.position || !form.salary) {
-      setError("Name, Position ane Salary required chhe."); return;
+      setError("Name, Position, and Salary are required."); return;
     }
     setError("");
     try {
@@ -88,7 +88,7 @@ export default function StaffPage() {
   const copyLeaveLink = (leaveToken) => {
     const link = `${FRONTEND_URL}/leave-form/${leaveToken}`;
     navigator.clipboard.writeText(link);
-    setToast("Leave form link copied! Staff ne WhatsApp karo. 📋");
+    setToast("Leave form link copied! Send it to the staff member via WhatsApp. 📋");
   };
 
   const f = (key) => ({
@@ -169,7 +169,7 @@ export default function StaffPage() {
                     </Tooltip>
                     {/* Copy leave form link */}
                     {s.status === "active" && s.leaveToken && (
-                      <Tooltip title="Leave Form Link Copy Karo (Staff ne moko)">
+                      <Tooltip title="Copy Leave Form Link (Send to staff)">
                         <IconButton size="small" color="secondary" onClick={() => copyLeaveLink(s.leaveToken)}>
                           <ContentCopyIcon fontSize="small" />
                         </IconButton>
@@ -195,7 +195,7 @@ export default function StaffPage() {
               {!loading && staff.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={10} align="center" sx={{ py:4, color:"text.secondary" }}>
-                    Koi staff nathi. + Add Staff click karo.
+                    No staff members found. Click + Add Staff.
                   </TableCell>
                 </TableRow>
               )}
@@ -238,7 +238,7 @@ export default function StaffPage() {
       <Dialog open={Boolean(deactivateTarget)} onClose={() => setDeactivateTarget(null)}>
         <DialogTitle>Deactivate Staff</DialogTitle>
         <DialogContent>
-          <Typography><strong>{deactivateTarget?.name}</strong> ne deactivate karvu chhe?</Typography>
+          <Typography>Are you sure you want to deactivate <strong>{deactivateTarget?.name}</strong>?</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeactivateTarget(null)}>Cancel</Button>

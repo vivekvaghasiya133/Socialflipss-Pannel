@@ -102,7 +102,7 @@ export default function NotificationBell() {
             <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}><CircularProgress size={24} /></Box>
           ) : notifs.length === 0 ? (
             <Box sx={{ py: 4, textAlign: "center" }}>
-              <Typography variant="body2" color="text.secondary">Koi notification nathi</Typography>
+              <Typography variant="body2" color="text.secondary">No notifications</Typography>
             </Box>
           ) : notifs.map(n => (
             <Box

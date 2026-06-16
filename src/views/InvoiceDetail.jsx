@@ -287,9 +287,9 @@ export default function InvoiceDetail() {
   // ── Create new invoice ──────────────────────────────────────────
   const handleCreate = async () => {
     const { clientId, clientBusiness, items } = newForm;
-    if (!isManualClient && !clientId) { setCreateError("Client select karo."); return; }
-    if (isManualClient && !clientBusiness) { setCreateError("Client Business Name (પેઢીનું નામ) required chhe."); return; }
-    if (!items.length || !items[0].description) { setCreateError("Kam se kam ek item required chhe."); return; }
+    if (!isManualClient && !clientId) { setCreateError("Please select a client."); return; }
+    if (isManualClient && !clientBusiness) { setCreateError("Client Business Name is required."); return; }
+    if (!items.length || !items[0].description) { setCreateError("At least one item is required."); return; }
     setCreating(true); setCreateError("");
     try {
       const payload = {
@@ -320,7 +320,7 @@ export default function InvoiceDetail() {
 
   // ── Record payment ──────────────────────────────────────────────
   const handlePayment = async () => {
-    if (!payForm.amount || Number(payForm.amount) <= 0) { setPayError("Valid amount enter karo."); return; }
+    if (!payForm.amount || Number(payForm.amount) <= 0) { setPayError("Please enter a valid amount."); return; }
     if (payForm.collectedBy === "other" && !payForm.collectedByCustom?.trim()) { setPayError("Collector's name is required."); return; }
     setPayError("");
     try {
@@ -353,14 +353,7 @@ export default function InvoiceDetail() {
       `Amount: ₹${total}\n` +
       `Paid: ₹${paid}\n` +
       `Pending: ₹${pending}\n\n` +
-      `Please complete the payment. Thank you! 🙏\n\n` +
-      `---\n\n` +
-      `નમસ્તે ${clientName} 👋\n\n` +
-      `*સોશિયલફ્લિપ્સ — ઇન્વોઇસ ${invoice.invoiceNumber}*\n\n` +
-      `રકમ: ₹${total}\n` +
-      `ચૂકવેલ: ₹${paid}\n` +
-      `બાકી: ₹${pending}\n\n` +
-      `કૃપા કરીને બાકી ચૂકવણી પૂર્ણ કરવા વિનંતી. આભાર! 🙏\n\n` +
+      `Please complete the pending payment. Thank you! 🙏\n\n` +
       `– SocialFlipss Team`
     );
     window.open(`https://wa.me/91${(invoice.clientId?.mobile || invoice.clientMobile || "").replace(/\D/g,"")}?text=${msg}`, "_blank");
@@ -611,7 +604,7 @@ export default function InvoiceDetail() {
             <CardContent>
               <Typography variant="h6" mb={2}>Payment History</Typography>
               {invoice.payments.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">Haji koi payment recorded nathi.</Typography>
+                <Typography variant="body2" color="text.secondary">No payments recorded yet.</Typography>
               ) : (
                 <Table size="small">
                   <TableHead>

@@ -80,7 +80,7 @@ export default function ProjectsPage() {
 
   const handleAdd = async () => {
     if (!form.clientId || !form.name) {
-      setFormError("Client ane project name required chhe.");
+      setFormError("Client and project name are required.");
       return;
     }
     setFormError("");
@@ -271,7 +271,7 @@ export default function ProjectsPage() {
               {projects.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py:5, color:"text.secondary" }}>
-                    Koi project nathi. "+ New Project" click karo.
+                    No projects found. Click "+ New Project".
                   </TableCell>
                 </TableRow>
               )}
@@ -339,7 +339,7 @@ export default function ProjectsPage() {
         <DialogTitle>Delete Project</DialogTitle>
         <DialogContent>
           <Typography>
-            <strong>{deleteTarget?.name}</strong> ane eni badhi content permanently delete thashe.
+            <strong>{deleteTarget?.name}</strong> and all its content will be permanently deleted.
           </Typography>
         </DialogContent>
         <DialogActions>

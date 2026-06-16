@@ -102,7 +102,7 @@ export default function AttendancePage() {
       <Box sx={{ display:"flex", justifyContent:"space-between", alignItems:"center", mb:3, flexWrap:"wrap", gap:2 }}>
         <Box>
           <Typography variant="h5">Daily Attendance</Typography>
-          <Typography variant="body2" color="text.secondary">Admin — date select karo ane attendance mark karo</Typography>
+          <Typography variant="body2" color="text.secondary">Admin — select date and mark attendance</Typography>
         </Box>
         <Box sx={{ display:"flex", gap:1.5, alignItems:"center" }}>
           <TextField
@@ -150,7 +150,7 @@ export default function AttendancePage() {
               {loading ? (
                 <TableRow><TableCell colSpan={5} align="center" sx={{ py:4 }}><CircularProgress size={28} /></TableCell></TableRow>
               ) : staff.length === 0 ? (
-                <TableRow><TableCell colSpan={5} align="center" sx={{ py:4, color:"text.secondary" }}>Koi staff nahi. Pehla Staff page par add karo.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} align="center" sx={{ py:4, color:"text.secondary" }}>No staff found. First add them on the Staff page.</TableCell></TableRow>
               ) : staff.map((s) => {
                 const currentStatus = marks[s._id] || "";
                 const colors = ["#1a56db","#0e9f6e","#8b5cf6","#e02424","#ff8800","#0891b2"];

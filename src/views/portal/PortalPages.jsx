@@ -63,7 +63,7 @@ export function PortalInvoices() {
                     <TableCell><Chip label={PAY_LABEL[inv.paymentStatus]} color={PAY_COLOR[inv.paymentStatus]} size="small"/></TableCell>
                   </TableRow>
                 ))}
-                {invoices.length===0 && <TableRow><TableCell colSpan={6} align="center" sx={{ py:5, color:"text.secondary" }}>Koi invoice nathi yet.</TableCell></TableRow>}
+                 {invoices.length===0 && <TableRow><TableCell colSpan={6} align="center" sx={{ py:5, color:"text.secondary" }}>No invoices yet.</TableCell></TableRow>}
               </TableBody>
             </Table>
           </TableContainer>
@@ -145,7 +145,7 @@ export function PortalInvoiceDetail() {
             </Box>
           </Box>
           {invoice.pendingAmount>0 && (
-            <Alert severity="info" sx={{ mt:2 }}>Payment maate SocialFlipss team ne contact karo. 📞</Alert>
+             <Alert severity="info" sx={{ mt:2 }}>Please contact the SocialFlips team for payments. 📞</Alert>
           )}
         </Box>
       </Card>
@@ -169,9 +169,9 @@ export function PortalSchedule() {
   return (
     <Box>
       <Typography variant="h5" mb={0.5}>Shoot Schedule</Typography>
-      <Typography variant="body2" color="text.secondary" mb={3}>Tamara upcoming ane past shoot sessions</Typography>
+       <Typography variant="body2" color="text.secondary" mb={3}>Your upcoming and past shoot sessions</Typography>
       {loading ? <Box sx={{ display:"flex", justifyContent:"center", pt:4 }}><CircularProgress/></Box> :
-       schedules.length===0 ? <Card><Box sx={{ py:6, textAlign:"center", color:"text.secondary" }}>Koi schedule nathi yet.</Box></Card> :
+       schedules.length===0 ? <Card><Box sx={{ py:6, textAlign:"center", color:"text.secondary" }}>No schedules yet.</Box></Card> :
        schedules.map(sch=>(
         <Card key={sch._id} sx={{ mb:2 }}>
           <Box sx={{ p:2.5 }}>
@@ -221,9 +221,9 @@ export function PortalNotifications() {
   return (
     <Box>
       <Typography variant="h5" mb={0.5}>Notifications</Typography>
-      <Typography variant="body2" color="text.secondary" mb={3}>Tamara badha updates</Typography>
+       <Typography variant="body2" color="text.secondary" mb={3}>All your updates</Typography>
       {loading ? <Box sx={{ display:"flex", justifyContent:"center", pt:4 }}><CircularProgress/></Box> :
-       notifs.length===0 ? <Card><Box sx={{ py:6, textAlign:"center", color:"text.secondary" }}>Koi notification nathi yet.</Box></Card> :
+       notifs.length===0 ? <Card><Box sx={{ py:6, textAlign:"center", color:"text.secondary" }}>No notifications yet.</Box></Card> :
        notifs.map(n=>(
         <Card key={n._id} sx={{ mb:1.5, opacity:n.read?0.7:1, border:n.read?"1px solid #e5e7eb":"1px solid #1a56db" }}>
           <Box sx={{ p:2, display:"flex", gap:2, alignItems:"flex-start" }}>

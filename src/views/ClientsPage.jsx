@@ -60,7 +60,7 @@ export default function ClientsPage() {
 
   const handleAdd = async () => {
     if (!form.businessName || !form.ownerName || !form.mobile) {
-      setFormError("Business name, owner name ane mobile required chhe."); return;
+      setFormError("Business name, owner name, and mobile number are required."); return;
     }
     setFormError("");
     try {
@@ -85,9 +85,6 @@ export default function ClientsPage() {
     const msg = encodeURIComponent(
       `Hi ${name} 👋\n\n` +
       `Just wanted to share an update from the SocialFlipss team.\n\n` +
-      `---\n\n` +
-      `નમસ્તે ${name} 👋\n\n` +
-      `સોશિયલફ્લિપ્સ ટીમ તરફથી અપડેટ શેર કરવાનું હતું.\n\n` +
       `– SocialFlipss Team`
     );
     window.open(`https://wa.me/91${mobile.replace(/\D/g,"")}?text=${msg}`, "_blank");
@@ -214,7 +211,7 @@ export default function ClientsPage() {
               {!loading && clients.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={9} align="center" sx={{ py:5, color:"text.secondary" }}>
-                    Koi client nathi.
+                    No clients found.
                   </TableCell>
                 </TableRow>
               )}
@@ -270,7 +267,7 @@ export default function ClientsPage() {
       <Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)}>
         <DialogTitle>Delete Client</DialogTitle>
         <DialogContent>
-          <Typography><strong>{deleteTarget?.businessName}</strong> ne permanently delete karvu chhe?</Typography>
+          <Typography>Are you sure you want to permanently delete <strong>{deleteTarget?.businessName}</strong>?</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>

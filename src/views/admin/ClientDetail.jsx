@@ -184,12 +184,12 @@ export default function ClientDetail() {
 
   // Setup portal access
   const handlePortalSetup = async () => {
-    if (!portalEmail && !portalMobile) { setToast("Email ya mobile required chhe."); return; }
+    if (!portalEmail && !portalMobile) { setToast("Email or mobile is required."); return; }
     setPortalSaving(true);
     try {
       await setupPortalAccess({ clientId: id, email: portalEmail, mobile: portalMobile, password: portalPassword || undefined });
       setPortalDone(true);
-      setToast("Portal access setup done! Client ne login credentials moko. ✅");
+      setToast("Portal access setup done! Send login credentials to client. ✅");
     } catch (err) { setToast(err.response?.data?.message || "Setup failed."); }
     finally { setPortalSaving(false); }
   };
@@ -276,7 +276,7 @@ export default function ClientDetail() {
     if (!client || !invoices.length) return;
     const pendingInvoices = invoices.filter(inv => inv.pendingAmount > 0);
     if (pendingInvoices.length === 0) {
-      setToast("Client nu koi pending invoice nathi. 🎉");
+      setToast("No pending invoices for this client. 🎉");
       return;
     }
 
@@ -347,7 +347,7 @@ export default function ClientDetail() {
       {client.status === "onboarding" && (
         <Alert severity="info" sx={{ mb:3, display:"flex", alignItems:"center", flexWrap:"wrap", gap:2 }}>
           <Box sx={{ flex:1 }}>
-            <Typography variant="body2" fontWeight={600}>Onboarding form click kari ne fill karvano baaki chhe.</Typography>
+            <Typography variant="body2" fontWeight={600}>The onboarding form has not been filled yet.</Typography>
             <Typography variant="caption" color="text.secondary" display="block" sx={{ wordBreak:"break-all", mt:0.5 }}>
               Onboarding Link: <strong>{`${window.location.origin}/onboard-client/${client._id}`}</strong>
             </Typography>
@@ -355,7 +355,7 @@ export default function ClientDetail() {
           <Box sx={{ display:"flex", gap:1, mt:1 }}>
             <Button size="small" variant="outlined" startIcon={<ContentCopyIcon/>} onClick={() => {
               navigator.clipboard.writeText(`${window.location.origin}/onboard-client/${client._id}`);
-              setToast("Onboarding link copied! Client ne WhatsApp karo. 📋");
+              setToast("Onboarding link copied! Please send to client. 📋");
             }}>
               Copy Link
             </Button>
@@ -616,7 +616,7 @@ export default function ClientDetail() {
                     onChange={e=>setPortalMobile(e.target.value)} placeholder="9876543210"/>
                 </Grid>
                 <Grid item xs={12}>
-                  <TextField fullWidth size="small" label="Password (optional — OTP login pn available chhe)" type="password"
+                  <TextField fullWidth size="small" label="Password (optional — OTP login is also available)" type="password"
                     value={portalPassword} onChange={e=>setPortalPassword(e.target.value)}
                     placeholder="Leave blank for OTP-only login"/>
                 </Grid>
@@ -634,7 +634,7 @@ export default function ClientDetail() {
               </Box>
               {portalDone && (
                 <Alert severity="success" sx={{ mt:2 }}>
-                  Portal access ready! Client ne WhatsApp par credentials send karo. Portal link: <strong>{window.location.origin}/portal/login</strong>
+                  Portal access ready! Send the credentials to the client via WhatsApp. Portal link: <strong>{window.location.origin}/portal/login</strong>
                 </Alert>
               )}
             </SectionCard>
@@ -646,7 +646,7 @@ export default function ClientDetail() {
               <Alert severity="info" sx={{ mb:2 }}>
                 {autoConfig?.dayOfMonth
                   ? `Invoice will automatically generate on day ${autoConfig.dayOfMonth} of every month.`
-                  : `Client na onboarding date anniversary par (${client.onboardingDate ? new Date(client.onboardingDate).getDate() : "?"} tarikh) automatically invoice generate thashe.`}
+                  : `Invoices will be automatically generated on the onboarding date anniversary (day ${client.onboardingDate ? new Date(client.onboardingDate).getDate() : "?"} of every month).`}
                 {autoConfig && <><br/><strong>Last generated: {autoConfig.lastGeneratedMonth || "Never"}</strong></>}
               </Alert>
 
@@ -727,7 +727,7 @@ export default function ClientDetail() {
               action={<Button size="small" onClick={()=>navigate(`/admin/invoices/new?clientId=${id}`)}>+ New Invoice</Button>}
             >
               {invoices.length === 0
-                ? <Typography color="text.secondary" variant="body2">Koi invoice nathi yet.</Typography>
+                ? <Typography color="text.secondary" variant="body2">No invoices yet.</Typography>
                 : (
                   <TableContainer>
                     <Table size="small">

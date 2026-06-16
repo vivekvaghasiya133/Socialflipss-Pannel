@@ -105,7 +105,7 @@ export default function ShootSchedulerPage() {
 
   const handleGenerate = async () => {
     if (!genForm.totalReels || !genForm.startDate || !genForm.endDate) {
-      setError("Total reels, start date ane end date required chhe."); return;
+      setError("Total reels, start date, and end date are required."); return;
     }
     setGenerating(true); setError("");
     try {
@@ -147,7 +147,7 @@ export default function ShootSchedulerPage() {
   const sendWhatsApp = (slot) => {
     const client  = schedule?.clientId;
     const mobile  = client?.mobile;
-    if (!mobile) { setToast("Client mobile number nathi."); return; }
+    if (!mobile) { setToast("Client mobile number not found."); return; }
     const msg = encodeURIComponent(buildWhatsAppMessage(slot, client, project?.name || ""));
     window.open(`https://wa.me/91${mobile.replace(/\D/g,"")}?text=${msg}`, "_blank");
     // Mark as whatsapp sent
@@ -206,7 +206,7 @@ export default function ShootSchedulerPage() {
           <CardContent>
             <Typography variant="h6" mb={2}>🗓️ Auto-Generate Shoot Schedule</Typography>
             <Typography variant="body2" color="text.secondary" mb={2}>
-              Total reels, start date ane end date nakho — baaki automatic schedule thaashhe. Mon–Sat working days, Morning/Afternoon/Evening slots ma evenly distribute thashe.
+              Enter total reels, start date, and end date — the rest will be scheduled automatically. Mon–Sat working days, Morning/Afternoon/Evening slots will be evenly distributed.
             </Typography>
             <Grid container spacing={2} alignItems="flex-end">
               <Grid item xs={12} sm={3}>
@@ -242,9 +242,9 @@ export default function ShootSchedulerPage() {
         <Card>
           <CardContent sx={{ textAlign:"center", py:6 }}>
             <CalendarIcon sx={{ fontSize:48, color:"#d1d5db", mb:2 }} />
-            <Typography variant="h6" color="text.secondary" mb={1}>Koi schedule nathi yet</Typography>
+            <Typography variant="h6" color="text.secondary" mb={1}>No schedules yet</Typography>
             <Typography variant="body2" color="text.secondary" mb={2}>
-              Total reels ane date range nakho — automatic shoot schedule generate thashe.
+              Enter total reels and date range — the automatic shoot schedule will be generated.
             </Typography>
             <Button variant="contained" onClick={()=>setShowGenForm(true)}>Generate Schedule</Button>
           </CardContent>
@@ -409,7 +409,7 @@ export default function ShootSchedulerPage() {
             <Grid item xs={12}>
               <TextField fullWidth size="small" label="Note (optional)" value={editForm.note}
                 onChange={e=>setEditForm({...editForm,note:e.target.value})}
-                placeholder="Koi special note for client..." />
+                placeholder="Any special note for client..." />
             </Grid>
           </Grid>
         </DialogContent>

@@ -90,7 +90,7 @@ export default function LeadsPage() {
     console.log(form);
     
     if (!form.businessName || !form.contactName || !form.mobile) {
-      setFormError("Business name, contact name ane mobile required chhe."); return;
+      setFormError("Business name, contact name, and mobile number are required."); return;
     }
     setFormError("");
     try {
@@ -121,9 +121,6 @@ export default function LeadsPage() {
     const msg = encodeURIComponent(
       `Hi ${name} 👋\n\n` +
       `This is the SocialFlipss team. We wanted to discuss our digital marketing services with you.\n\n` +
-      `---\n\n` +
-      `નમસ્તે ${name} 👋\n\n` +
-      `હું સોશિયલફ્લિપ્સ ટીમ તરફથી વાત કરી રહ્યો છું. અમારે તમારી સાથે ડિજિટલ માર્કેટિંગ સેવાઓ વિશે ચર્ચા કરવી હતી.\n\n` +
       `– SocialFlipss Team`
     );
     window.open(`https://wa.me/91${mobile.replace(/\D/g,"")}?text=${msg}`, "_blank");
@@ -180,7 +177,7 @@ export default function LeadsPage() {
           onClick={() => setDueSoon(!dueSoon)}
           action={<Button size="small" color="inherit">{dueSoon ? "Show All" : "Show Due"}</Button>}
         >
-          <strong>{stats.dueTodayOrOverdue} follow-up{stats.dueTodayOrOverdue > 1 ? "s" : ""}</strong> due today ya overdue chhe!
+          <strong>{stats.dueTodayOrOverdue} follow-up{stats.dueTodayOrOverdue > 1 ? "s" : ""}</strong> due today or overdue!
         </Alert>
       )}
 
@@ -274,7 +271,7 @@ export default function LeadsPage() {
               {!loading && leads.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={8} align="center" sx={{ py:5, color:"text.secondary" }}>
-                    Koi lead nathi. "+ Add Lead" click karo.
+                    No leads found. Click "+ Add Lead" to create one.
                   </TableCell>
                 </TableRow>
               )}
@@ -336,7 +333,7 @@ export default function LeadsPage() {
               </Box>
             </Grid>
             <Grid item xs={12}>
-              <TextField fullWidth size="small" label="Initial Notes" multiline rows={2} value={form.notes} onChange={(e) => setForm({...form, notes: e.target.value})} placeholder="Pehli vaat thi notes..." />
+              <TextField fullWidth size="small" label="Initial Notes" multiline rows={2} value={form.notes} onChange={(e) => setForm({...form, notes: e.target.value})} placeholder="Notes from first discussion..." />
             </Grid>
           </Grid>
         </DialogContent>
@@ -350,7 +347,7 @@ export default function LeadsPage() {
       <Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)}>
         <DialogTitle>Delete Lead</DialogTitle>
         <DialogContent>
-          <Typography><strong>{deleteTarget?.businessName}</strong> ne delete karvu chhe?</Typography>
+          <Typography>Are you sure you want to delete <strong>{deleteTarget?.businessName}</strong>?</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteTarget(null)}>Cancel</Button>

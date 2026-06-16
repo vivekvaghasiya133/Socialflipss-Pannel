@@ -131,7 +131,7 @@ export default function ClientDetail() {
     if (!client || !invoices.length) return;
     const pendingInvoices = invoices.filter(inv => inv.pendingAmount > 0);
     if (pendingInvoices.length === 0) {
-      setToast("Client nu koi pending invoice nathi. 🎉");
+      setToast("No pending invoices for this client. 🎉");
       return;
     }
 

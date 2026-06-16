@@ -9,7 +9,7 @@ import {
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import BeachAccessIcon from "@mui/icons-material/BeachAccess";
 
-const API = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const API = process.env.REACT_APP_API_URL || "https://socialflipss-backend.onrender.com/api";
 
 export default function StaffLeaveForm() {
   const { token } = useParams();
@@ -32,10 +32,10 @@ export default function StaffLeaveForm() {
 
   const handleSubmit = async () => {
     if (!form.fromDate || !form.toDate || !form.reason) {
-      setError("Badha fields bharva jaruri chhe."); return;
+      setError("All fields are required."); return;
     }
     if (form.toDate < form.fromDate) {
-      setError("'To Date' 'From Date' pachhi hovi joiye."); return;
+      setError("'To Date' must be after 'From Date'."); return;
     }
     setSaving(true); setError("");
     try {
@@ -60,7 +60,7 @@ export default function StaffLeaveForm() {
         <CardContent sx={{ p: 4 }}>
           <Typography variant="h6" color="error" mb={1}>Invalid Link</Typography>
           <Typography variant="body2" color="text.secondary">
-            Aa link invalid chhe ya expire thayi gayi chhe. Admin ne contact karo.
+            This link is invalid or has expired. Please contact the administrator.
           </Typography>
         </CardContent>
       </Card>
@@ -72,10 +72,10 @@ export default function StaffLeaveForm() {
       <Card sx={{ maxWidth: 440, width: "100%", textAlign: "center" }}>
         <CardContent sx={{ p: 5 }}>
           <CheckCircleIcon sx={{ fontSize: 64, color: "#0e9f6e", mb: 2 }} />
-          <Typography variant="h5" fontWeight={700} mb={1}>Leave Request Submit Thayo!</Typography>
+          <Typography variant="h5" fontWeight={700} mb={1}>Leave Request Submitted!</Typography>
           <Typography variant="body2" color="text.secondary" lineHeight={1.8}>
-            Tamari leave request admin ne meli gayi chhe.<br />
-            Approve ya reject thayaa pachhi tamne email aavshhe. 📧
+            Your leave request has been submitted to the admin.<br />
+            You will receive an email once it is approved or rejected. 📧
           </Typography>
         </CardContent>
       </Card>
@@ -157,7 +157,7 @@ export default function StaffLeaveForm() {
             </Typography>
             <TextField
               fullWidth multiline rows={4}
-              placeholder="Leave nu karan lakhho — personal work, sick, family, etc..."
+              placeholder="Please describe the reason for your leave (e.g. personal work, sick, family)..."
               value={form.reason}
               onChange={(e) => setForm({ ...form, reason: e.target.value })}
             />
@@ -171,7 +171,7 @@ export default function StaffLeaveForm() {
           </Button>
 
           <Typography variant="caption" color="text.secondary" display="block" textAlign="center" mt={1.5}>
-            Submit thaya pachhi admin ne notification jaashhe. Email par response aavshhe.
+            After submission, the admin will be notified. You will receive a response by email.
           </Typography>
         </CardContent>
       </Card>

@@ -39,7 +39,7 @@ export default function LeavesPage() {
 
   const handleApply = async () => {
     if (!form.staffId || !form.fromDate || !form.toDate || !form.reason) {
-      setError("Badha required fields bharo."); return;
+      setError("Please fill all required fields."); return;
     }
     setError("");
     try {
