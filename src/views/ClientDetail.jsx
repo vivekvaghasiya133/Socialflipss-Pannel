@@ -4,14 +4,18 @@ import {
   Box, Typography, Card, CardContent, Grid, Chip, Button, Divider,
   TextField, Select, MenuItem, FormControl, InputLabel, Alert,
   Snackbar, CircularProgress, IconButton, Tooltip, Table, TableBody,
-  TableCell, TableHead, TableRow, TableContainer,
+  TableCell, TableHead, TableRow, TableContainer, Dialog, DialogTitle,
+  DialogContent, DialogActions,
 } from "@mui/material";
 import ArrowBackIcon  from "@mui/icons-material/ArrowBack";
 import WhatsAppIcon   from "@mui/icons-material/WhatsApp";
 import AddIcon        from "@mui/icons-material/Add";
 import DeleteIcon     from "@mui/icons-material/Delete";
 import ReceiptIcon    from "@mui/icons-material/Receipt";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
+import CloseIcon      from "@mui/icons-material/Close";
 import { getClientById, updateClient, getInvoices } from "../api/clientsApi";
+import { getMeetings, createMeeting, uploadMeetingImage } from "../api/meetingApi";
 import { useAuth } from "../context/AuthContext";
 
 const STATUS_OPTIONS = ["onboarding","active","paused","churned"];
@@ -58,6 +62,7 @@ export default function ClientDetail() {
 
   const [client, setClient]   = useState(null);
   const [invoices, setInvoices] = useState([]);
+  const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving]   = useState(false);
   const [toast, setToast]     = useState("");
@@ -71,12 +76,19 @@ export default function ClientDetail() {
   const [deliverables, setDeliverables] = useState([]);
   const [newDel, setNewDel] = useState({ type:"", quantity:"", note:"" });
 
+  const [meetDialogOpen, setMeetDialogOpen] = useState(false);
+  const [meetUploading, setMeetUploading]   = useState(false);
+  const [meetForm, setMeetForm]             = useState({
+    title: "", purpose: "Onboarding Meeting", date: new Date().toISOString().slice(0, 16), notes: "", images: []
+  });
+
   const load = () => {
     setLoading(true);
     Promise.all([
       getClientById(id),
       getInvoices({ clientId: id }),
-    ]).then(([cr, ir]) => {
+      getMeetings({ clientId: id }).catch(() => ({ data: [] })),
+    ]).then(([cr, ir, mr]) => {
       const c = cr.data;
       setClient(c);
       setAdminForm({ status: c.status || "onboarding", assignedTo: c.assignedTo?._id || "", internalNotes: c.internalNotes || "" });
@@ -88,6 +100,7 @@ export default function ClientDetail() {
       });
       setDeliverables(c.package?.deliverables || []);
       setInvoices(ir.data.invoices || []);
+      setMeetings(mr.data || []);
     }).catch(() => navigate("/admin/clients"))
       .finally(() => setLoading(false));
   };
@@ -113,6 +126,58 @@ export default function ClientDetail() {
   };
 
   const removeDeliverable = (i) => setDeliverables(deliverables.filter((_, idx) => idx !== i));
+
+  const handleMeetImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    setMeetUploading(true);
+    try {
+      const uploadPromises = files.map(file => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = async () => {
+            try {
+              const res = await uploadMeetingImage({ image: reader.result });
+              resolve(res.data.url);
+            } catch (err) { reject(err); }
+          };
+          reader.onerror = err => reject(err);
+        });
+      });
+      const urls = await Promise.all(uploadPromises);
+      setMeetForm(prev => ({ ...prev, images: [...prev.images, ...urls] }));
+      setToast("Images uploaded successfully! ✅");
+    } catch {
+      setToast("Failed to upload one or more images.");
+    } finally {
+      setMeetUploading(false);
+    }
+  };
+
+  const removeMeetImage = (urlIdx) => {
+    setMeetForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, idx) => idx !== urlIdx)
+    }));
+  };
+
+  const handleMeetSubmit = async () => {
+    if (!meetForm.title || !meetForm.purpose || !meetForm.date) {
+      setToast("Please fill out all required fields.");
+      return;
+    }
+    try {
+      await createMeeting({ ...meetForm, clientId: id });
+      setMeetDialogOpen(false);
+      setToast("Meeting log saved! 🤝");
+      // reload meetings
+      const mr = await getMeetings({ clientId: id });
+      setMeetings(mr.data || []);
+    } catch {
+      setToast("Failed to save meeting log.");
+    }
+  };
 
   const openWhatsApp = () => {
     if (!client) return;
@@ -353,6 +418,60 @@ export default function ClientDetail() {
               </TableContainer>
             </Section>
           )}
+
+          {/* Meetings Log */}
+          <Section 
+            title="Meetings Log"
+            action={
+              canManage && (
+                <Button size="small" variant="outlined" onClick={() => setMeetDialogOpen(true)}>
+                  + Log Meeting
+                </Button>
+              )
+            }
+          >
+            {meetings.length === 0 ? (
+              <Typography color="text.secondary" variant="body2">No meetings logged for this client yet.</Typography>
+            ) : (
+              <Grid container spacing={2}>
+                {meetings.map((meet) => (
+                  <Grid item xs={12} key={meet._id}>
+                    <Card sx={{ border: "1px solid #e5e7eb", borderRadius: 2, bgcolor: "#f9fafb" }}>
+                      <Box sx={{ p: 2 }}>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1, flexWrap: "wrap", gap: 1 }}>
+                          <Box>
+                            <Chip label={meet.purpose} size="small" color="primary" sx={{ fontWeight: 600, mr: 1 }} />
+                            <Typography variant="subtitle2" display="inline" fontWeight={700}>{meet.title}</Typography>
+                          </Box>
+                          <Typography variant="caption" color="text.disabled">
+                            {new Date(meet.date).toLocaleDateString("en-IN")}
+                          </Typography>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: "pre-line", mt: 1 }}>
+                          {meet.notes}
+                        </Typography>
+                        {meet.images && meet.images.length > 0 && (
+                          <Box sx={{ mt: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
+                            {meet.images.map((img, i) => (
+                              <Box 
+                                component="a" 
+                                href={`http://localhost:5000${img}`} 
+                                target="_blank" 
+                                key={i}
+                                sx={{ width: 60, height: 60, border: "1px solid #e5e7eb", borderRadius: 1, overflow: "hidden" }}
+                              >
+                                <img src={`http://localhost:5000${img}`} alt="sketch" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                              </Box>
+                            ))}
+                          </Box>
+                        )}
+                      </Box>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </Section>
         </Grid>
 
         {/* RIGHT — admin controls */}
@@ -391,6 +510,105 @@ export default function ClientDetail() {
           </Grid>
         )}
       </Grid>
+
+      {/* Log Meeting Dialog */}
+      <Dialog open={meetDialogOpen} onClose={() => setMeetDialogOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+        <DialogTitle sx={{ fontWeight: 700 }}>Log Meeting with {client.businessName}</DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Meeting Date & Time"
+                type="datetime-local"
+                required
+                InputLabelProps={{ shrink: true }}
+                value={meetForm.date}
+                onChange={e => setMeetForm({...meetForm, date: e.target.value})}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Purpose</InputLabel>
+                <Select
+                  value={meetForm.purpose}
+                  label="Purpose"
+                  onChange={e => setMeetForm({...meetForm, purpose: e.target.value})}
+                >
+                  {["Onboarding Meeting", "Monthly Planning", "Follow Up", "Revisions & Feedback", "General Alignment"].map(p => (
+                    <MenuItem key={p} value={p}>{p}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Meeting Title"
+                placeholder="e.g. Onboarding Brand Strategy Discussion"
+                required
+                value={meetForm.title}
+                onChange={e => setMeetForm({...meetForm, title: e.target.value})}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Notes / Discussed Points"
+                placeholder="Minutes of the meeting, brief details..."
+                multiline
+                rows={4}
+                value={meetForm.notes}
+                onChange={e => setMeetForm({...meetForm, notes: e.target.value})}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>📷 Upload Sketches / Offline Notes</Typography>
+              <Button
+                variant="outlined"
+                component="label"
+                startIcon={<PhotoCameraIcon />}
+                disabled={meetUploading}
+                size="small"
+              >
+                {meetUploading ? "Uploading..." : "Select Images"}
+                <input
+                  type="file"
+                  hidden
+                  multiple
+                  accept="image/*"
+                  onChange={handleMeetImageUpload}
+                />
+              </Button>
+              {meetForm.images.length > 0 && (
+                <Grid container spacing={1} sx={{ mt: 1.5 }}>
+                  {meetForm.images.map((url, i) => (
+                    <Grid item key={i} sx={{ position: "relative" }}>
+                      <Box sx={{ width: 60, height: 60, border: "1px solid #ccc", borderRadius: 2, overflow: "hidden" }}>
+                        <img src={`http://localhost:5000${url}`} alt="preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      </Box>
+                      <IconButton
+                        size="small"
+                        sx={{ position: "absolute", top: -5, right: -5, bgcolor: "rgba(255,255,255,0.8)", border: "1px solid #ccc" }}
+                        onClick={() => removeMeetImage(i)}
+                      >
+                        <CloseIcon fontSize="inherit" style={{ fontSize: 12 }} />
+                      </IconButton>
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setMeetDialogOpen(false)} disabled={meetUploading}>Cancel</Button>
+          <Button variant="contained" onClick={handleMeetSubmit} disabled={meetUploading}>Save Meeting Log</Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar open={Boolean(toast)} autoHideDuration={3000} onClose={() => setToast("")} message={toast} />
     </Box>

@@ -15,6 +15,7 @@ import CalendarIcon    from "@mui/icons-material/CalendarMonth";
 import EditIcon        from "@mui/icons-material/Edit";
 import { getProjectById } from "../api/projectsApi";
 import { getShootScheduleByProject, generateShootSchedule, updateShootSlot, deleteShootSchedule } from "../api/featuresApi";
+import api from "../api";
 
 const SLOT_COLORS = {
   morning:   { bg:"#fef3c7", color:"#92400e", label:"🌅 Morning",   time:"10:00 AM" },
@@ -62,6 +63,7 @@ export default function ShootSchedulerPage() {
 
   const [project, setProject]   = useState(null);
   const [schedule, setSchedule] = useState(null);
+  const [content, setContent]   = useState([]);
   const [loading, setLoading]   = useState(true);
   const [generating, setGenerating] = useState(false);
   const [toast, setToast]       = useState("");
@@ -80,12 +82,14 @@ export default function ShootSchedulerPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [pr, sr] = await Promise.all([
+      const [pr, sr, cr] = await Promise.all([
         getProjectById(projectId),
         getShootScheduleByProject(projectId),
+        api.get("/content", { params: { projectId, limit: 200 } }).catch(() => ({ data: { content: [] } })),
       ]);
       setProject(pr.data);
       setSchedule(sr.data);
+      setContent(cr.data.content || []);
 
       // Pre-fill gen form from project
       if (pr.data.startDate && pr.data.endDate) {
@@ -333,7 +337,18 @@ export default function ShootSchedulerPage() {
                         </TableCell>
                         <TableCell>
                           <Chip label={`🎬 ${slot.reelCount} reel${slot.reelCount>1?"s":""}`} size="small"
-                            sx={{ bgcolor:"#ede9fe", color:"#6d28d9", fontWeight:600 }} />
+                            sx={{ bgcolor:"#ede9fe", color:"#6d28d9", fontWeight:600, mb: 0.5 }} />
+                          {content
+                            .filter(c => c.shootDate && c.shootDate.slice(0, 10) === slot.date)
+                            .map(c => (
+                              <Chip 
+                                key={c._id} 
+                                label={c.title} 
+                                size="small" 
+                                variant="outlined" 
+                                sx={{ display: "block", mt: 0.5, fontSize: 10, maxWidth: 180, textOverflow: "ellipsis", overflow: "hidden" }} 
+                              />
+                            ))}
                         </TableCell>
                         <TableCell>
                           <Chip

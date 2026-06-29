@@ -15,13 +15,13 @@ import api from "../api";
 import { getClients } from "../api/clientsApi";
 
 const STAGES = [
-  { key:"idea",            label:"💡 Idea",            color:"#6b7280", bg:"#f3f4f6" },
-  { key:"script",          label:"✍️ Script",          color:"#0891b2", bg:"#e0f2fe" },
-  { key:"shoot",           label:"🎥 Shoot",           color:"#7c3aed", bg:"#ede9fe" },
-  { key:"edit",            label:"🎬 Edit",            color:"#d97706", bg:"#fef3c7" },
-  { key:"qc",              label:"✅ QC",              color:"#0e9f6e", bg:"#dcfce7" },
-  { key:"client_approval", label:"👤 Client Approval", color:"#3f83f8", bg:"#e1effe" },
-  { key:"posted",          label:"🚀 Posted",          color:"#059669", bg:"#d1fae5" },
+  { key: "idea", label: "💡 Idea", color: "#6b7280", bg: "#f3f4f6" },
+  { key: "script", label: "✍️ Script", color: "#0891b2", bg: "#e0f2fe" },
+  { key: "shoot", label: "🎥 Shoot", color: "#7c3aed", bg: "#ede9fe" },
+  { key: "edit", label: "🎬 Edit", color: "#d97706", bg: "#fef3c7" },
+  { key: "qc", label: "✅ QC", color: "#0e9f6e", bg: "#dcfce7" },
+  { key: "client_approval", label: "👤 Client Approval", color: "#3f83f8", bg: "#e1effe" },
+  { key: "posted", label: "🚀 Posted", color: "#059669", bg: "#d1fae5" },
 ];
 
 const GOAL_COLORS = {
@@ -31,13 +31,13 @@ const GOAL_COLORS = {
   Awareness: "#d97706"
 };
 
-const PRIORITY_COLORS = { high:"error", medium:"warning", low:"default" };
+const PRIORITY_COLORS = { high: "error", medium: "warning", low: "default" };
 
 const EMPTY_CONTENT = {
-  title:"", type:"reel", description:"", platform:"instagram",
-  assignedTo:"", shootDate:"", postDate:"", driveLink:"",
-  instagramLink:"", priority:"medium", stage:"idea",
-  reelGoal: "Authority", clientId: ""
+  title: "", type: "reel", description: "", platform: "instagram",
+  assignedTo: "", shootDate: "", postDate: "", driveLink: "",
+  instagramLink: "", priority: "medium", stage: "idea",
+  reelGoal: "Authority", clientId: "", scriptText: ""
 };
 
 function ContentCard({ item, onEdit, onDelete, onDragStart, onDragEnd, dragging }) {
@@ -61,16 +61,16 @@ function ContentCard({ item, onEdit, onDelete, onDragStart, onDragEnd, dragging 
           <Typography variant="caption" fontWeight={700} color="text.secondary">
             🏢 {item.clientId?.businessName || "Unknown Client"}
           </Typography>
-          <Chip 
-            label={item.reelGoal || "Authority"} 
-            size="small" 
-            sx={{ 
-              fontSize: 9, 
-              height: 16, 
-              bgcolor: (GOAL_COLORS[item.reelGoal] || "#7c3aed") + "18", 
-              color: GOAL_COLORS[item.reelGoal] || "#7c3aed", 
-              fontWeight: 700 
-            }} 
+          <Chip
+            label={item.reelGoal || "Authority"}
+            size="small"
+            sx={{
+              fontSize: 9,
+              height: 16,
+              bgcolor: (GOAL_COLORS[item.reelGoal] || "#7c3aed") + "18",
+              color: GOAL_COLORS[item.reelGoal] || "#7c3aed",
+              fontWeight: 700
+            }}
           />
         </Box>
 
@@ -81,21 +81,70 @@ function ContentCard({ item, onEdit, onDelete, onDragStart, onDragEnd, dragging 
 
         {/* Description/Script */}
         {item.description && (
-          <Typography 
-            variant="caption" 
-            color="text.secondary" 
-            display="block" 
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            display="block"
             mb={1}
-            sx={{ 
-              overflow: "hidden", 
-              textOverflow: "ellipsis", 
-              display: "-webkit-box", 
-              WebkitLineClamp: 2, 
-              WebkitBoxOrient: "vertical" 
+            sx={{
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical"
             }}
           >
             {item.description}
           </Typography>
+        )}
+
+        {/* Assignments Display */}
+        <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mb: 1 }}>
+          {item.stage === "shoot" && item.shooterId && (
+            <Chip
+              label={`🎯 Shooter: ${item.shooterId.name || "Assigned"}`}
+              size="small"
+              sx={{ fontSize: 9, height: 16, bgcolor: "#ede9fe", color: "#6d28d9", fontWeight: 600 }}
+            />
+          )}
+          {item.stage === "edit" && item.editorId && (
+            <Chip
+              label={`🎬 Editor: ${item.editorId.name || "Assigned"}`}
+              size="small"
+              sx={{ fontSize: 9, height: 16, bgcolor: "#fef3c7", color: "#d97706", fontWeight: 600 }}
+            />
+          )}
+          {item.stage === "edit" && !item.editorId && (
+            <Chip
+              label="⚠️ Unassigned Editor"
+              size="small"
+              sx={{ fontSize: 9, height: 16, bgcolor: "#fde8e8", color: "#9b1c1c", fontWeight: 600 }}
+            />
+          )}
+        </Box>
+
+        {/* QC Revisions Feedback Notes */}
+        {item.stage === "edit" && item.qcFeedbackText && (
+          <Box sx={{ bgcolor: "#fff1f2", border: "1px solid #fecdd3", borderRadius: 1.5, p: 1, mb: 1 }}>
+            <Typography variant="caption" color="error.main" fontWeight={700} display="block">
+              ⚠ Head QC Feedback:
+            </Typography>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: 9 }}>
+              "{item.qcFeedbackText}"
+            </Typography>
+            {item.qcVoiceNote && (
+              <Button
+                size="small"
+                variant="text"
+                color="error"
+                href={item.qcVoiceNote}
+                target="_blank"
+                sx={{ fontSize: 8.5, p: 0, minWidth: 0, textTransform: "none", mt: 0.5 }}
+              >
+                🔊 Listen Voice Note
+              </Button>
+            )}
+          </Box>
         )}
 
         {/* Client Approval status badge */}
@@ -124,19 +173,19 @@ function ContentCard({ item, onEdit, onDelete, onDragStart, onDragEnd, dragging 
         {/* Dates */}
         <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mb: 1 }}>
           {item.shootDate && (
-            <Chip 
+            <Chip
               label={`📷 ${new Date(item.shootDate).toLocaleDateString("en-IN")}`}
-              size="small" 
-              variant="outlined" 
-              sx={{ fontSize: 9, height: 16 }} 
+              size="small"
+              variant="outlined"
+              sx={{ fontSize: 9, height: 16 }}
             />
           )}
           {item.postDate && (
-            <Chip 
+            <Chip
               label={`📅 Due: ${new Date(item.postDate).toLocaleDateString("en-IN")}`}
-              size="small" 
-              variant="outlined" 
-              sx={{ fontSize: 9, height: 16 }} 
+              size="small"
+              variant="outlined"
+              sx={{ fontSize: 9, height: 16 }}
             />
           )}
         </Box>
@@ -281,7 +330,15 @@ export default function ContentPipelinePage() {
       priority: item.priority || "medium",
       stage: item.stage || "idea",
       reelGoal: item.reelGoal || "Authority",
-      clientId: item.clientId?._id || item.clientId || ""
+      clientId: item.clientId?._id || item.clientId || "",
+      scriptText: item.scriptText || "",
+      shooterId: item.shooterId?._id || item.shooterId || "",
+      editorId: item.editorId?._id || item.editorId || "",
+      shootDataLink: item.shootDataLink || "",
+      shootVoiceNote: item.shootVoiceNote || "",
+      shootInstructions: item.shootInstructions || "",
+      qcVoiceNote: item.qcVoiceNote || "",
+      qcFeedbackText: item.qcFeedbackText || "",
     });
     setDialogOpen(true);
   };
@@ -334,9 +391,9 @@ export default function ContentPipelinePage() {
             Drag and drop reels between stages to coordinate scriptwriting, shooting, editing, and publishing.
           </Typography>
         </Box>
-        <Button 
-          variant="contained" 
-          startIcon={<AddIcon />} 
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
           size="small"
           onClick={handleOpenAdd}
         >
@@ -395,10 +452,10 @@ export default function ContentPipelinePage() {
                 <Typography variant="body2" fontWeight={700} sx={{ color: col.color }}>
                   {col.label}
                 </Typography>
-                <Chip 
-                  label={col.items.length} 
-                  size="small" 
-                  sx={{ fontSize: 10, height: 18, bgcolor: col.color + "22", color: col.color, fontWeight: 700 }} 
+                <Chip
+                  label={col.items.length}
+                  size="small"
+                  sx={{ fontSize: 10, height: 18, bgcolor: col.color + "22", color: col.color, fontWeight: 700 }}
                 />
               </Box>
 
@@ -426,10 +483,10 @@ export default function ContentPipelinePage() {
       )}
 
       {/* Edit Task Dialog */}
-      <Dialog 
-        open={dialogOpen} 
-        onClose={() => setDialogOpen(false)} 
-        maxWidth="sm" 
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        maxWidth="sm"
         fullWidth
         PaperProps={{ sx: { borderRadius: 3 } }}
       >
@@ -548,9 +605,10 @@ export default function ContentPipelinePage() {
               <TextField
                 fullWidth
                 size="small"
-                label="Script Outline / Concept Outline"
+                label="Caption / Concept"
+                placeholder="Idea, caption draft, hook..."
                 multiline
-                rows={3}
+                rows={2}
                 value={form.description}
                 onChange={e => handleFormField("description", e.target.value)}
               />
@@ -573,6 +631,198 @@ export default function ContentPipelinePage() {
                   value={form.instagramLink}
                   onChange={e => handleFormField("instagramLink", e.target.value)}
                 />
+              </Grid>
+            )}
+            {(form.stage === "script" || form.stage === "client_approval") && (
+              <Grid item xs={12}>
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="subtitle2" fontWeight={700} color="primary" gutterBottom>
+                  ✍️ Script Outline Editor
+                </Typography>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Script Text"
+                  multiline
+                  rows={6}
+                  placeholder="Hook: ...&#10;Body: ...&#10;Call to Action: ..."
+                  value={form.scriptText || ""}
+                  onChange={e => handleFormField("scriptText", e.target.value)}
+                />
+                <Typography variant="caption" color="text.secondary" display="block">
+                  Write the script above. Once ready, you can change the stage to <strong>Client Approval</strong> to send it to the client portal.
+                </Typography>
+              </Grid>
+            )}
+
+            {form.stage === "shoot" && (
+              <Grid container spacing={2} item xs={12} sx={{ mt: 1 }}>
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 1 }} />
+                  <Typography variant="subtitle2" fontWeight={700} color="secondary.main" gutterBottom>
+                    🎥 Shoot Stage Assignment & Data
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Assigned Shooter</InputLabel>
+                    <Select
+                      value={form.shooterId}
+                      label="Assigned Shooter"
+                      onChange={e => handleFormField("shooterId", e.target.value)}
+                    >
+                      <MenuItem value="">Unassigned</MenuItem>
+                      {users.map(u => (
+                        <MenuItem key={u._id} value={u._id}>{u.name} ({u.role})</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Shoot Voice Note Link"
+                    placeholder="https://drive.google.com/..."
+                    value={form.shootVoiceNote || ""}
+                    onChange={e => handleFormField("shootVoiceNote", e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Raw Footage / Shoot Data Link"
+                    placeholder="https://drive.google.com/..."
+                    value={form.shootDataLink || ""}
+                    onChange={e => handleFormField("shootDataLink", e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Shoot / Edit Instructions for Editor"
+                    multiline
+                    rows={3}
+                    placeholder="Hook, style instructions..."
+                    value={form.shootInstructions || ""}
+                    onChange={e => handleFormField("shootInstructions", e.target.value)}
+                  />
+                </Grid>
+              </Grid>
+            )}
+
+            {form.stage === "edit" && (
+              <Grid container spacing={2} item xs={12} sx={{ mt: 1 }}>
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 1 }} />
+                  <Typography variant="subtitle2" fontWeight={700} color="warning.main" gutterBottom>
+                    🎬 Edit Stage Assignment
+                  </Typography>
+                </Grid>
+
+                {/* QC Revisions Feedback Notes for Editor */}
+                {(form.qcFeedbackText || form.qcVoiceNote) && (
+                  <Grid item xs={12}>
+                    <Alert severity="error" sx={{ mb: 1.5 }}>
+                      <Typography variant="subtitle2" fontWeight={700} color="error.dark">
+                        ⚠ Head QC Feedback / Revisions Required:
+                      </Typography>
+                      {form.qcFeedbackText && (
+                        <Typography variant="body2" sx={{ mt: 0.5, fontStyle: "italic" }}>
+                          "{form.qcFeedbackText}"
+                        </Typography>
+                      )}
+                      {form.qcVoiceNote && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          href={form.qcVoiceNote}
+                          target="_blank"
+                          startIcon={<span>🔊</span>}
+                          sx={{ mt: 1, textTransform: "none", fontSize: 11, fontWeight: "bold" }}
+                        >
+                          Play QC Voice Note
+                        </Button>
+                      )}
+                    </Alert>
+                  </Grid>
+                )}
+
+                <Grid item xs={12}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Assigned Editor</InputLabel>
+                    <Select
+                      value={form.editorId}
+                      label="Assigned Editor"
+                      onChange={e => handleFormField("editorId", e.target.value)}
+                    >
+                      <MenuItem value="">Unassigned</MenuItem>
+                      {users.map(u => (
+                        <MenuItem key={u._id} value={u._id}>{u.name} ({u.role})</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
+            )}
+
+            {form.stage === "qc" && (
+              <Grid container spacing={2} item xs={12} sx={{ mt: 1 }}>
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 1 }} />
+                  <Typography variant="subtitle2" fontWeight={700} color="success.main" gutterBottom>
+                    ✅ Head QC Feedback Loop
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="QC Voice Note Feedback Link"
+                    placeholder="https://drive.google.com/..."
+                    value={form.qcVoiceNote || ""}
+                    onChange={e => handleFormField("qcVoiceNote", e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="QC Feedback Notes"
+                    multiline
+                    rows={3}
+                    placeholder="Write changes requested..."
+                    value={form.qcFeedbackText || ""}
+                    onChange={e => handleFormField("qcFeedbackText", e.target.value)}
+                  />
+                </Grid>
+                <Grid item xs={12} sx={{ display: "flex", gap: 1, mt: 1 }}>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    fullWidth
+                    onClick={() => {
+                      setForm({ ...form, stage: "client_approval", qcFeedbackText: "", qcVoiceNote: "" });
+                      setToast("QC Passed! Stage set to Client Approval.");
+                    }}
+                  >
+                    QC Pass (Approve Video)
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    fullWidth
+                    onClick={() => {
+                      setForm({ ...form, stage: "edit" });
+                      setToast("QC Failed! Stage set back to Edit for revisions.");
+                    }}
+                  >
+                    QC Fail (Send to Editor)
+                  </Button>
+                </Grid>
               </Grid>
             )}
           </Grid>

@@ -63,6 +63,7 @@ export default function DashboardLayout() {
       items: [
         { label: "Leads", icon: <LeadsIcon />, path: "/admin/leads", roles: ["admin", "manager"] },
         { label: "Clients", icon: <PeopleIcon />, path: "/admin/clients", roles: ["admin", "manager", "team"] },
+        { label: "Meetings", icon: <EventNoteIcon />, path: "/admin/meetings", roles: ["admin", "manager", "team"] },
         { label: "Invoices", icon: <ReceiptIcon />, path: "/admin/invoices", roles: ["admin", "manager"] },
       ],
     },

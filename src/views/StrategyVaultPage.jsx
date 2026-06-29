@@ -57,12 +57,16 @@ export default function StrategyVaultPage() {
     return reelCount;
   };
 
+
+
   const handleClientChange = (selectedClientId) => {
     const targetReelCount = getReelsCountForClient(selectedClientId);
     setForm(prev => ({
       ...prev,
       clientId: selectedClientId,
-      reelTopics: Array(targetReelCount).fill("")
+      reelTopics: Array(targetReelCount).fill(null).map(() => ({
+        title: "", brief: "", status: "Draft", feedback: "", contentId: null
+      }))
     }));
   };
 
@@ -108,10 +112,20 @@ export default function StrategyVaultPage() {
     setEditTarget(strat);
     const targetCid = strat.clientId?._id || strat.clientId || "";
     const targetReelCount = getReelsCountForClient(targetCid);
-    const savedTopics = strat.reelTopics || [];
+    const savedTopics = (strat.reelTopics || []).map(topic => {
+      if (typeof topic === "string") {
+        return { title: topic, brief: "", status: "Draft", feedback: "", contentId: null };
+      }
+      return topic;
+    });
     let finalTopics = [...savedTopics];
     if (finalTopics.length < targetReelCount) {
-      finalTopics = [...finalTopics, ...Array(targetReelCount - finalTopics.length).fill("")];
+      finalTopics = [
+        ...finalTopics,
+        ...Array(targetReelCount - finalTopics.length).fill(null).map(() => ({
+          title: "", brief: "", status: "Draft", feedback: "", contentId: null
+        }))
+      ];
     } else if (finalTopics.length > targetReelCount) {
       finalTopics = finalTopics.slice(0, targetReelCount);
     }
@@ -160,9 +174,12 @@ export default function StrategyVaultPage() {
     }
   };
 
-  const handleTopicChange = (idx, value) => {
+  const handleTopicFieldChange = (idx, field, value) => {
     const updatedTopics = [...form.reelTopics];
-    updatedTopics[idx] = value;
+    updatedTopics[idx] = {
+      ...updatedTopics[idx],
+      [field]: value
+    };
     setForm({ ...form, reelTopics: updatedTopics });
   };
 
@@ -381,19 +398,60 @@ export default function StrategyVaultPage() {
                   Please select a client to load their package reels planning slots.
                 </Alert>
               )}
-              <Grid container spacing={1.5}>
-                {form.reelTopics.map((topic, idx) => (
-                  <Grid item xs={12} sm={6} key={idx}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label={`Reel ${idx + 1} Topic Outline`}
-                      placeholder={`Topic ${idx + 1} concept, hook, description...`}
-                      value={topic}
-                      onChange={e => handleTopicChange(idx, e.target.value)}
-                    />
-                  </Grid>
-                ))}
+              <Grid container spacing={2}>
+                {form.reelTopics.map((topic, idx) => {
+                  const topicVal = typeof topic === "string" ? { title: topic, brief: "", status: "Draft", feedback: "" } : (topic || { title: "", brief: "", status: "Draft", feedback: "" });
+                  return (
+                    <Grid item xs={12} key={idx}>
+                      <Box sx={{ p: 2, border: "1px solid #e5e7eb", borderRadius: 2, bgcolor: "#f9fafb" }}>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+                          <Typography variant="subtitle2" fontWeight={700}>Reel {idx + 1}</Typography>
+                          <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                            {topicVal.status && (
+                              <Chip 
+                                label={topicVal.status} 
+                                size="small" 
+                                color={topicVal.status === "Approved" ? "success" : topicVal.status === "Changes Requested" ? "warning" : topicVal.status === "Review" ? "info" : "default"}
+                                sx={{ fontWeight: 600, fontSize: 10 }}
+                              />
+                            )}
+                          </Box>
+                        </Box>
+                        <Grid container spacing={1.5}>
+                          <Grid item xs={12} sm={4}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Concept Title"
+                              placeholder="e.g., Hook + Topic Idea"
+                              value={topicVal.title || ""}
+                              onChange={e => handleTopicFieldChange(idx, "title", e.target.value)}
+                            />
+                          </Grid>
+                          <Grid item xs={12} sm={8}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Content Brief / Angle"
+                              placeholder="Describe hooks, call-to-action, or details about this reel..."
+                              multiline
+                              rows={1.5}
+                              value={topicVal.brief || ""}
+                              onChange={e => handleTopicFieldChange(idx, "brief", e.target.value)}
+                            />
+                          </Grid>
+                        </Grid>
+                        {topicVal.status === "Changes Requested" && topicVal.feedback && (
+                          <Box sx={{ mt: 1.5, p: 1, bgcolor: "#fffbeb", border: "1px solid #fef3c7", borderRadius: 1.5 }}>
+                            <Typography variant="caption" color="warning.dark" sx={{ fontWeight: 600 }}>
+                              💬 Client Feedback: {topicVal.feedback}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                    </Grid>
+                  );
+                })}
               </Grid>
             </Grid>
 

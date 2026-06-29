@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || "https://socialflipss-backend.onrender.com/api";
+const BASE = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
 // Client portal uses separate token
 const portalApi = axios.create({ baseURL: BASE });
@@ -37,6 +37,7 @@ export const getPortalDashboard = () => portalApi.get("/portal/dashboard");
 // ── Content ───────────────────────────────────────────────────────
 export const getPortalContent = (params) => portalApi.get("/portal/content", { params });
 export const approvePortalContent = (id, data) => portalApi.put(`/portal/content/${id}/approve`, data);
+export const approvePortalScript = (id, data) => portalApi.put(`/portal/content/${id}/approve-script`, data);
 
 // ── Invoices ──────────────────────────────────────────────────────
 export const getPortalInvoices = () => portalApi.get("/portal/invoices");
@@ -49,6 +50,10 @@ export const getPortalSchedule = () => portalApi.get("/portal/shoot-schedule");
 export const getPortalNotifications = () => portalApi.get("/portal/notifications");
 export const markPortalNotifRead = (id) => portalApi.put(`/portal/notifications/${id}/read`);
 export const markAllPortalNotifRead = () => portalApi.put("/portal/notifications/read-all");
+
+// ── Strategy Review ───────────────────────────────────────────────
+export const getPortalStrategy = () => portalApi.get("/portal/strategy");
+export const reviewPortalStrategyTopic = (strategyId, topicId, data) => portalApi.put(`/portal/strategy/${strategyId}/topics/${topicId}/review`, data);
 
 // ── Admin: Auto Invoice ───────────────────────────────────────────
 import api from "./index";

@@ -13,16 +13,20 @@ import NotifIcon      from "@mui/icons-material/Notifications";
 import MenuIcon       from "@mui/icons-material/Menu";
 import LogoutIcon     from "@mui/icons-material/Logout";
 import PersonIcon     from "@mui/icons-material/Person";
+import LightbulbIcon  from "@mui/icons-material/Lightbulb";
+import AssignmentIcon from "@mui/icons-material/Assignment";
 import { getPortalNotifications } from "../../api/portalApi";
 
 const DRAWER_WIDTH = 240;
 
 const NAV = [
-  { label:"Dashboard",      icon:<DashboardIcon />, path:"/portal" },
-  { label:"My Content",     icon:<VideoIcon />,     path:"/portal/content" },
-  { label:"Invoices",       icon:<ReceiptIcon />,   path:"/portal/invoices" },
-  { label:"Shoot Schedule", icon:<CalendarIcon />,  path:"/portal/schedule" },
-  { label:"Notifications",  icon:<NotifIcon />,     path:"/portal/notifications" },
+  { label:"Dashboard",        icon:<DashboardIcon />,  path:"/portal" },
+  { label:"Monthly Strategy", icon:<LightbulbIcon />,  path:"/portal/strategy" },
+  { label:"Script Approvals", icon:<AssignmentIcon />, path:"/portal/scripts" },
+  { label:"Reel Approvals",   icon:<VideoIcon />,      path:"/portal/content" },
+  { label:"Invoices",         icon:<ReceiptIcon />,    path:"/portal/invoices" },
+  { label:"Shoot Schedule",   icon:<CalendarIcon />,   path:"/portal/schedule" },
+  { label:"Notifications",    icon:<NotifIcon />,      path:"/portal/notifications" },
 ];
 
 export default function PortalLayout() {

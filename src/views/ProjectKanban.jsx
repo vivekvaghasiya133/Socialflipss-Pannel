@@ -7,45 +7,47 @@ import {
   Select, MenuItem, FormControl, InputLabel, Alert, Snackbar,
   CircularProgress, Tooltip, Avatar, Grid, Divider,
 } from "@mui/material";
-import ArrowBackIcon  from "@mui/icons-material/ArrowBack";
-import AddIcon        from "@mui/icons-material/Add";
-import EditIcon       from "@mui/icons-material/Edit";
-import DeleteIcon     from "@mui/icons-material/Delete";
-import LinkIcon       from "@mui/icons-material/Link";
-import CheckIcon      from "@mui/icons-material/CheckCircle";
-import CalendarIcon   from "@mui/icons-material/CalendarMonth";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import LinkIcon from "@mui/icons-material/Link";
+import CheckIcon from "@mui/icons-material/CheckCircle";
+import CalendarIcon from "@mui/icons-material/CalendarMonth";
 
 // ── API imports ───────────────────────────────────────────────────
 import api from "../api";
-const getProjectById  = (id)        => api.get(`/projects/${id}`);
-const updateProject   = (id, data)  => api.put(`/projects/${id}`, data);
-const getContent      = (params)    => api.get("/content", { params });
-const createContent   = (data)      => api.post("/content", data);
-const updateContent   = (id, data)  => api.put(`/content/${id}`, data);
-const deleteContent   = (id)        => api.delete(`/content/${id}`);
-const getUsers        = ()          => api.get("/auth/users");
+const getProjectById = (id) => api.get(`/projects/${id}`);
+const updateProject = (id, data) => api.put(`/projects/${id}`, data);
+const getContent = (params) => api.get("/content", { params });
+const createContent = (data) => api.post("/content", data);
+const updateContent = (id, data) => api.put(`/content/${id}`, data);
+const deleteContent = (id) => api.delete(`/content/${id}`);
+const getUsers = () => api.get("/auth/users");
 
 const STAGES = [
-  { key:"idea",            label:"💡 Idea",            color:"#6b7280", bg:"#f3f4f6" },
-  { key:"script",          label:"✍️ Script",          color:"#0891b2", bg:"#e0f2fe" },
-  { key:"shoot",           label:"🎥 Shoot",           color:"#7c3aed", bg:"#ede9fe" },
-  { key:"edit",            label:"🎬 Edit",            color:"#d97706", bg:"#fef3c7" },
-  { key:"qc",              label:"✅ QC",              color:"#0e9f6e", bg:"#dcfce7" },
-  { key:"client_approval", label:"👤 Client Approval", color:"#3f83f8", bg:"#e1effe" },
-  { key:"posted",          label:"🚀 Posted",          color:"#059669", bg:"#d1fae5" },
+  { key: "idea", label: "💡 Idea", color: "#6b7280", bg: "#f3f4f6" },
+  { key: "script", label: "✍️ Script", color: "#0891b2", bg: "#e0f2fe" },
+  { key: "shoot", label: "🎥 Shoot", color: "#7c3aed", bg: "#ede9fe" },
+  { key: "edit", label: "🎬 Edit", color: "#d97706", bg: "#fef3c7" },
+  { key: "qc", label: "✅ QC", color: "#0e9f6e", bg: "#dcfce7" },
+  { key: "client_approval", label: "👤 Client Approval", color: "#3f83f8", bg: "#e1effe" },
+  { key: "posted", label: "🚀 Posted", color: "#059669", bg: "#d1fae5" },
 ];
 
 const TYPE_COLORS = {
-  reel:"#1a56db", post:"#0891b2", story:"#8b5cf6",
-  carousel:"#d97706", youtube:"#e02424", other:"#6b7280",
+  reel: "#1a56db", post: "#0891b2", story: "#8b5cf6",
+  carousel: "#d97706", youtube: "#e02424", other: "#6b7280",
 };
 
-const PRIORITY_COLORS = { high:"error", medium:"warning", low:"default" };
+const PRIORITY_COLORS = { high: "error", medium: "warning", low: "default" };
 
 const EMPTY_CONTENT = {
-  title:"", type:"reel", description:"", platform:"instagram",
-  assignedTo:"", shootDate:"", postDate:"", driveLink:"",
-  instagramLink:"", priority:"medium", stage:"idea",
+  title: "", type: "reel", description: "", platform: "instagram",
+  assignedTo: "", shootDate: "", postDate: "", driveLink: "",
+  instagramLink: "", priority: "medium", stage: "idea", scriptText: "",
+  shooterId: "", editorId: "", shootDataLink: "", shootVoiceNote: "",
+  shootInstructions: "", qcVoiceNote: "", qcFeedbackText: ""
 };
 
 function ContentCard({ item, onEdit, onDelete, onDragStart, onDragEnd, dragging }) {
@@ -55,21 +57,21 @@ function ContentCard({ item, onEdit, onDelete, onDragStart, onDragEnd, dragging 
       onDragStart={() => onDragStart(item)}
       onDragEnd={onDragEnd}
       sx={{
-        mb:1.5,
-        cursor:"grab",
+        mb: 1.5,
+        cursor: "grab",
         opacity: dragging ? 0.5 : 1,
-        border:"1px solid #e5e7eb",
-        "&:hover":{ boxShadow:3 },
-        transition:"box-shadow 0.15s",
+        border: "1px solid #e5e7eb",
+        "&:hover": { boxShadow: 3 },
+        transition: "box-shadow 0.15s",
       }}
     >
-      <CardContent sx={{ p:"12px !important" }}>
+      <CardContent sx={{ p: "12px !important" }}>
         {/* Type + Priority */}
-        <Box sx={{ display:"flex", justifyContent:"space-between", mb:1 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
           <Chip label={item.type.toUpperCase()} size="small"
-            sx={{ fontSize:10, height:18, bgcolor:TYPE_COLORS[item.type]+"18", color:TYPE_COLORS[item.type], fontWeight:700 }} />
+            sx={{ fontSize: 10, height: 18, bgcolor: TYPE_COLORS[item.type] + "18", color: TYPE_COLORS[item.type], fontWeight: 700 }} />
           <Chip label={item.priority} color={PRIORITY_COLORS[item.priority]} size="small"
-            sx={{ fontSize:10, height:18 }} />
+            sx={{ fontSize: 10, height: 18 }} />
         </Box>
 
         {/* Client Approval status badge */}
@@ -95,45 +97,117 @@ function ContentCard({ item, onEdit, onDelete, onDragStart, onDragEnd, dragging 
           </Box>
         )}
 
+        {/* Script Approval status badge */}
+        {(item.scriptApproved || item.scriptApprovalStatus === "rejected" || item.scriptApprovalStatus === "changes_requested") && (
+          <Box sx={{ mb: 1, display: "flex", flexDirection: "column", gap: 0.5 }}>
+            {item.scriptApproved && (
+              <Chip label="✓ Script Approved" size="small"
+                sx={{ fontSize: 9.5, height: 18, bgcolor: "#e0f2fe", color: "#0369a1", fontWeight: 700, width: "fit-content" }} />
+            )}
+            {item.scriptApprovalStatus === "rejected" && (
+              <Chip label="✕ Script Rejected" size="small"
+                sx={{ fontSize: 9.5, height: 18, bgcolor: "#fde8e8", color: "#9b1c1c", fontWeight: 700, width: "fit-content" }} />
+            )}
+            {item.scriptApprovalStatus === "changes_requested" && (
+              <Chip label="⚠ Script Revisions" size="small"
+                sx={{ fontSize: 9.5, height: 18, bgcolor: "#fef3c7", color: "#92400e", fontWeight: 700, width: "fit-content" }} />
+            )}
+            {item.scriptApprovalNote && (
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ fontStyle: "italic", fontSize: 10, pl: 0.5 }}>
+                Script Note: "{item.scriptApprovalNote}"
+              </Typography>
+            )}
+          </Box>
+        )}
+
         {/* Title */}
-        <Typography variant="body2" fontWeight={600} mb={0.5} sx={{ lineHeight:1.4 }}>
+        <Typography variant="body2" fontWeight={600} mb={0.5} sx={{ lineHeight: 1.4 }}>
           {item.title}
         </Typography>
 
         {/* Description */}
         {item.description && (
           <Typography variant="caption" color="text.secondary" display="block" mb={1}
-            sx={{ overflow:"hidden", textOverflow:"ellipsis", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>
+            sx={{ overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
             {item.description}
           </Typography>
         )}
 
+        {/* Assignments Display */}
+        <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mb: 1 }}>
+          {item.stage === "shoot" && item.shooterId && (
+            <Chip
+              label={`🎯 Shooter: ${item.shooterId.name || "Assigned"}`}
+              size="small"
+              sx={{ fontSize: 9.5, height: 18, bgcolor: "#ede9fe", color: "#6d28d9", fontWeight: 600 }}
+            />
+          )}
+          {item.stage === "edit" && item.editorId && (
+            <Chip
+              label={`🎬 Editor: ${item.editorId.name || "Assigned"}`}
+              size="small"
+              sx={{ fontSize: 9.5, height: 18, bgcolor: "#fef3c7", color: "#d97706", fontWeight: 600 }}
+            />
+          )}
+          {item.stage === "edit" && !item.editorId && (
+            <Chip
+              label="⚠️ Unassigned Editor"
+              size="small"
+              sx={{ fontSize: 9.5, height: 18, bgcolor: "#fde8e8", color: "#9b1c1c", fontWeight: 600 }}
+            />
+          )}
+        </Box>
+
+        {/* QC Revisions Feedback Notes */}
+        {item.stage === "edit" && item.qcFeedbackText && (
+          <Box sx={{ bgcolor: "#fff1f2", border: "1px solid #fecdd3", borderRadius: 1.5, p: 1, mb: 1 }}>
+            <Typography variant="caption" color="error.main" fontWeight={700} display="block">
+              ⚠ Head QC Feedback:
+            </Typography>
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: 9.5 }}>
+              "{item.qcFeedbackText}"
+            </Typography>
+            {item.qcVoiceNote && (
+              <Button
+                size="small"
+                variant="text"
+                color="error"
+                href={item.qcVoiceNote}
+                target="_blank"
+                sx={{ fontSize: 9, p: 0, minWidth: 0, textTransform: "none", mt: 0.5 }}
+              >
+                🔊 Listen Voice Note
+              </Button>
+            )}
+          </Box>
+        )}
+
         {/* Dates */}
-        <Box sx={{ display:"flex", gap:1, flexWrap:"wrap", mb:1 }}>
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1 }}>
           {item.shootDate && (
             <Chip label={`📷 ${new Date(item.shootDate).toLocaleDateString("en-IN")}`}
-              size="small" variant="outlined" sx={{ fontSize:10, height:18 }} />
+              size="small" variant="outlined" sx={{ fontSize: 10, height: 18 }} />
           )}
           {item.postDate && (
             <Chip label={`📅 ${new Date(item.postDate).toLocaleDateString("en-IN")}`}
-              size="small" variant="outlined" sx={{ fontSize:10, height:18 }} />
+              size="small" variant="outlined" sx={{ fontSize: 10, height: 18 }} />
           )}
         </Box>
 
         {/* Links */}
         {(item.driveLink || item.instagramLink) && (
-          <Box sx={{ display:"flex", gap:0.5, mb:1 }}>
+          <Box sx={{ display: "flex", gap: 0.5, mb: 1 }}>
             {item.driveLink && (
               <Tooltip title="Drive Link">
                 <IconButton size="small" component="a" href={item.driveLink} target="_blank">
-                  <LinkIcon sx={{ fontSize:14, color:"#1a56db" }} />
+                  <LinkIcon sx={{ fontSize: 14, color: "#1a56db" }} />
                 </IconButton>
               </Tooltip>
             )}
             {item.instagramLink && (
               <Tooltip title="Instagram Post">
                 <IconButton size="small" component="a" href={item.instagramLink} target="_blank">
-                  <CheckIcon sx={{ fontSize:14, color:"#059669" }} />
+                  <CheckIcon sx={{ fontSize: 14, color: "#059669" }} />
                 </IconButton>
               </Tooltip>
             )}
@@ -141,23 +215,23 @@ function ContentCard({ item, onEdit, onDelete, onDragStart, onDragEnd, dragging 
         )}
 
         {/* Footer */}
-        <Box sx={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           {item.assignedTo ? (
             <Tooltip title={item.assignedTo.name || ""}>
-              <Avatar sx={{ width:22, height:22, fontSize:10, bgcolor:"#1a56db" }}>
+              <Avatar sx={{ width: 22, height: 22, fontSize: 10, bgcolor: "#1a56db" }}>
                 {item.assignedTo.name?.[0]}
               </Avatar>
             </Tooltip>
           ) : <Box />}
-          <Box sx={{ display:"flex", gap:0.25 }}>
+          <Box sx={{ display: "flex", gap: 0.25 }}>
             <Tooltip title="Edit">
               <IconButton size="small" onClick={e => { e.stopPropagation(); onEdit(item); }}>
-                <EditIcon sx={{ fontSize:14 }} />
+                <EditIcon sx={{ fontSize: 14 }} />
               </IconButton>
             </Tooltip>
             <Tooltip title="Delete">
               <IconButton size="small" color="error" onClick={e => { e.stopPropagation(); onDelete(item._id); }}>
-                <DeleteIcon sx={{ fontSize:14 }} />
+                <DeleteIcon sx={{ fontSize: 14 }} />
               </IconButton>
             </Tooltip>
           </Box>
@@ -174,51 +248,51 @@ export default function ProjectKanban() {
   // We use { id } to match the route defined in App.jsx
   // const { id: projectId } = useParams();
   const { projectId } = useParams();
-  console.log(projectId , "hfdf");
-  
+  console.log(projectId, "hfdf");
+
   const navigate = useNavigate();
 
-  const [project, setProject]   = useState(null);
-  const [content, setContent]   = useState([]);
-  const [users, setUsers]       = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [toast, setToast]       = useState("");
-  const [error, setError]       = useState("");
+  const [project, setProject] = useState(null);
+  const [content, setContent] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState("");
+  const [error, setError] = useState("");
 
   // Drag state
   const [draggingItem, setDraggingItem] = useState(null);
   const [dragOverStage, setDragOverStage] = useState(null);
 
   // Add/Edit dialog
-  const [dialog, setDialog]     = useState(false);
-  const [editTarget, setEdit]   = useState(null);
-  const [form, setForm]         = useState(EMPTY_CONTENT);
+  const [dialog, setDialog] = useState(false);
+  const [editTarget, setEdit] = useState(null);
+  const [form, setForm] = useState(EMPTY_CONTENT);
   const [formError, setFormError] = useState("");
 
   // Project edit dialog
   const [projDialog, setProjDialog] = useState(false);
-  const [projForm, setProjForm]     = useState({});
+  const [projForm, setProjForm] = useState({});
 
   const load = useCallback(async () => {
     console.log("Hello 1");
-    
+
     if (!projectId) return;
     console.log("Hello 2");
     setLoading(true);
     try {
       const [pr, cr, ur] = await Promise.all([
         getProjectById(projectId),
-        getContent({ projectId, limit:200 }),
-        getUsers().catch(() => ({ data:[] })),
+        getContent({ projectId, limit: 200 }),
+        getUsers().catch(() => ({ data: [] })),
       ]);
       setProject(pr.data);
       setContent(cr.data.content || []);
       setUsers(ur.data || []);
       setProjForm({
-        name:        pr.data.name,
-        status:      pr.data.status,
+        name: pr.data.name,
+        status: pr.data.status,
         monthlyGoal: pr.data.monthlyGoal || "",
-        notes:       pr.data.notes || "",
+        notes: pr.data.notes || "",
       });
     } catch (err) {
       setError("Project failed to load. Please go back and try again.");
@@ -237,7 +311,7 @@ export default function ProjectKanban() {
 
   // Drag handlers
   const handleDragStart = (item) => setDraggingItem(item);
-  const handleDragEnd   = ()     => { setDraggingItem(null); setDragOverStage(null); };
+  const handleDragEnd = () => { setDraggingItem(null); setDragOverStage(null); };
 
   const handleDrop = async (stageKey) => {
     if (!draggingItem || draggingItem.stage === stageKey) return;
@@ -251,21 +325,29 @@ export default function ProjectKanban() {
   };
 
   // Add / Edit
-  const openAdd  = ()     => { setEdit(null);  setForm(EMPTY_CONTENT); setDialog(true); };
+  const openAdd = () => { setEdit(null); setForm(EMPTY_CONTENT); setDialog(true); };
   const openEdit = (item) => {
     setEdit(item);
     setForm({
-      title:         item.title,
-      type:          item.type,
-      description:   item.description || "",
-      platform:      item.platform || "instagram",
-      assignedTo:    item.assignedTo?._id || "",
-      shootDate:     item.shootDate   ? item.shootDate.slice(0,10)   : "",
-      postDate:      item.postDate    ? item.postDate.slice(0,10)    : "",
-      driveLink:     item.driveLink   || "",
+      title: item.title,
+      type: item.type,
+      description: item.description || "",
+      platform: item.platform || "instagram",
+      assignedTo: item.assignedTo?._id || "",
+      shootDate: item.shootDate ? item.shootDate.slice(0, 10) : "",
+      postDate: item.postDate ? item.postDate.slice(0, 10) : "",
+      driveLink: item.driveLink || "",
       instagramLink: item.instagramLink || "",
-      priority:      item.priority || "medium",
-      stage:         item.stage,
+      priority: item.priority || "medium",
+      stage: item.stage,
+      scriptText: item.scriptText || "",
+      shooterId: item.shooterId?._id || item.shooterId || "",
+      editorId: item.editorId?._id || item.editorId || "",
+      shootDataLink: item.shootDataLink || "",
+      shootVoiceNote: item.shootVoiceNote || "",
+      shootInstructions: item.shootInstructions || "",
+      qcVoiceNote: item.qcVoiceNote || "",
+      qcFeedbackText: item.qcFeedbackText || "",
     });
     setDialog(true);
   };
@@ -309,35 +391,35 @@ export default function ProjectKanban() {
   };
 
   const f = (key) => ({
-    fullWidth: true, size:"small",
+    fullWidth: true, size: "small",
     value: form[key] || "",
     onChange: (e) => setForm({ ...form, [key]: e.target.value }),
   });
 
   if (loading) return (
-    <Box sx={{ display:"flex", justifyContent:"center", pt:8 }}>
+    <Box sx={{ display: "flex", justifyContent: "center", pt: 8 }}>
       <CircularProgress />
     </Box>
   );
 
   if (error) return (
     <Box>
-      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate("/admin/projects")} sx={{ mb:2 }}>Back</Button>
+      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate("/admin/projects")} sx={{ mb: 2 }}>Back</Button>
       <Alert severity="error">{error}</Alert>
     </Box>
   );
 
-  const totalContent  = content.length;
+  const totalContent = content.length;
   const postedContent = content.filter(c => c.stage === "posted").length;
 
   return (
     <Box>
-      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate("/admin/projects")} sx={{ mb:2 }}>
+      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate("/admin/projects")} sx={{ mb: 2 }}>
         Back to Projects
       </Button>
 
       {/* Header */}
-      <Box sx={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", mb:3, flexWrap:"wrap", gap:2 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 3, flexWrap: "wrap", gap: 2 }}>
         <Box>
           <Typography variant="h5">{project?.name}</Typography>
           <Typography variant="body2" color="text.secondary">
@@ -351,11 +433,11 @@ export default function ProjectKanban() {
             </Typography>
           )}
         </Box>
-        <Box sx={{ display:"flex", gap:1, flexWrap:"wrap" }}>
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
           <Chip
-            label={project?.status?.replace("_"," ").toUpperCase()}
-            color={{ planning:"info", active:"success", completed:"secondary", on_hold:"warning" }[project?.status] || "default"}
-            sx={{ fontWeight:700 }}
+            label={project?.status?.replace("_", " ").toUpperCase()}
+            color={{ planning: "info", active: "success", completed: "secondary", on_hold: "warning" }[project?.status] || "default"}
+            sx={{ fontWeight: 700 }}
           />
           <Button size="small" variant="outlined" onClick={() => setProjDialog(true)}>
             Edit Project
@@ -371,31 +453,31 @@ export default function ProjectKanban() {
         </Box>
       </Box>
 
-      {error && <Alert severity="error" sx={{ mb:2 }} onClose={() => setError("")}>{error}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>{error}</Alert>}
 
       {/* Kanban Board */}
-      <Box sx={{ display:"flex", gap:2, overflowX:"auto", pb:2, alignItems:"flex-start", width: "100%", maxWidth: "100%" }}>
+      <Box sx={{ display: "flex", gap: 2, overflowX: "auto", pb: 2, alignItems: "flex-start", width: "100%", maxWidth: "100%" }}>
         {columns.map(col => (
           <Box
             key={col.key}
             onDragOver={e => { e.preventDefault(); setDragOverStage(col.key); }}
             onDrop={() => handleDrop(col.key)}
             sx={{
-              minWidth:260, flex:"0 0 260px",
+              minWidth: 260, flex: "0 0 260px",
               background: dragOverStage === col.key ? col.bg : "#f9fafb",
-              borderRadius:2,
+              borderRadius: 2,
               border: dragOverStage === col.key ? `2px dashed ${col.color}` : "2px solid transparent",
-              p:1.5,
-              transition:"border 0.15s, background 0.15s",
+              p: 1.5,
+              transition: "border 0.15s, background 0.15s",
             }}
           >
             {/* Column header */}
-            <Box sx={{ display:"flex", justifyContent:"space-between", alignItems:"center", mb:1.5 }}>
-              <Typography variant="body2" fontWeight={700} sx={{ color:col.color }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+              <Typography variant="body2" fontWeight={700} sx={{ color: col.color }}>
                 {col.label}
               </Typography>
               <Chip label={col.items.length} size="small"
-                sx={{ fontSize:11, height:20, bgcolor:col.color+"22", color:col.color, fontWeight:700 }} />
+                sx={{ fontSize: 11, height: 20, bgcolor: col.color + "22", color: col.color, fontWeight: 700 }} />
             </Box>
 
             {/* Cards */}
@@ -412,7 +494,7 @@ export default function ProjectKanban() {
             ))}
 
             {col.items.length === 0 && (
-              <Box sx={{ py:3, textAlign:"center", color:"text.disabled", fontSize:12 }}>
+              <Box sx={{ py: 3, textAlign: "center", color: "text.disabled", fontSize: 12 }}>
                 No content
               </Box>
             )}
@@ -424,8 +506,8 @@ export default function ProjectKanban() {
       <Dialog open={dialog} onClose={() => setDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{editTarget ? "Edit Content" : "Add Content"}</DialogTitle>
         <DialogContent>
-          {formError && <Alert severity="error" sx={{ mb:2 }}>{formError}</Alert>}
-          <Grid container spacing={2} sx={{ mt:0.5 }}>
+          {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid item xs={12}>
               <TextField {...f("title")} label="Title *" placeholder="Reel on product benefits..." />
             </Grid>
@@ -433,9 +515,9 @@ export default function ProjectKanban() {
               <FormControl fullWidth size="small">
                 <InputLabel>Type</InputLabel>
                 <Select value={form.type} label="Type"
-                  onChange={e => setForm({...form, type:e.target.value})}>
-                  {["reel","post","story","carousel","youtube","other"].map(t => (
-                    <MenuItem key={t} value={t} sx={{ textTransform:"capitalize" }}>{t}</MenuItem>
+                  onChange={e => setForm({ ...form, type: e.target.value })}>
+                  {["reel", "post", "story", "carousel", "youtube", "other"].map(t => (
+                    <MenuItem key={t} value={t} sx={{ textTransform: "capitalize" }}>{t}</MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -444,9 +526,9 @@ export default function ProjectKanban() {
               <FormControl fullWidth size="small">
                 <InputLabel>Priority</InputLabel>
                 <Select value={form.priority} label="Priority"
-                  onChange={e => setForm({...form, priority:e.target.value})}>
-                  {["high","medium","low"].map(p => (
-                    <MenuItem key={p} value={p} sx={{ textTransform:"capitalize" }}>{p}</MenuItem>
+                  onChange={e => setForm({ ...form, priority: e.target.value })}>
+                  {["high", "medium", "low"].map(p => (
+                    <MenuItem key={p} value={p} sx={{ textTransform: "capitalize" }}>{p}</MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -459,7 +541,7 @@ export default function ProjectKanban() {
               <FormControl fullWidth size="small">
                 <InputLabel>Assigned To</InputLabel>
                 <Select value={form.assignedTo} label="Assigned To"
-                  onChange={e => setForm({...form, assignedTo:e.target.value})}>
+                  onChange={e => setForm({ ...form, assignedTo: e.target.value })}>
                   <MenuItem value="">Unassigned</MenuItem>
                   {users.map(u => (
                     <MenuItem key={u._id} value={u._id}>{u.name} ({u.role})</MenuItem>
@@ -472,7 +554,7 @@ export default function ProjectKanban() {
                 <FormControl fullWidth size="small">
                   <InputLabel>Stage</InputLabel>
                   <Select value={form.stage} label="Stage"
-                    onChange={e => setForm({...form, stage:e.target.value})}>
+                    onChange={e => setForm({ ...form, stage: e.target.value })}>
                     {STAGES.map(s => <MenuItem key={s.key} value={s.key}>{s.label}</MenuItem>)}
                   </Select>
                 </FormControl>
@@ -480,11 +562,11 @@ export default function ProjectKanban() {
             )}
             <Grid item xs={6}>
               <TextField {...f("shootDate")} label="Shoot Date" type="date"
-                InputLabelProps={{ shrink:true }} />
+                InputLabelProps={{ shrink: true }} />
             </Grid>
             <Grid item xs={6}>
               <TextField {...f("postDate")} label="Post Date" type="date"
-                InputLabelProps={{ shrink:true }} />
+                InputLabelProps={{ shrink: true }} />
             </Grid>
             <Grid item xs={12}>
               <TextField {...f("driveLink")} label="Drive Link"
@@ -496,9 +578,159 @@ export default function ProjectKanban() {
                   placeholder="https://instagram.com/p/..." />
               </Grid>
             )}
+            {(form.stage === "script" || form.stage === "client_approval") && (
+              <Grid item xs={12}>
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="subtitle2" fontWeight={700} color="primary" gutterBottom>
+                  ✍️ Script Outline Editor
+                </Typography>
+                <TextField
+                  {...f("scriptText")}
+                  label="Script Text"
+                  multiline
+                  rows={6}
+                  placeholder="Hook: ...&#10;Body: ...&#10;Call to Action: ..."
+                />
+                <Typography variant="caption" color="text.secondary">
+                  Write the script above. Once ready, you can change the stage to <strong>Client Approval</strong> to send it to the client portal.
+                </Typography>
+              </Grid>
+            )}
+
+            {form.stage === "shoot" && (
+              <Grid container spacing={2} item xs={12} sx={{ mt: 1 }}>
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 1 }} />
+                  <Typography variant="subtitle2" fontWeight={700} color="secondary.main" gutterBottom>
+                    🎥 Shoot Stage Assignment & Data
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Assigned Shooter</InputLabel>
+                    <Select
+                      value={form.shooterId}
+                      label="Assigned Shooter"
+                      onChange={e => setForm({ ...form, shooterId: e.target.value })}
+                    >
+                      <MenuItem value="">Unassigned</MenuItem>
+                      {users.map(u => (
+                        <MenuItem key={u._id} value={u._id}>{u.name} ({u.role})</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField {...f("shootVoiceNote")} label="Shoot Voice Note Link" placeholder="https://drive.google.com/..." />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField {...f("shootDataLink")} label="Raw Footage / Shoot Data Link" placeholder="https://drive.google.com/..." />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField {...f("shootInstructions")} label="Shoot / Edit Instructions for Editor" multiline rows={3} placeholder="Hook, style instructions..." />
+                </Grid>
+              </Grid>
+            )}
+
+            {form.stage === "edit" && (
+              <Grid container spacing={2} item xs={12} sx={{ mt: 1 }}>
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 1 }} />
+                  <Typography variant="subtitle2" fontWeight={700} color="warning.main" gutterBottom>
+                    🎬 Edit Stage Assignment
+                  </Typography>
+                </Grid>
+
+                {/* QC Revisions Feedback Notes for Editor */}
+                {(form.qcFeedbackText || form.qcVoiceNote) && (
+                  <Grid item xs={12}>
+                    <Alert severity="error" sx={{ mb: 1.5 }}>
+                      <Typography variant="subtitle2" fontWeight={700} color="error.dark">
+                        ⚠ Head QC Feedback / Revisions Required:
+                      </Typography>
+                      {form.qcFeedbackText && (
+                        <Typography variant="body2" sx={{ mt: 0.5, fontStyle: "italic" }}>
+                          "{form.qcFeedbackText}"
+                        </Typography>
+                      )}
+                      {form.qcVoiceNote && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          href={form.qcVoiceNote}
+                          target="_blank"
+                          startIcon={<span>🔊</span>}
+                          sx={{ mt: 1, textTransform: "none", fontSize: 11, fontWeight: "bold" }}
+                        >
+                          Play QC Voice Note
+                        </Button>
+                      )}
+                    </Alert>
+                  </Grid>
+                )}
+
+                <Grid item xs={12}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Assigned Editor</InputLabel>
+                    <Select
+                      value={form.editorId}
+                      label="Assigned Editor"
+                      onChange={e => setForm({ ...form, editorId: e.target.value })}
+                    >
+                      <MenuItem value="">Unassigned</MenuItem>
+                      {users.map(u => (
+                        <MenuItem key={u._id} value={u._id}>{u.name} ({u.role})</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+              </Grid>
+            )}
+
+            {form.stage === "qc" && (
+              <Grid container spacing={2} item xs={12} sx={{ mt: 1 }}>
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 1 }} />
+                  <Typography variant="subtitle2" fontWeight={700} color="success.main" gutterBottom>
+                    ✅ Head QC Feedback Loop
+                  </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField {...f("qcVoiceNote")} label="QC Voice Note Feedback Link" placeholder="https://drive.google.com/..." />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField {...f("qcFeedbackText")} label="QC Feedback Notes" multiline rows={3} placeholder="Write changes requested..." />
+                </Grid>
+                <Grid item xs={12} sx={{ display: "flex", gap: 1, mt: 1 }}>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    fullWidth
+                    onClick={() => {
+                      setForm({ ...form, stage: "client_approval", qcFeedbackText: "", qcVoiceNote: "" });
+                      setToast("QC Passed! Stage set to Client Approval.");
+                    }}
+                  >
+                    QC Pass (Approve Video)
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    fullWidth
+                    onClick={() => {
+                      setForm({ ...form, stage: "edit" });
+                      setToast("QC Failed! Stage set back to Edit for revisions.");
+                    }}
+                  >
+                    QC Fail (Send to Editor)
+                  </Button>
+                </Grid>
+              </Grid>
+            )}
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ px:3, pb:2 }}>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDialog(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleSave}>
             {editTarget ? "Save Changes" : "Add Content"}
@@ -510,35 +742,35 @@ export default function ProjectKanban() {
       <Dialog open={projDialog} onClose={() => setProjDialog(false)} maxWidth="xs" fullWidth>
         <DialogTitle>Edit Project</DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} sx={{ mt:0.5 }}>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid item xs={12}>
               <TextField fullWidth size="small" label="Project Name"
                 value={projForm.name || ""}
-                onChange={e => setProjForm({...projForm, name:e.target.value})} />
+                onChange={e => setProjForm({ ...projForm, name: e.target.value })} />
             </Grid>
             <Grid item xs={12}>
               <FormControl fullWidth size="small">
                 <InputLabel>Status</InputLabel>
                 <Select value={projForm.status || "planning"} label="Status"
-                  onChange={e => setProjForm({...projForm, status:e.target.value})}>
-                  {Object.entries({ planning:"Planning", active:"Active", completed:"Completed", on_hold:"On Hold" })
-                    .map(([k,v]) => <MenuItem key={k} value={k}>{v}</MenuItem>)}
+                  onChange={e => setProjForm({ ...projForm, status: e.target.value })}>
+                  {Object.entries({ planning: "Planning", active: "Active", completed: "Completed", on_hold: "On Hold" })
+                    .map(([k, v]) => <MenuItem key={k} value={k}>{v}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
             <Grid item xs={12}>
               <TextField fullWidth size="small" label="Monthly Goal"
                 value={projForm.monthlyGoal || ""}
-                onChange={e => setProjForm({...projForm, monthlyGoal:e.target.value})} />
+                onChange={e => setProjForm({ ...projForm, monthlyGoal: e.target.value })} />
             </Grid>
             <Grid item xs={12}>
               <TextField fullWidth size="small" label="Notes" multiline rows={2}
                 value={projForm.notes || ""}
-                onChange={e => setProjForm({...projForm, notes:e.target.value})} />
+                onChange={e => setProjForm({ ...projForm, notes: e.target.value })} />
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ px:3, pb:2 }}>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setProjDialog(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleProjSave}>Save</Button>
         </DialogActions>

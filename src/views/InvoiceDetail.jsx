@@ -12,7 +12,8 @@ import AddIcon        from "@mui/icons-material/Add";
 import DeleteIcon     from "@mui/icons-material/Delete";
 import PrintIcon      from "@mui/icons-material/Print";
 import WhatsAppIcon   from "@mui/icons-material/WhatsApp";
-import { getInvoiceById, createInvoice, recordPayment, deletePayment } from "../api/clientsApi";
+import EditIcon       from "@mui/icons-material/Edit";
+import { getInvoiceById, createInvoice, recordPayment, deletePayment, updateInvoice } from "../api/clientsApi";
 import { getClients } from "../api/clientsApi";
 import { useAuth } from "../context/AuthContext";
 
@@ -252,6 +253,7 @@ export default function InvoiceDetail() {
   const [payDialog, setPayDialog] = useState(false);
   const [payForm, setPayForm]     = useState({ amount:"", method:"upi", note:"", date:"", collectedBy:"vivek", collectedByCustom:"" });
   const [payError, setPayError]   = useState("");
+  const [isEditing, setIsEditing] = useState(false);
 
   // New invoice form
   const [newForm, setNewForm] = useState({
@@ -274,15 +276,59 @@ export default function InvoiceDetail() {
   const [creating, setCreating]       = useState(false);
 
   useEffect(() => {
-    if (isNew) {
-      getClients({ limit:100 }).then(r => setClients(r.data.clients));
-      return;
-    }
+    getClients({ limit: 100 })
+      .then(r => setClients(r.data.clients))
+      .catch(() => {});
+
+    if (isNew) return;
+
     setLoading(true);
     getInvoiceById(id).then(r => setInvoice(r.data))
       .catch(() => navigate("/admin/invoices"))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, isNew]);
+
+  const handleStartEdit = () => {
+    setIsManualClient(!invoice.clientId);
+    setNewForm({
+      clientId: invoice.clientId?._id || "",
+      clientName: invoice.clientName || "",
+      clientBusiness: invoice.clientBusiness || "",
+      clientMobile: invoice.clientMobile || "",
+      clientEmail: invoice.clientEmail || "",
+      clientCity: invoice.clientCity || "",
+      month: invoice.month || "",
+      issueDate: invoice.issueDate ? new Date(invoice.issueDate).toISOString().slice(0, 10) : "",
+      dueDate: invoice.dueDate ? new Date(invoice.dueDate).toISOString().slice(0, 10) : "",
+      items: invoice.items.map(i => ({ description: i.description, quantity: i.quantity, rate: i.rate })),
+      discount: invoice.discount || 0,
+      gstPercent: invoice.gstPercent || 0,
+      notes: invoice.notes || "",
+    });
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    const { clientId, clientBusiness, items } = newForm;
+    if (!isManualClient && !clientId) { setCreateError("Please select a client."); return; }
+    if (isManualClient && !clientBusiness) { setCreateError("Client Business Name is required."); return; }
+    if (!items.length || !items[0].description) { setCreateError("At least one item is required."); return; }
+    setCreating(true); setCreateError("");
+    try {
+      const payload = {
+        ...newForm,
+        clientId: isManualClient ? "" : clientId,
+      };
+      const res = await updateInvoice(id, payload);
+      setInvoice(res.data);
+      setIsEditing(false);
+      setToast("Invoice updated successfully!");
+    } catch (err) {
+      setCreateError(err.response?.data?.message || "Failed to update invoice");
+    } finally {
+      setCreating(false);
+    }
+  };
 
   // ── Create new invoice ──────────────────────────────────────────
   const handleCreate = async () => {
@@ -359,11 +405,13 @@ export default function InvoiceDetail() {
     window.open(`https://wa.me/91${(invoice.clientId?.mobile || invoice.clientMobile || "").replace(/\D/g,"")}?text=${msg}`, "_blank");
   };
 
-  // ── NEW INVOICE FORM ────────────────────────────────────────────
-  if (isNew) return (
+  // ── NEW / EDIT INVOICE FORM ─────────────────────────────────────
+  if (isNew || isEditing) return (
     <Box>
-      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate("/admin/invoices")} sx={{ mb:2 }}>Back</Button>
-      <Typography variant="h5" mb={3}>Create Invoice</Typography>
+      <Button startIcon={<ArrowBackIcon />} onClick={() => isEditing ? setIsEditing(false) : navigate("/admin/invoices")} sx={{ mb:2 }}>
+        {isEditing ? "Cancel" : "Back"}
+      </Button>
+      <Typography variant="h5" mb={3}>{isEditing ? "Edit Invoice" : "Create Invoice"}</Typography>
       {createError && <Alert severity="error" sx={{ mb:2 }}>{createError}</Alert>}
       <Grid container spacing={2}>
         <Grid item xs={12} md={8}>
@@ -499,8 +547,8 @@ export default function InvoiceDetail() {
                 <Typography fontWeight={700} color="#1a56db">Total</Typography>
                 <Typography fontWeight={700} color="#1a56db" fontSize={18}>₹{liveTotal.toLocaleString("en-IN")}</Typography>
               </Box>
-              <Button fullWidth variant="contained" sx={{ mt:2 }} onClick={handleCreate} disabled={creating}>
-                {creating ? "Creating..." : "Create Invoice"}
+              <Button fullWidth variant="contained" sx={{ mt:2 }} onClick={isEditing ? handleSave : handleCreate} disabled={creating}>
+                {creating ? "Saving..." : (isEditing ? "Save Changes" : "Create Invoice")}
               </Button>
             </CardContent>
           </Card>
@@ -526,6 +574,11 @@ export default function InvoiceDetail() {
         </Box>
         <Box sx={{ display:"flex", gap:1, flexWrap:"wrap" }}>
           <Chip label={invoice.paymentStatus.toUpperCase()} color={PAY_COLOR[invoice.paymentStatus]} sx={{ fontWeight:700 }} />
+          {canManage && (
+            <Button variant="outlined" size="small" startIcon={<EditIcon />} onClick={handleStartEdit}>
+              Edit
+            </Button>
+          )}
           <Button variant="outlined" size="small" startIcon={<PrintIcon />} onClick={() => printInvoice(invoice)}>Print / PDF</Button>
           {invoice.paymentStatus !== "paid" && (
             <Button variant="outlined" size="small" color="success" startIcon={<WhatsAppIcon />} onClick={sendWhatsApp}>

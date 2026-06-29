@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Box, Typography, Card, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Chip, IconButton, Button, Select, MenuItem,
-  FormControl, InputLabel, Alert, Snackbar, Tooltip, Grid,
+  FormControl, InputLabel, Alert, Snackbar, Tooltip, Grid, Pagination,
 } from "@mui/material";
 import AddIcon        from "@mui/icons-material/Add";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -25,6 +25,7 @@ export default function InvoicesPage() {
   const [total, setTotal]       = useState(0);
   const [statusFilter, setStatus] = useState("");
   const [toast, setToast]       = useState("");
+  const [page, setPage]         = useState(1);
 
   const loadStats = useCallback(() => {
     if (isAdmin) {
@@ -35,12 +36,17 @@ export default function InvoicesPage() {
   }, [isAdmin]);
 
   const load = useCallback(() => {
-    getInvoices({ paymentStatus: statusFilter, clientId: clientIdFilter })
+    getInvoices({ paymentStatus: statusFilter, clientId: clientIdFilter, page, limit: 20 })
       .then(r => { setInvoices(r.data.invoices); setTotal(r.data.total); });
-  }, [statusFilter, clientIdFilter]);
+  }, [statusFilter, clientIdFilter, page]);
 
   useEffect(() => { loadStats(); }, [loadStats]);
   useEffect(() => { load(); }, [load]);
+
+  const handleStatusChange = (e) => {
+    setStatus(e.target.value);
+    setPage(1);
+  };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this invoice?")) return;
@@ -86,7 +92,7 @@ export default function InvoicesPage() {
       <Card sx={{ p:2, mb:2 }}>
         <FormControl size="small" sx={{ minWidth:160 }}>
           <InputLabel>Payment Status</InputLabel>
-          <Select value={statusFilter} label="Payment Status" onChange={e => setStatus(e.target.value)}>
+          <Select value={statusFilter} label="Payment Status" onChange={handleStatusChange}>
             <MenuItem value="">All</MenuItem>
             <MenuItem value="pending">Pending</MenuItem>
             <MenuItem value="partial">Partial</MenuItem>
@@ -150,6 +156,17 @@ export default function InvoicesPage() {
             </TableBody>
           </Table>
         </TableContainer>
+
+        {total > 20 && (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 2, borderTop: "1px solid #e5e7eb" }}>
+            <Pagination
+              count={Math.ceil(total / 20)}
+              page={page}
+              onChange={(e, val) => setPage(val)}
+              color="primary"
+            />
+          </Box>
+        )}
       </Card>
 
       <Snackbar open={Boolean(toast)} autoHideDuration={3000} onClose={() => setToast("")} message={toast} />

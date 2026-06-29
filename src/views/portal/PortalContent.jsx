@@ -26,13 +26,13 @@ const TYPE_EMOJI = { reel:"🎬", post:"📸", story:"📖", carousel:"🖼️",
 
 function ContentCard({ item, onApprove }) {
   const stage = STAGE_STYLE[item.stage] || STAGE_STYLE.idea;
-  const needsApproval = !item.clientApproved && (item.stage === "client_approval" || item.stage === "script");
+  const needsApproval = !item.clientApproved && item.stage === "client_approval";
 
   return (
     <Card sx={{ border: needsApproval ? "2px solid #d97706" : "1px solid #e5e7eb", position:"relative" }}>
       {needsApproval && (
         <Box sx={{ position:"absolute", top:-10, right:12, zIndex:1 }}>
-          <Chip label="⚠️ Approval Needed" color="warning" size="small" sx={{ fontWeight:700 }} />
+          <Chip label="⚠️ Reel Approval Needed" color="warning" size="small" sx={{ fontWeight:700 }} />
         </Box>
       )}
       <Box sx={{ p:2 }}>
@@ -49,9 +49,21 @@ function ContentCard({ item, onApprove }) {
         {/* Description */}
         {item.description && (
           <Typography variant="body2" color="text.secondary" mb={1}
-            sx={{ overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>
+            sx={{ overflow:"hidden", display:"-webkit-box", WebkitLineClamp:3, WebkitBoxOrient:"vertical" }}>
             {item.description}
           </Typography>
+        )}
+
+        {/* Script Outline (Read Only reference) */}
+        {item.scriptText && (
+          <Box sx={{ mt: 1, mb: 1, p: 1, bgcolor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 1.5 }}>
+            <Typography variant="caption" fontWeight={700} color="text.secondary" display="block">
+              📜 Approved Script Outline:
+            </Typography>
+            <Typography variant="caption" sx={{ whiteSpace: "pre-line", color: "text.primary", fontFamily: "monospace" }}>
+              {item.scriptText}
+            </Typography>
+          </Box>
         )}
 
         {/* Dates */}
@@ -85,15 +97,15 @@ function ContentCard({ item, onApprove }) {
         {needsApproval && (
           <Box sx={{ display:"flex", gap:1, flexWrap:"wrap" }}>
             <Button size="small" variant="contained" color="success" startIcon={<CheckIcon />}
-              onClick={()=>onApprove(item,"approved")} sx={{ flex:1 }}>
-              Approve
+              onClick={()=>onApprove(item,"approved")} sx={{ flex: 1, minWidth: "90px" }}>
+              Approve Reel
             </Button>
             <Button size="small" variant="outlined" color="warning" startIcon={<ChangeIcon />}
-              onClick={()=>onApprove(item,"changes_requested")} sx={{ flex:1 }}>
+              onClick={()=>onApprove(item,"changes_requested")} sx={{ flex: 1, minWidth: "130px" }}>
               Request Changes
             </Button>
             <Button size="small" variant="outlined" color="error" startIcon={<RejectIcon />}
-              onClick={()=>onApprove(item,"rejected")} sx={{ flex:1 }}>
+              onClick={()=>onApprove(item,"rejected")} sx={{ flex: 1, minWidth: "70px" }}>
               Reject
             </Button>
           </Box>
@@ -161,22 +173,25 @@ export default function PortalContent() {
     }
   };
 
+  // Filter content: exclude idea and script stages from the Reel Approvals view
+  const reelItems = content.filter(c => c.stage !== "idea" && c.stage !== "script");
+
   // Filter content by tab
   const displayContent = tab === 1
-    ? content.filter(c => !c.clientApproved && (c.stage === "client_approval" || c.stage === "script"))
+    ? reelItems.filter(c => !c.clientApproved && c.stage === "client_approval")
     : tab === 2
-      ? content.filter(c => c.stage === "posted")
-      : content;
+      ? reelItems.filter(c => c.stage === "posted")
+      : reelItems;
 
-  const pendingCount = content.filter(c => !c.clientApproved && (c.stage === "client_approval" || c.stage === "script")).length;
+  const pendingCount = reelItems.filter(c => !c.clientApproved && c.stage === "client_approval").length;
 
   return (
     <Box>
       <Box sx={{ display:"flex", justifyContent:"space-between", alignItems:"center", mb:3 }}>
         <Box>
-          <Typography variant="h5">My Content</Typography>
+          <Typography variant="h5" fontWeight={700}>🎬 Reel Approvals</Typography>
           <Typography variant="body2" color="text.secondary">
-            {content.length} total · {content.filter(c=>c.stage==="posted").length} posted
+            {reelItems.length} total reels · {reelItems.filter(c=>c.stage==="posted").length} posted
           </Typography>
         </Box>
       </Box>
@@ -185,15 +200,15 @@ export default function PortalContent() {
 
       {pendingCount > 0 && (
         <Alert severity="warning" sx={{ mb:2 }} action={<Button size="small" color="inherit" onClick={()=>setTab(1)}>View →</Button>}>
-          <strong>{pendingCount} content item{pendingCount>1?"s":""}</strong> awaiting your approval!
+          <strong>{pendingCount} reel{pendingCount>1?"s":""}</strong> awaiting your final approval!
         </Alert>
       )}
 
       <Card sx={{ mb:2 }}>
         <Tabs value={tab} onChange={(_,v)=>setTab(v)}>
-          <Tab label={`All (${content.length})`} />
+          <Tab label={`All Reels (${reelItems.length})`} />
           <Tab label={`Pending Approval (${pendingCount})`} sx={{ color: pendingCount>0?"#d97706":"inherit" }} />
-          <Tab label={`Posted (${content.filter(c=>c.stage==="posted").length})`} />
+          <Tab label={`Posted (${reelItems.filter(c=>c.stage==="posted").length})`} />
         </Tabs>
       </Card>
 
@@ -201,7 +216,7 @@ export default function PortalContent() {
         <Box sx={{ display:"flex", justifyContent:"center", pt:6 }}><CircularProgress /></Box>
       ) : displayContent.length === 0 ? (
         <Card><Box sx={{ py:6, textAlign:"center", color:"text.secondary" }}>
-          <Typography>No content found.</Typography>
+          <Typography>No reels found.</Typography>
         </Box></Card>
       ) : (
         <Grid container spacing={2}>
