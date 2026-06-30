@@ -115,6 +115,33 @@ export default function PortalStrategy() {
     );
   }
 
+  const getTopicLabel = (idx, client) => {
+    if (!client || !client.package || !client.package.deliverables) {
+      return `Reel ${idx + 1}`;
+    }
+    
+    let currentIdx = 0;
+    for (const d of client.package.deliverables) {
+      const typeLower = (d.type || "").toLowerCase();
+      if (
+        typeLower.includes("reel") ||
+        typeLower.includes("ugc") ||
+        typeLower.includes("video") ||
+        typeLower.includes("post") ||
+        typeLower.includes("carousel") ||
+        typeLower.includes("youtube")
+      ) {
+        if (idx >= currentIdx && idx < currentIdx + d.quantity) {
+          const itemNumberInType = idx - currentIdx + 1;
+          return `${d.type} ${itemNumberInType}`;
+        }
+        currentIdx += d.quantity;
+      }
+    }
+    
+    return `Reel ${idx + 1}`;
+  };
+
   const approvedCount = (strategy.reelTopics || []).filter(t => t.status === "Approved").length;
   const totalCount = (strategy.reelTopics || []).length;
 
@@ -185,7 +212,7 @@ export default function PortalStrategy() {
         {/* Reel Topics Grid */}
         <Grid item xs={12}>
           <Typography variant="h6" fontWeight={700} mb={2} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <LightbulbIcon color="primary" /> Reel Concept Review ({totalCount} slots)
+            <LightbulbIcon color="primary" /> Concept Review ({totalCount} slots)
           </Typography>
           <Grid container spacing={2}>
             {(strategy.reelTopics || []).map((topic, idx) => {
@@ -205,7 +232,7 @@ export default function PortalStrategy() {
                           {idx + 1}
                         </Box>
                         <Typography variant="subtitle1" fontWeight={600}>
-                          {topic.title || "Concept Under Development"}
+                          {getTopicLabel(idx, strategy.clientId)}: {topic.title || "Concept Under Development"}
                         </Typography>
                       </Box>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>

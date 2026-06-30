@@ -12,7 +12,9 @@ import BlockIcon       from "@mui/icons-material/Block";
 import CalendarIcon    from "@mui/icons-material/CalendarMonth";
 import LinkIcon        from "@mui/icons-material/Link";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import VpnKeyIcon      from "@mui/icons-material/VpnKey";
 import { getStaff, createStaff, updateStaff, deactivateStaff } from "../api/hrApi";
+import { getUsers, createUser } from "../api/leadsApi";
 
 const DEPARTMENTS = ["Content","SEO","Design","Ads / PPC","Personal Branding","Management","Other"];
 const EMPTY = { name:"", email:"", mobile:"", position:"", department:"", joiningDate:"", salary:"" };
@@ -36,6 +38,7 @@ function AvatarCell({ name }) {
 export default function StaffPage() {
   const navigate = useNavigate();
   const [staff, setStaff]       = useState([]);
+  const [users, setUsers]       = useState([]);
   const [loading, setLoading]   = useState(true);
   const [dialog, setDialog]     = useState(false);
   const [editTarget, setEdit]   = useState(null);
@@ -44,11 +47,57 @@ export default function StaffPage() {
   const [error, setError]       = useState("");
   const [deactivateTarget, setDeactivateTarget] = useState(null);
 
+  // Portal login setup state
+  const [portalDialog, setPortalDialog] = useState(false);
+  const [portalStaff, setPortalStaff] = useState(null);
+  const [portalForm, setPortalForm] = useState({ password: "", role: "team" });
+
   const load = () => {
     setLoading(true);
-    getStaff().then((r) => setStaff(r.data)).finally(() => setLoading(false));
+    Promise.all([getStaff(), getUsers()])
+      .then(([staffRes, usersRes]) => {
+        setStaff(staffRes.data);
+        setUsers(usersRes.data);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   };
   useEffect(load, []);
+
+  const hasUserAccount = (email) => {
+    if (!email) return false;
+    return users.some(u => u.email?.toLowerCase() === email.toLowerCase());
+  };
+
+  const openPortalDialog = (s) => {
+    setPortalStaff(s);
+    setPortalForm({ password: "", role: "team" });
+    setError("");
+    setPortalDialog(true);
+  };
+
+  const handleCreatePortal = async () => {
+    if (!portalForm.password) {
+      setError("Password is required.");
+      return;
+    }
+    setError("");
+    try {
+      await createUser({
+        name: portalStaff.name,
+        email: portalStaff.email,
+        mobile: portalStaff.mobile || "",
+        position: portalStaff.position,
+        role: portalForm.role,
+        password: portalForm.password,
+      });
+      setPortalDialog(false);
+      setToast(`Login portal created for ${portalStaff.name}!`);
+      load();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to create portal login.");
+    }
+  };
 
   const openAdd  = () => { setEdit(null); setForm(EMPTY); setDialog(true); };
   const openEdit = (s) => {
@@ -161,6 +210,31 @@ export default function StaffPage() {
                     />
                   </TableCell>
                   <TableCell>
+                    {/* Create Portal Login */}
+                    {s.status === "active" && (
+                      hasUserAccount(s.email) ? (
+                        <Tooltip title="Portal Login is Active">
+                          <span>
+                            <IconButton size="small" color="success" disabled>
+                              <VpnKeyIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      ) : (
+                        <Tooltip title={s.email ? "Create Portal Login" : "Add email first to create login"}>
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="warning"
+                              onClick={() => openPortalDialog(s)}
+                              disabled={!s.email}
+                            >
+                              <VpnKeyIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      )
+                    )}
                     {/* Calendar view */}
                     <Tooltip title="Monthly Calendar View">
                       <IconButton size="small" color="primary" onClick={() => navigate(`/admin/staff/${s._id}/calendar`)}>
@@ -243,6 +317,49 @@ export default function StaffPage() {
         <DialogActions>
           <Button onClick={() => setDeactivateTarget(null)}>Cancel</Button>
           <Button color="error" variant="contained" onClick={handleDeactivate}>Deactivate</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Create Portal Dialog */}
+      <Dialog open={portalDialog} onClose={() => setPortalDialog(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Create Portal Login</DialogTitle>
+        <DialogContent>
+          {error && <Alert severity="error" sx={{ mb:2 }}>{error}</Alert>}
+          <Typography variant="body2" color="text.secondary" mb={2} sx={{ mt: 1 }}>
+            Creating login credentials for <strong>{portalStaff?.name}</strong> ({portalStaff?.email}).
+          </Typography>
+          <Grid container spacing={2} sx={{ mt:0.5 }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Login Password"
+                type="password"
+                required
+                value={portalForm.password}
+                onChange={e => setPortalForm({ ...portalForm, password: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Access Role</InputLabel>
+                <Select
+                  value={portalForm.role}
+                  label="Access Role"
+                  onChange={e => setPortalForm({ ...portalForm, role: e.target.value })}
+                >
+                  <MenuItem value="team">Team Member (Standard Access)</MenuItem>
+                  <MenuItem value="manager">Manager (Elevated Access)</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ px:3, pb:2 }}>
+          <Button onClick={() => setPortalDialog(false)}>Cancel</Button>
+          <Button variant="contained" color="success" onClick={handleCreatePortal}>
+            Create Portal Account
+          </Button>
         </DialogActions>
       </Dialog>
 

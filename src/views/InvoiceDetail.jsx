@@ -246,6 +246,21 @@ export default function InvoiceDetail() {
   const isNew      = id === "new";
   const { canManage, isAdmin } = useAuth();
 
+  const handleBack = () => {
+    if (isEditing) {
+      setIsEditing(false);
+    } else {
+      const from = searchParams.get("from");
+      const clientParamId = searchParams.get("clientId");
+      const resolvedClientId = clientParamId || invoice?.clientId?._id || invoice?.clientId;
+      if (from === "client" && resolvedClientId) {
+        navigate(`/admin/clients/${resolvedClientId}`);
+      } else {
+        navigate("/admin/invoices");
+      }
+    }
+  };
+
   const [invoice, setInvoice] = useState(null);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(!isNew);
@@ -343,7 +358,8 @@ export default function InvoiceDetail() {
         clientId: isManualClient ? "" : clientId,
       };
       const inv = await createInvoice(payload);
-      navigate(`/admin/invoices/${inv.data._id}`);
+      const from = searchParams.get("from");
+      navigate(`/admin/invoices/${inv.data._id}${from === "client" ? "?from=client" : ""}`);
     } catch (err) {
       setCreateError(err.response?.data?.message || "Failed");
       setCreating(false);
@@ -408,7 +424,7 @@ export default function InvoiceDetail() {
   // ── NEW / EDIT INVOICE FORM ─────────────────────────────────────
   if (isNew || isEditing) return (
     <Box>
-      <Button startIcon={<ArrowBackIcon />} onClick={() => isEditing ? setIsEditing(false) : navigate("/admin/invoices")} sx={{ mb:2 }}>
+      <Button startIcon={<ArrowBackIcon />} onClick={handleBack} sx={{ mb:2 }}>
         {isEditing ? "Cancel" : "Back"}
       </Button>
       <Typography variant="h5" mb={3}>{isEditing ? "Edit Invoice" : "Create Invoice"}</Typography>
@@ -563,7 +579,7 @@ export default function InvoiceDetail() {
 
   return (
     <Box>
-      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate("/admin/invoices")} sx={{ mb:2 }}>Back</Button>
+      <Button startIcon={<ArrowBackIcon />} onClick={handleBack} sx={{ mb:2 }}>Back</Button>
 
       <Box sx={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", mb:3, flexWrap:"wrap", gap:2 }}>
         <Box>

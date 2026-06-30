@@ -790,7 +790,7 @@ export default function ClientDetail() {
           {/* TAB 3 — Invoice History */}
           {tab === 3 && (
             <SectionCard title="📜 Invoice History"
-              action={<Button size="small" onClick={()=>navigate(`/admin/invoices/new?clientId=${id}`)}>+ New Invoice</Button>}
+              action={<Button size="small" onClick={()=>navigate(`/admin/invoices/new?clientId=${id}&from=client`)}>+ New Invoice</Button>}
             >
               {invoices.length === 0
                 ? <Typography color="text.secondary" variant="body2">No invoices yet.</Typography>
@@ -807,7 +807,7 @@ export default function ClientDetail() {
                       <TableBody>
                         {invoices.map(inv=>(
                           <TableRow key={inv._id} hover sx={{ cursor:"pointer" }}
-                            onClick={()=>navigate(`/admin/invoices/${inv._id}`)}>
+                            onClick={()=>navigate(`/admin/invoices/${inv._id}?from=client`)}>
                             <TableCell sx={{ fontFamily:"monospace", fontSize:12, color:"#1a56db", fontWeight:600 }}>{inv.invoiceNumber}</TableCell>
                             <TableCell sx={{ fontSize:12 }}>{inv.month||"—"}</TableCell>
                             <TableCell sx={{ fontWeight:600 }}>₹{Number(inv.totalAmount).toLocaleString("en-IN")}</TableCell>
@@ -915,7 +915,7 @@ export default function ClientDetail() {
                 <Typography variant="caption" color="text.secondary" display="block" mb={1}>Quick Actions</Typography>
                 <Box sx={{ display:"flex", flexDirection:"column", gap:1 }}>
                   <Button size="small" variant="outlined" startIcon={<ReceiptIcon/>}
-                    onClick={()=>navigate(`/admin/invoices/new?clientId=${id}&clientName=${client.businessName}`)}>
+                    onClick={()=>navigate(`/admin/invoices/new?clientId=${id}&clientName=${client.businessName}&from=client`)}>
                     Create Invoice
                   </Button>
                   <Button size="small" variant="outlined" startIcon={<PersonIcon/>}

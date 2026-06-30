@@ -80,6 +80,10 @@ function ScriptCard({ item, onApprove }) {
               onClick={()=>onApprove(item,"changes_requested")} sx={{ flex:1 }}>
               Request Revisions
             </Button>
+            <Button size="small" variant="outlined" color="error" startIcon={<RejectIcon />}
+              onClick={()=>onApprove(item,"rejected")} sx={{ flex:1 }}>
+              Reject
+            </Button>
           </Box>
         )}
 

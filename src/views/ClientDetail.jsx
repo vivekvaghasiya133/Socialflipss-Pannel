@@ -400,7 +400,7 @@ export default function ClientDetail() {
                   <TableBody>
                     {invoices.slice(0,5).map(inv => (
                       <TableRow key={inv._id} hover sx={{ cursor:"pointer" }}
-                        onClick={() => navigate(`/admin/invoices/${inv._id}`)}>
+                        onClick={() => navigate(`/admin/invoices/${inv._id}?from=client`)}>
                         <TableCell sx={{ fontSize:12, fontFamily:"monospace" }}>{inv.invoiceNumber}</TableCell>
                         <TableCell sx={{ fontSize:12 }}>{inv.month || "—"}</TableCell>
                         <TableCell sx={{ fontWeight:600 }}>₹{Number(inv.totalAmount).toLocaleString("en-IN")}</TableCell>
@@ -502,7 +502,7 @@ export default function ClientDetail() {
                 </Button>
                 <Divider sx={{ my:2 }} />
                 <Button fullWidth variant="outlined" color="primary" startIcon={<ReceiptIcon />}
-                  onClick={() => navigate(`/admin/invoices/new?clientId=${id}&clientName=${client.businessName}`)}>
+                  onClick={() => navigate(`/admin/invoices/new?clientId=${id}&clientName=${client.businessName}&from=client`)}>
                   Create Invoice
                 </Button>
               </CardContent>

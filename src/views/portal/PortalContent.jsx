@@ -173,8 +173,8 @@ export default function PortalContent() {
     }
   };
 
-  // Filter content: exclude idea and script stages from the Reel Approvals view
-  const reelItems = content.filter(c => c.stage !== "idea" && c.stage !== "script");
+  // Show all content items (reels, posts, stories, etc.) so client can track progress from the start
+  const reelItems = content;
 
   // Filter content by tab
   const displayContent = tab === 1

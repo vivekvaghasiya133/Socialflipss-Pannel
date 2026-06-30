@@ -45,16 +45,51 @@ export default function StrategyVaultPage() {
 
   const getReelsCountForClient = (clientId) => {
     const client = clients.find(c => c._id === clientId);
-    let reelCount = 15; // default fallback if no reel deliverable
+    let totalCount = 0;
     if (client && client.package && client.package.deliverables) {
-      const reelDel = client.package.deliverables.find(d =>
-        d.type && d.type.toLowerCase().includes("reel")
-      );
-      if (reelDel && reelDel.quantity > 0) {
-        reelCount = reelDel.quantity;
+      client.package.deliverables.forEach(d => {
+        const typeLower = (d.type || "").toLowerCase();
+        if (
+          typeLower.includes("reel") ||
+          typeLower.includes("ugc") ||
+          typeLower.includes("video") ||
+          typeLower.includes("post") ||
+          typeLower.includes("carousel") ||
+          typeLower.includes("youtube")
+        ) {
+          totalCount += d.quantity || 0;
+        }
+      });
+    }
+    return totalCount > 0 ? totalCount : 15;
+  };
+
+  const getTopicLabel = (idx, clientId) => {
+    const client = clients.find(c => c._id === clientId);
+    if (!client || !client.package || !client.package.deliverables) {
+      return `Reel ${idx + 1}`;
+    }
+    
+    let currentIdx = 0;
+    for (const d of client.package.deliverables) {
+      const typeLower = (d.type || "").toLowerCase();
+      if (
+        typeLower.includes("reel") ||
+        typeLower.includes("ugc") ||
+        typeLower.includes("video") ||
+        typeLower.includes("post") ||
+        typeLower.includes("carousel") ||
+        typeLower.includes("youtube")
+      ) {
+        if (idx >= currentIdx && idx < currentIdx + d.quantity) {
+          const itemNumberInType = idx - currentIdx + 1;
+          return `${d.type} ${itemNumberInType}`;
+        }
+        currentIdx += d.quantity;
       }
     }
-    return reelCount;
+    
+    return `Reel ${idx + 1}`;
   };
 
 
@@ -391,7 +426,7 @@ export default function StrategyVaultPage() {
             {/* Reel Topics */}
             <Grid item xs={12}>
               <Typography variant="subtitle2" fontWeight={700} color="primary" sx={{ mb: 1.5, display: "flex", alignItems: "center", gap: 0.5 }}>
-                <LightbulbIcon sx={{ fontSize: 18 }} /> {form.reelTopics.length} Reel Topics Outlines
+                <LightbulbIcon sx={{ fontSize: 18 }} /> {form.reelTopics.length} Content / Reel Topics Outlines
               </Typography>
               {form.reelTopics.length === 0 && (
                 <Alert severity="info" sx={{ mb: 1.5 }}>
@@ -405,7 +440,7 @@ export default function StrategyVaultPage() {
                     <Grid item xs={12} key={idx}>
                       <Box sx={{ p: 2, border: "1px solid #e5e7eb", borderRadius: 2, bgcolor: "#f9fafb" }}>
                         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
-                          <Typography variant="subtitle2" fontWeight={700}>Reel {idx + 1}</Typography>
+                          <Typography variant="subtitle2" fontWeight={700}>{getTopicLabel(idx, form.clientId)}</Typography>
                           <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
                             {topicVal.status && (
                               <Chip 
