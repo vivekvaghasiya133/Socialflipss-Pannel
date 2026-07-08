@@ -4,12 +4,13 @@ import {
   TableHead, TableRow, TableContainer, IconButton, Button,
   TextField, Dialog, DialogTitle, DialogContent, DialogActions,
   CircularProgress, Alert, Select, MenuItem, FormControl,
-  InputLabel, Tooltip, Chip, Paper, Divider
+  InputLabel, Tooltip, Chip, Paper, Divider, Checkbox, FormControlLabel
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import LightbulbIcon from "@mui/icons-material/Lightbulb";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import { getStrategies, createStrategy, updateStrategy, deleteStrategy } from "../api/strategyApi";
 import { getClients } from "../api/clientsApi";
 import { useAuth } from "../context/AuthContext";
@@ -28,6 +29,11 @@ export default function StrategyVaultPage() {
   const [error, setError] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
+
+  // PDF Export State
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportTarget, setExportTarget] = useState(null);
+  const [selectedExportIndexes, setSelectedExportIndexes] = useState([]);
 
   // Form State
   const [form, setForm] = useState({
@@ -61,7 +67,7 @@ export default function StrategyVaultPage() {
         }
       });
     }
-    return totalCount > 0 ? totalCount : 15;
+    return totalCount;
   };
 
   const getTopicLabel = (idx, clientId) => {
@@ -100,7 +106,7 @@ export default function StrategyVaultPage() {
       ...prev,
       clientId: selectedClientId,
       reelTopics: Array(targetReelCount).fill(null).map(() => ({
-        title: "", brief: "", status: "Draft", feedback: "", contentId: null
+        title: "", brief: "", scriptText: "", status: "Draft", approvedBy: "", feedback: "", contentId: null
       }))
     }));
   };
@@ -149,16 +155,24 @@ export default function StrategyVaultPage() {
     const targetReelCount = getReelsCountForClient(targetCid);
     const savedTopics = (strat.reelTopics || []).map(topic => {
       if (typeof topic === "string") {
-        return { title: topic, brief: "", status: "Draft", feedback: "", contentId: null };
+        return { title: topic, brief: "", scriptText: "", status: "Draft", approvedBy: "", feedback: "", contentId: null };
       }
-      return topic;
+      return {
+        title: topic.title || "",
+        brief: topic.brief || "",
+        scriptText: topic.scriptText || "",
+        status: topic.status || "Draft",
+        approvedBy: topic.approvedBy || "",
+        feedback: topic.feedback || "",
+        contentId: topic.contentId || null
+      };
     });
     let finalTopics = [...savedTopics];
     if (finalTopics.length < targetReelCount) {
       finalTopics = [
         ...finalTopics,
         ...Array(targetReelCount - finalTopics.length).fill(null).map(() => ({
-          title: "", brief: "", status: "Draft", feedback: "", contentId: null
+          title: "", brief: "", scriptText: "", status: "Draft", approvedBy: "", feedback: "", contentId: null
         }))
       ];
     } else if (finalTopics.length > targetReelCount) {
@@ -209,11 +223,218 @@ export default function StrategyVaultPage() {
     }
   };
 
+  const handleOpenPdfExport = (strat) => {
+    setExportTarget(strat);
+    // Auto-select all topics that have titles
+    const indexesWithTitles = (strat.reelTopics || [])
+      .map((topic, idx) => {
+        const title = typeof topic === "string" ? topic : (topic?.title || "");
+        return title.trim() ? idx : -1;
+      })
+      .filter(idx => idx !== -1);
+    
+    setSelectedExportIndexes(indexesWithTitles);
+    setExportDialogOpen(true);
+  };
+
+  const handleToggleExportIndex = (idx) => {
+    setSelectedExportIndexes(prev => 
+      prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
+    );
+  };
+
+  const handleSelectAllExport = () => {
+    if (!exportTarget) return;
+    const allIdx = (exportTarget.reelTopics || [])
+      .map((topic, idx) => {
+        const title = typeof topic === "string" ? topic : (topic?.title || "");
+        return title.trim() ? idx : -1;
+      })
+      .filter(idx => idx !== -1);
+    setSelectedExportIndexes(allIdx);
+  };
+
+  const handleSelectNoneExport = () => {
+    setSelectedExportIndexes([]);
+  };
+
+  const handleGeneratePdf = () => {
+    if (!exportTarget) return;
+    
+    const clientName = exportTarget.clientId?.businessName || "Client";
+    const selectedTopics = (exportTarget.reelTopics || [])
+      .map((topic, idx) => {
+        const isString = typeof topic === "string";
+        return {
+          index: idx,
+          title: isString ? topic : (topic.title || ""),
+          brief: isString ? "" : (topic.brief || ""),
+          scriptText: isString ? "" : (topic.scriptText || "")
+        };
+      })
+      .filter(t => selectedExportIndexes.includes(t.index));
+
+    const printWindow = window.open("", "_blank");
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Strategy Export - ${clientName}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+            body { font-family: 'Outfit', sans-serif; color: #1e293b; padding: 20px; background: #ffffff; margin-bottom: 60px; position: relative; }
+            
+            /* Watermark style */
+            body::before {
+              content: 'SOCIALFLIPSS';
+              position: fixed;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%) rotate(-30deg);
+              font-size: 90px;
+              font-weight: 900;
+              color: rgba(59, 130, 246, 0.035);
+              z-index: -1000;
+              pointer-events: none;
+              white-space: nowrap;
+              letter-spacing: 0.15em;
+            }
+
+            .branding-bar {
+              height: 4px;
+              background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+              margin-bottom: 15px;
+              border-radius: 2px;
+            }
+
+            .header { 
+              display: flex; 
+              justify-content: space-between; 
+              align-items: flex-end; 
+              margin-bottom: 25px; 
+              border-bottom: 2px solid #f1f5f9; 
+              padding-bottom: 15px; 
+            }
+            .title { font-size: 22px; font-weight: 800; color: #0f172a; }
+            .meta { font-size: 13px; color: #64748b; margin-top: 4px; font-weight: 500; }
+            
+            .brand-logo-text {
+              font-size: 14px;
+              font-weight: 800;
+              color: #1e3a8a;
+              letter-spacing: 0.05em;
+              display: flex;
+              align-items: center;
+              gap: 4px;
+            }
+            .brand-badge {
+              font-size: 9px;
+              background: #eff6ff;
+              color: #1d4ed8;
+              padding: 2px 8px;
+              border-radius: 12px;
+              font-weight: 700;
+              border: 1px solid #bfdbfe;
+              margin-top: 4px;
+              display: inline-block;
+            }
+
+            .topic-card { 
+              border: 1px solid #e2e8f0; 
+              border-top: 3px solid #3b82f6; 
+              border-radius: 10px; 
+              padding: 20px; 
+              margin-bottom: 25px; 
+              background: #f8fafc; 
+              box-shadow: 0 1px 3px rgba(0,0,0,0.01);
+            }
+            .topic-header { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
+            .section-title { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #2563eb; margin-top: 14px; margin-bottom: 4px; letter-spacing: 0.05em; }
+            .section-content { font-size: 13px; line-height: 1.6; color: #334155; white-space: pre-line; }
+            .script-box { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; font-family: 'Courier New', Courier, monospace; font-size: 12px; color: #0f172a; margin-top: 4px; line-height: 1.5; }
+            
+            /* Print running footer */
+            .print-footer {
+              position: fixed;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              display: flex;
+              justify-content: space-between;
+              font-size: 9px;
+              color: #94a3b8;
+              border-top: 1px solid #e2e8f0;
+              padding-top: 8px;
+              font-weight: 500;
+              background: #ffffff;
+            }
+            
+            @media print {
+              body { margin-bottom: 50px; }
+              .topic-card { page-break-inside: auto; background: #fafafa !important; }
+              .print-footer { position: fixed; bottom: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="branding-bar"></div>
+          <div class="header">
+            <div>
+              <div class="title">${clientName} - Content Strategy</div>
+              <div class="meta">Month: ${exportTarget.month} | Total Selected: ${selectedTopics.length}</div>
+            </div>
+            <div style="text-align: right;">
+              <div class="brand-logo-text">⚡ SOCIALFLIPSS</div>
+              <div class="brand-badge">CREATIVE CONTENT AGENCY</div>
+            </div>
+          </div>
+          ${selectedTopics.map((topic) => `
+            <div class="topic-card">
+              <div class="topic-header">Reel ${topic.index + 1}: ${topic.title || "Untitled Concept"}</div>
+              
+              <div class="section-title">Concept / Idea Brief</div>
+              <div class="section-content">${topic.brief || "No brief description provided."}</div>
+              
+              ${topic.scriptText ? `
+                <div class="section-title">Script Draft</div>
+                <div class="script-box section-content">${topic.scriptText}</div>
+              ` : ""}
+            </div>
+          `).join("")}
+          
+          <div class="print-footer">
+            <span>socialflipss.com | Creative Content Management System</span>
+            <span>Generated by SocialFlipss Team</span>
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+              window.close();
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    setExportDialogOpen(false);
+  };
+
   const handleTopicFieldChange = (idx, field, value) => {
     const updatedTopics = [...form.reelTopics];
     updatedTopics[idx] = {
       ...updatedTopics[idx],
       [field]: value
+    };
+    setForm({ ...form, reelTopics: updatedTopics });
+  };
+
+  const handleTopicStatusChange = (idx, newStatus) => {
+    const updatedTopics = [...form.reelTopics];
+    const oldTopic = updatedTopics[idx];
+    updatedTopics[idx] = {
+      ...oldTopic,
+      status: newStatus,
+      approvedBy: newStatus === "Approved" ? (oldTopic.approvedBy || "admin") : ""
     };
     setForm({ ...form, reelTopics: updatedTopics });
   };
@@ -280,8 +501,13 @@ export default function StrategyVaultPage() {
                       />
                     </TableCell>
                     <TableCell align="center">
+                      <Tooltip title="Download PDF">
+                        <IconButton color="info" onClick={() => handleOpenPdfExport(strat)} sx={{ mr: 0.5 }}>
+                          <PictureAsPdfIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                       <Tooltip title="Edit Strategy">
-                        <IconButton color="primary" onClick={() => handleOpenEdit(strat)}>
+                        <IconButton color="primary" onClick={() => handleOpenEdit(strat)} sx={{ mr: 0.5 }}>
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
@@ -428,27 +654,43 @@ export default function StrategyVaultPage() {
               <Typography variant="subtitle2" fontWeight={700} color="primary" sx={{ mb: 1.5, display: "flex", alignItems: "center", gap: 0.5 }}>
                 <LightbulbIcon sx={{ fontSize: 18 }} /> {form.reelTopics.length} Content / Reel Topics Outlines
               </Typography>
-              {form.reelTopics.length === 0 && (
+              {!form.clientId && (
                 <Alert severity="info" sx={{ mb: 1.5 }}>
                   Please select a client to load their package reels planning slots.
                 </Alert>
               )}
+              {form.clientId && form.reelTopics.length === 0 && (
+                <Alert severity="warning" sx={{ mb: 1.5 }}>
+                  No deliverables configured for this client. Please set package deliverables in Client Details first.
+                </Alert>
+              )}
               <Grid container spacing={2}>
                 {form.reelTopics.map((topic, idx) => {
-                  const topicVal = typeof topic === "string" ? { title: topic, brief: "", status: "Draft", feedback: "" } : (topic || { title: "", brief: "", status: "Draft", feedback: "" });
+                  const topicVal = typeof topic === "string" ? { title: topic, brief: "", scriptText: "", status: "Draft", approvedBy: "", feedback: "" } : (topic || { title: "", brief: "", scriptText: "", status: "Draft", approvedBy: "", feedback: "" });
                   return (
                     <Grid item xs={12} key={idx}>
                       <Box sx={{ p: 2, border: "1px solid #e5e7eb", borderRadius: 2, bgcolor: "#f9fafb" }}>
                         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
                           <Typography variant="subtitle2" fontWeight={700}>{getTopicLabel(idx, form.clientId)}</Typography>
-                          <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-                            {topicVal.status && (
-                              <Chip 
-                                label={topicVal.status} 
-                                size="small" 
-                                color={topicVal.status === "Approved" ? "success" : topicVal.status === "Changes Requested" ? "warning" : topicVal.status === "Review" ? "info" : "default"}
-                                sx={{ fontWeight: 600, fontSize: 10 }}
-                              />
+                          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+                            <FormControl size="small" sx={{ minWidth: 140 }}>
+                              <Select
+                                value={topicVal.status || "Draft"}
+                                onChange={e => handleTopicStatusChange(idx, e.target.value)}
+                                sx={{ fontSize: 11, height: 26, fontWeight: 700, bgcolor: "#fff" }}
+                              >
+                                <MenuItem value="Draft" sx={{ fontSize: 11, fontWeight: 600 }}>Draft</MenuItem>
+                                <MenuItem value="Review" sx={{ fontSize: 11, fontWeight: 600 }}>Review</MenuItem>
+                                <MenuItem value="Approved" sx={{ fontSize: 11, fontWeight: 600 }}>
+                                  {topicVal.approvedBy === "admin" ? "Approved (SF) ✓" : topicVal.approvedBy === "client" ? "Approved (Client) ✓" : "Approved ✓"}
+                                </MenuItem>
+                                <MenuItem value="Changes Requested" sx={{ fontSize: 11, fontWeight: 600 }}>Changes Requested</MenuItem>
+                              </Select>
+                            </FormControl>
+                            {topicVal.status === "Approved" && topicVal.approvedBy && (
+                              <Typography variant="caption" sx={{ fontSize: 9, color: "text.secondary", mt: 0.5, fontWeight: 500 }}>
+                                {topicVal.approvedBy === "admin" ? "Approved by SocialFlipss" : "Approved by Client"}
+                              </Typography>
                             )}
                           </Box>
                         </Box>
@@ -473,6 +715,18 @@ export default function StrategyVaultPage() {
                               rows={1.5}
                               value={topicVal.brief || ""}
                               onChange={e => handleTopicFieldChange(idx, "brief", e.target.value)}
+                            />
+                          </Grid>
+                          <Grid item xs={12}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Script (Optional)"
+                              placeholder="Write the full script draft here if preparing scripting together with concept..."
+                              multiline
+                              rows={2.5}
+                              value={topicVal.scriptText || ""}
+                              onChange={e => handleTopicFieldChange(idx, "scriptText", e.target.value)}
                             />
                           </Grid>
                         </Grid>
@@ -506,6 +760,95 @@ export default function StrategyVaultPage() {
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleSave}>Save Strategy</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* PDF Export Dialog */}
+      <Dialog 
+        open={exportDialogOpen} 
+        onClose={() => setExportDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          📄 Export Strategy to PDF
+        </DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="subtitle2" gutterBottom>
+            Client: <strong>{exportTarget?.clientId?.businessName || "Client"}</strong> ({exportTarget?.month})
+          </Typography>
+          <Typography variant="body2" color="text.secondary" mb={2}>
+            Select the concept/reels topics you want to include in the PDF export.
+          </Typography>
+          
+          <Box sx={{ mb: 2, display: "flex", gap: 1.5 }}>
+            <Button size="small" variant="outlined" onClick={handleSelectAllExport}>
+              Select All
+            </Button>
+            <Button size="small" variant="outlined" onClick={handleSelectNoneExport}>
+              Clear All
+            </Button>
+          </Box>
+
+          <Box sx={{ maxHeight: 350, overflowY: "auto", pr: 1 }}>
+            {exportTarget && (exportTarget.reelTopics || []).filter(topic => {
+              const title = typeof topic === "string" ? topic : (topic?.title || "");
+              return title.trim() !== "";
+            }).length === 0 ? (
+              <Alert severity="info">No active topics with titles found in this strategy.</Alert>
+            ) : (
+              (exportTarget?.reelTopics || []).map((topic, idx) => {
+                const topicTitle = typeof topic === "string" ? topic : (topic?.title || "");
+                if (!topicTitle.trim()) return null;
+
+                const isChecked = selectedExportIndexes.includes(idx);
+                return (
+                  <Box 
+                    key={idx} 
+                    sx={{ 
+                      display: "flex", 
+                      alignItems: "center", 
+                      p: 1, 
+                      borderBottom: "1px solid #f3f4f6",
+                      "&:hover": { bgcolor: "#f9fafb" } 
+                    }}
+                  >
+                    <FormControlLabel
+                      control={
+                        <Checkbox 
+                          checked={isChecked} 
+                          onChange={() => handleToggleExportIndex(idx)} 
+                        />
+                      }
+                      label={
+                        <Box>
+                          <Typography variant="body2" fontWeight={600}>
+                            Reel {idx + 1}: {topicTitle}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {typeof topic !== "string" && topic.brief ? (topic.brief.slice(0, 80) + (topic.brief.length > 80 ? "..." : "")) : "No brief description"}
+                          </Typography>
+                        </Box>
+                      }
+                      sx={{ flexGrow: 1, m: 0 }}
+                    />
+                  </Box>
+                );
+              })
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setExportDialogOpen(false)}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={handleGeneratePdf}
+            disabled={selectedExportIndexes.length === 0}
+          >
+            Generate PDF
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

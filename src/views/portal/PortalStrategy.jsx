@@ -12,7 +12,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { getPortalStrategy, reviewPortalStrategyTopic } from "../../api/portalApi";
 
 const STATUS_CHIPS = {
-  Draft:             { label: "Draft", color: "default" },
+  Draft:             { label: "Under Development", color: "default" },
   Review:            { label: "Awaiting Review", color: "info" },
   Approved:          { label: "Approved ✓", color: "success" },
   "Changes Requested": { label: "Revision Requested", color: "warning" }
@@ -80,7 +80,9 @@ export default function PortalStrategy() {
         status: reviewStatus,
         feedback: reviewStatus === "Approved" ? "" : feedback
       });
-      setToast(reviewStatus === "Approved" ? "Topic Approved! Script will be prepared shortly. ✅" : "Changes requested.");
+      setToast(reviewStatus === "Approved" 
+        ? (reviewTopic?.scriptText ? "Topic & Script Approved! Sent to production phase. ✅" : "Topic Approved! Script will be prepared shortly. ✅")
+        : "Changes requested.");
       setReviewTopic(null);
       loadStrategy();
     } catch (err) {
@@ -216,7 +218,16 @@ export default function PortalStrategy() {
           </Typography>
           <Grid container spacing={2}>
             {(strategy.reelTopics || []).map((topic, idx) => {
-              const chip = STATUS_CHIPS[topic.status] || STATUS_CHIPS.Draft;
+              const getChipDetails = (t) => {
+                if (t.status === "Approved") {
+                  if (t.approvedBy === "admin") {
+                    return { label: "Approved by SocialFlipss ✓", color: "success" };
+                  }
+                  return { label: "Approved by Client ✓", color: "success" };
+                }
+                return STATUS_CHIPS[t.status] || STATUS_CHIPS.Draft;
+              };
+              const chip = getChipDetails(topic);
               const isExpanded = expandedTopics[idx];
               const awaitingReview = topic.status !== "Approved";
 
@@ -245,12 +256,21 @@ export default function PortalStrategy() {
                       <Divider />
                       <Box sx={{ p: 2.5, bgcolor: "#fcfdff" }}>
                         <Typography variant="subtitle2" color="primary" fontWeight={700} gutterBottom>Concept Brief / Angle:</Typography>
-                        <Typography variant="body2" color="text.secondary" mb={3} sx={{ whiteSpace: "pre-line" }}>
+                        <Typography variant="body2" color="text.secondary" mb={topic.scriptText ? 2 : 3} sx={{ whiteSpace: "pre-line" }}>
                           {topic.brief || "No brief outline provided yet."}
                         </Typography>
 
+                        {topic.scriptText && (
+                          <Box sx={{ mt: 2, mb: 3 }}>
+                            <Typography variant="subtitle2" color="primary" fontWeight={700} gutterBottom>Script Draft:</Typography>
+                            <Box sx={{ p: 2, bgcolor: "#f3f4f6", border: "1px solid #e5e7eb", borderRadius: 2, whiteSpace: "pre-line", fontFamily: "monospace", fontSize: 13, color: "text.primary" }}>
+                              {topic.scriptText}
+                            </Box>
+                          </Box>
+                        )}
+
                         {/* Client Actions */}
-                        {awaitingReview && (
+                        {awaitingReview && topic.title && topic.title.trim() && (
                           <Box sx={{ display: "flex", gap: 1.5, mt: 2, flexWrap: "wrap" }}>
                             <Button
                               variant="contained"
@@ -274,9 +294,32 @@ export default function PortalStrategy() {
                         )}
 
                         {topic.status === "Approved" && (
-                          <Alert severity="success" icon={<CheckIcon fontSize="inherit" />} sx={{ mt: 1 }}>
-                            <strong>Approved!</strong> Scriptwriting is in progress for this concept.
-                          </Alert>
+                          <Box sx={{ mt: 1, display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+                            <Alert severity="success" icon={<CheckIcon fontSize="inherit" />} sx={{ flexGrow: 1, mt: 0 }}>
+                              <strong>Approved!</strong> Scriptwriting is in progress for this concept.
+                            </Alert>
+                            <Button
+                              variant="outlined"
+                              color="warning"
+                              size="small"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (window.confirm("Are you sure you want to undo approval and put this concept back under review?")) {
+                                  setLoading(true);
+                                  try {
+                                    await reviewPortalStrategyTopic(strategy._id, topic._id, { status: "Review" });
+                                    setToast("Approval undone. Reverted to review state.");
+                                    loadStrategy();
+                                  } catch (err) {
+                                    setError(err.response?.data?.message || "Failed to undo approval.");
+                                    setLoading(false);
+                                  }
+                                }
+                              }}
+                            >
+                              Undo Approval
+                            </Button>
+                          </Box>
                         )}
 
                         {topic.status === "Changes Requested" && (
@@ -308,8 +351,10 @@ export default function PortalStrategy() {
           <Typography variant="subtitle2" gutterBottom>Topic: {reviewTopic?.title}</Typography>
           <Typography variant="body2" color="text.secondary" mb={3}>
             {reviewStatus === "Approved" 
-              ? "By approving, the concept will move to the scripting phase. The scripting team will draft the full script outline."
-              : "Let the creative team know what changes, hooks, or topics you want to adjust in this brief."}
+              ? (reviewTopic?.scriptText 
+                  ? "By approving, both the concept and script will be approved and sent to the production phase." 
+                  : "By approving, the concept will move to the scripting phase. The scripting team will draft the full script outline.")
+              : "Let the creative team know what changes, hooks, topics, or script draft you want to adjust."}
           </Typography>
 
           {reviewStatus === "Changes Requested" && (
