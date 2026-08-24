@@ -1,7 +1,14 @@
 import axios from "axios";
 
+const getBaseURL = () => {
+  if (typeof window !== "undefined" && window.location.hostname === "localhost") {
+    return "http://localhost:5001/api";
+  }
+  return "https://socialflipss-backend.onrender.com/api";
+};
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || "https://socialflipss-backend.onrender.com/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || getBaseURL(),
 });
 
 // Attach JWT token to every request automatically
