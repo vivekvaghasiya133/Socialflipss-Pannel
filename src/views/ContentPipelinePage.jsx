@@ -426,59 +426,61 @@ export default function ContentPipelinePage() {
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", pt: 6 }}><CircularProgress /></Box>
       ) : (
-        /* Kanban Board Grid */
-        <Box sx={{ display: "flex", gap: 2, overflowX: "auto", pb: 2, flex: 1, minHeight: 450, alignItems: "flex-start", width: "100%", maxWidth: "100%" }}>
-          {columns.map(col => (
-            <Box
-              key={col.key}
-              onDragOver={e => { e.preventDefault(); setDragOverStage(col.key); }}
-              onDrop={() => handleDrop(col.key)}
-              sx={{
-                minWidth: 260,
-                flex: "0 0 260px",
-                background: dragOverStage === col.key ? col.bg : "#f9fafb",
-                borderRadius: 2,
-                border: dragOverStage === col.key ? `2px dashed ${col.color}` : "2px solid #e5e7eb",
-                p: 1.5,
-                transition: "all 0.15s",
-                maxHeight: "calc(100vh - 220px)",
-                overflowY: "auto",
-                "&::-webkit-scrollbar": { width: 4 },
-                "&::-webkit-scrollbar-thumb": { background: "#e5e7eb", borderRadius: 2 }
-              }}
-            >
-              {/* Header */}
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, position: "sticky", top: 0, bgcolor: dragOverStage === col.key ? col.bg : "#f9fafb", zIndex: 1, pb: 1 }}>
-                <Typography variant="body2" fontWeight={700} sx={{ color: col.color }}>
-                  {col.label}
-                </Typography>
-                <Chip
-                  label={col.items.length}
-                  size="small"
-                  sx={{ fontSize: 10, height: 18, bgcolor: col.color + "22", color: col.color, fontWeight: 700 }}
-                />
-              </Box>
-
-              {/* Cards list */}
-              {col.items.map(item => (
-                <ContentCard
-                  key={item._id}
-                  item={item}
-                  onEdit={handleOpenEdit}
-                  onDelete={handleDelete}
-                  dragging={draggingItem?._id === item._id}
-                  onDragStart={handleDragStart}
-                  onDragEnd={handleDragEnd}
-                />
-              ))}
-
-              {col.items.length === 0 && (
-                <Box sx={{ py: 4, textAlign: "center", color: "text.disabled", fontSize: 12, border: "1px dashed #e5e7eb", borderRadius: 2 }}>
-                  Empty
+        <Box sx={{ width: "100%", overflowX: "auto", pb: 1, flex: 1, minHeight: 450 }}>
+          <Box sx={{ display: "flex", gap: 2, pb: 2, alignItems: "flex-start", width: "max-content", minWidth: "100%" }}>
+            {columns.map(col => (
+              <Box
+                key={col.key}
+                onDragOver={e => { e.preventDefault(); setDragOverStage(col.key); }}
+                onDrop={() => handleDrop(col.key)}
+                sx={{
+                  minWidth: 260,
+                  width: 260,
+                  flex: "0 0 260px",
+                  background: dragOverStage === col.key ? col.bg : "#f9fafb",
+                  borderRadius: 2,
+                  border: dragOverStage === col.key ? `2px dashed ${col.color}` : "2px solid #e5e7eb",
+                  p: 1.5,
+                  transition: "all 0.15s",
+                  maxHeight: "calc(100vh - 220px)",
+                  overflowY: "auto",
+                  "&::-webkit-scrollbar": { width: 4 },
+                  "&::-webkit-scrollbar-thumb": { background: "#e5e7eb", borderRadius: 2 }
+                }}
+              >
+                {/* Header */}
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, position: "sticky", top: 0, bgcolor: dragOverStage === col.key ? col.bg : "#f9fafb", zIndex: 1, pb: 1 }}>
+                  <Typography variant="body2" fontWeight={700} sx={{ color: col.color }}>
+                    {col.label}
+                  </Typography>
+                  <Chip
+                    label={col.items.length}
+                    size="small"
+                    sx={{ fontSize: 10, height: 18, bgcolor: col.color + "22", color: col.color, fontWeight: 700 }}
+                  />
                 </Box>
-              )}
-            </Box>
-          ))}
+
+                {/* Cards list */}
+                {col.items.map(item => (
+                  <ContentCard
+                    key={item._id}
+                    item={item}
+                    onEdit={handleOpenEdit}
+                    onDelete={handleDelete}
+                    dragging={draggingItem?._id === item._id}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                  />
+                ))}
+
+                {col.items.length === 0 && (
+                  <Box sx={{ py: 4, textAlign: "center", color: "text.disabled", fontSize: 12, border: "1px dashed #e5e7eb", borderRadius: 2 }}>
+                    Empty
+                  </Box>
+                )}
+              </Box>
+            ))}
+          </Box>
         </Box>
       )}
 
