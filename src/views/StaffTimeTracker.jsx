@@ -27,6 +27,7 @@ export default function StaffTimeTracker() {
 
   // Leave Modal State
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showPunchOutModal, setShowPunchOutModal] = useState(false);
   const [leaveForm, setLeaveForm] = useState({
     fromDate: new Date().toISOString().split("T")[0],
     toDate: new Date().toISOString().split("T")[0],
@@ -111,13 +112,17 @@ export default function StaffTimeTracker() {
     }
   };
 
-  const handlePunchOut = async () => {
-    if (!window.confirm("Are you sure you want to Punch Out for today?")) return;
+  const handlePunchOutClick = () => {
+    setShowPunchOutModal(true);
+  };
+
+  const confirmPunchOutAction = async () => {
     setActionLoading(true);
     try {
       const res = await punchOut();
       showToast(res.data?.message || "Punched out! Have a great evening. 🌟");
-      loadStatus();
+      setShowPunchOutModal(false);
+      await loadStatus();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to punch out");
     } finally {
@@ -338,7 +343,7 @@ export default function StaffTimeTracker() {
                       </button>
                       <button
                         disabled={actionLoading}
-                        onClick={handlePunchOut}
+                        onClick={handlePunchOutClick}
                         className="px-4 py-2 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-black text-xs rounded-xl shadow-sm transition-all"
                       >
                         👋 Punch Out
@@ -684,6 +689,38 @@ export default function StaffTimeTracker() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+          {/* ── IN-APP PUNCH OUT CONFIRMATION MODAL ── */}
+      {showPunchOutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white border border-slate-100 rounded-3xl p-8 w-full max-w-sm shadow-2xl text-center animate-scaleUp">
+            <div className="w-16 h-16 rounded-3xl bg-red-50 text-red-500 flex items-center justify-center text-3xl mx-auto mb-4 border border-red-100">
+              👋
+            </div>
+            <h3 className="text-xl font-black text-slate-900 mb-1">Confirm Punch Out</h3>
+            <p className="text-xs text-slate-500 font-medium mb-6 leading-relaxed">
+              Are you sure you want to end your shift for today? Your total net working hours will be calculated and saved.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPunchOutModal(false)}
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={actionLoading}
+                onClick={confirmPunchOutAction}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black rounded-xl text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+              >
+                {actionLoading ? "Punching Out..." : "Yes, Punch Out 👋"}
+              </button>
+            </div>
           </div>
         </div>
       )}
