@@ -34,6 +34,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import { useAuth } from "../../context/AuthContext";
 import NotificationBell from "./../admin/NotificationBell";
 import MobileBottomNav from "../navigation/MobileBottomNav";
+import InstallAppPrompt from "../navigation/InstallAppPrompt";
 
 const DRAWER_WIDTH = 256;
 
@@ -180,6 +181,7 @@ export default function DashboardLayout() {
             <Box sx={{ flex: 1 }} />
 
             {/* 🔔 Notification Bell */}
+            <InstallAppPrompt />
             <NotificationBell />
 
             <Chip label={user?.role?.toUpperCase()} color={ROLE_COLOR[user?.role] || "default"} size="small" sx={{ mr: 1.5, fontWeight: 700, fontSize: 10 }} />
