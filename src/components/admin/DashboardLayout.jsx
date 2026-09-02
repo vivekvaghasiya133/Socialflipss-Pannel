@@ -139,8 +139,9 @@ export default function DashboardLayout() {
                 <ListItemButton key={item.path} component={Link} to={item.path} selected={active}
                   sx={{
                     borderRadius: 2, mb: 0.25, py: 0.75,
-                    "&.Mui-selected": { background: "rgba(99,102,241,0.08)", color: "#6366F1", fontWeight: 700, "& .MuiListItemIcon-root": { color: "#6366F1" } },
-                    "&:hover": { background: active ? "rgba(99,102,241,0.12)" : "#f3f4f6" },
+                    "&.Mui-selected": { background: "linear-gradient(90deg, rgba(99,102,241,0.2) 0%, rgba(99,102,241,0.04) 100%)", color: "#A5B4FC", borderLeft: "3px solid #6366F1", fontWeight: 700, "& .MuiListItemIcon-root": { color: "#818CF8" } },
+                    "&:hover": { background: "rgba(255,255,255,0.06)", color: "#FFFFFF", "& .MuiListItemIcon-root": { color: "#A5B4FC" } },
+                    color: active ? "#A5B4FC" : "#94A3B8",
                   }}>
                   <ListItemIcon sx={{ minWidth: 34, color: active ? "#6366F1" : "text.secondary" }}>{item.icon}</ListItemIcon>
                   <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: active ? 700 : 500, fontSize: 13 }} />
@@ -165,15 +166,15 @@ export default function DashboardLayout() {
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", background: "#0B0F17" }}>
-      <Drawer variant="permanent" sx={{ width: DRAWER_WIDTH, flexShrink: 0, display: { xs: "none", md: "block" }, "& .MuiDrawer-paper": { width: DRAWER_WIDTH, boxSizing: "border-box", borderRight: "1px solid #1E293B", background: "#0F172A", color: "#F8FAFC" } }}>
+      <Drawer variant="permanent" sx={{ width: DRAWER_WIDTH, flexShrink: 0, display: { xs: "none", md: "block" }, "& .MuiDrawer-paper": { width: DRAWER_WIDTH, boxSizing: "border-box", borderRight: "1px solid rgba(255,255,255,0.07)", background: "#090D16", color: "#F8FAFC" } }}>
         {drawer}
       </Drawer>
-      <Drawer variant="temporary" open={mobileOpen} onClose={() => setMobileOpen(false)} sx={{ display: { xs: "block", md: "none" }, "& .MuiDrawer-paper": { width: DRAWER_WIDTH, background: "#0F172A", color: "#F8FAFC" } }}>
+      <Drawer variant="temporary" open={mobileOpen} onClose={() => setMobileOpen(false)} sx={{ display: { xs: "block", md: "none" }, "& .MuiDrawer-paper": { width: DRAWER_WIDTH, background: "#090D16", color: "#F8FAFC" } }}>
         {drawer}
       </Drawer>
 
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: "1px solid #1E293B", zIndex: 1, background: "#0F172A", color: "#F8FAFC" }}>
+        <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: "1px solid rgba(255,255,255,0.07)", zIndex: 1, background: "rgba(9,13,22,0.85)", backdropFilter: "blur(16px)", color: "#F8FAFC" }}>
           <Toolbar sx={{ minHeight: "56px !important" }}>
             <IconButton edge="start" sx={{ mr: 1, display: { md: "none" }, color: "#94A3B8" }} onClick={() => setMobileOpen(true)}>
               <MenuIcon />
