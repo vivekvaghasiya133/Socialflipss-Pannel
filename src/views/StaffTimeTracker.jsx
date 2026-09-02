@@ -77,10 +77,10 @@ export default function StaffTimeTracker() {
     try {
       const res = await punchIn({ location: "Office HQ" });
       showToast(res.data?.message || "Punched in successfully! ✨");
-      loadStatus();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to punch in");
     } finally {
+      await loadStatus();
       setActionLoading(false);
     }
   };
