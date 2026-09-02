@@ -36,7 +36,18 @@ export default function AgencySettingsPage() {
     setLoading(true);
     try {
       const res = await getAgencyConfig();
-      if (res.data?.success) setConfig(res.data.config);
+      if (res.data?.success) {
+        setConfig(res.data.config);
+        if (res.data.config?.faviconUrl && typeof document !== "undefined") {
+          let link = document.querySelector("link[rel*='icon']");
+          if (!link) {
+            link = document.createElement("link");
+            link.rel = "icon";
+            document.head.appendChild(link);
+          }
+          link.href = res.data.config.faviconUrl;
+        }
+      }
     } catch (err) {
       console.error("Error loading agency config:", err);
     } finally {
@@ -152,8 +163,18 @@ export default function AgencySettingsPage() {
 
     const reader = new FileReader();
     reader.onloadend = () => {
-      setConfig((prev) => ({ ...prev, faviconUrl: reader.result }));
-      showToast("Favicon selected! Click Save Agency Branding below to apply. ✨");
+      const result = reader.result;
+      setConfig((prev) => ({ ...prev, faviconUrl: result }));
+      if (typeof document !== "undefined") {
+        let link = document.querySelector("link[rel*='icon']");
+        if (!link) {
+          link = document.createElement("link");
+          link.rel = "icon";
+          document.head.appendChild(link);
+        }
+        link.href = result;
+      }
+      showToast("Favicon selected & updated in tab! Click Save below to persist. ✨");
     };
     reader.readAsDataURL(file);
   };
@@ -163,8 +184,13 @@ export default function AgencySettingsPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      await updateBranding(config);
-      showToast("Branding & white-label settings updated! 🎨");
+      const res = await updateBranding(config);
+      if (res.data?.config?.faviconUrl && typeof document !== "undefined") {
+        let link = document.querySelector("link[rel*='icon']");
+        if (link) link.href = res.data.config.faviconUrl;
+      }
+      showToast("Branding, Logo & Favicon saved to database! 🎨");
+      loadConfig();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to save branding");
     } finally {

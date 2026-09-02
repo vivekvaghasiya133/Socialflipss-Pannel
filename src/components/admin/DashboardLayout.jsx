@@ -25,6 +25,8 @@ import HandshakeIcon from "@mui/icons-material/Handshake";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 
 import { useAuth } from "../../context/AuthContext";
+import { getAgencyConfig } from "../../api/agencyOsApi";
+import { useEffect } from "react";
 import NotificationBell from "./../admin/NotificationBell";
 import MobileBottomNav from "../navigation/MobileBottomNav";
 import InstallAppPrompt from "../navigation/InstallAppPrompt";
@@ -36,6 +38,27 @@ export default function DashboardLayout() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [agencyBranding, setAgencyBranding] = useState(null);
+
+  useEffect(() => {
+    getAgencyConfig()
+      .then((res) => {
+        if (res.data?.success && res.data.config) {
+          const cfg = res.data.config;
+          setAgencyBranding(cfg);
+          if (cfg.faviconUrl && typeof document !== "undefined") {
+            let link = document.querySelector("link[rel*='icon']");
+            if (!link) {
+              link = document.createElement("link");
+              link.rel = "icon";
+              document.head.appendChild(link);
+            }
+            link.href = cfg.faviconUrl;
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleLogout = () => {
     setAnchorEl(null);
@@ -100,7 +123,7 @@ export default function DashboardLayout() {
         }}>
           <span style={{ position: "absolute", zIndex: 1 }}>SF</span>
           <img
-            src="/logo.jpg"
+            src={agencyBranding?.logoUrl || "/logo.jpg"}
             alt="Logo"
             style={{ width: "100%", height: "100%", objectFit: "cover", position: "relative", zIndex: 2 }}
             onError={(e) => { e.target.style.display = "none"; }}
@@ -108,7 +131,7 @@ export default function DashboardLayout() {
         </Box>
         <Box>
           <Typography variant="subtitle1" fontWeight={900} sx={{ color: "#1E293B", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-            SocialFlipss
+            {agencyBranding?.agencyName || "SocialFlipss"}
           </Typography>
           <Typography variant="caption" sx={{ color: "#FF5200", fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase" }}>
             Agency OS • Pro
