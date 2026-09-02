@@ -16,8 +16,8 @@ export default function MobileBottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-slate-950/95 backdrop-blur-2xl border-t border-slate-800/80 px-2 py-2 safe-area-pb shadow-2xl">
-      <div className="flex items-center justify-around max-w-lg mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 backdrop-blur-2xl border-t border-slate-200/90 px-2 pt-2.5 pb-6 shadow-[0_-4px_25px_rgba(0,0,0,0.06)]">
+      <div className="flex items-center justify-around max-w-md mx-auto">
         {navItems.map((item) => {
           const isActive = currentPath === item.path || (item.path === "/admin/production-hub" && currentPath === "/admin");
 
@@ -27,18 +27,18 @@ export default function MobileBottomNav() {
               to={item.path}
               className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-2xl transition-all ${
                 isActive
-                  ? "text-indigo-400 font-extrabold scale-105"
-                  : "text-slate-400 hover:text-slate-200 font-medium"
+                  ? "text-[#FF5200] font-black scale-105"
+                  : "text-slate-500 hover:text-slate-800 font-bold"
               }`}
             >
-              <span className={`text-xl transition-transform ${isActive ? "scale-110 drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]" : ""}`}>
+              <span className={`text-xl transition-transform ${isActive ? "scale-110 drop-shadow-[0_2px_8px_rgba(255,82,0,0.3)]" : "opacity-75"}`}>
                 {item.icon}
               </span>
-              <span className="text-[10px] tracking-tight mt-0.5 whitespace-nowrap">
+              <span className="text-[10px] tracking-tight mt-1 whitespace-nowrap">
                 {item.label}
               </span>
               {isActive && (
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-0.5 shadow-[0_0_6px_rgba(99,102,241,1)]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FF5200] mt-1 shadow-[0_0_6px_rgba(255,82,0,0.8)]" />
               )}
             </Link>
           );

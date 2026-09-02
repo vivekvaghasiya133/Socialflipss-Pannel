@@ -257,13 +257,11 @@ export default function ProductionHub() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 font-sans pb-20">
-      {/* ── CELEBRATION CONFETTI OVERLAY ── */}
+      {/* ── SLEEK FLOATING DYNAMIC ISLAND TOAST (PREMIUM & NON-BLOCKING) ── */}
       {showConfetti && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-none transition-all">
-          <div className="p-8 rounded-3xl bg-gradient-to-r from-[#FF5200] via-orange-500 to-amber-500 text-white shadow-2xl scale-110 animate-bounce flex flex-col items-center">
-            <span className="text-5xl mb-2">🎉 🚀 ✨</span>
-            <h2 className="text-2xl font-black text-center">{confettiMsg}</h2>
-          </div>
+        <div className="fixed top-5 left-4 right-4 max-w-sm mx-auto z-50 py-3 px-4 rounded-2xl bg-slate-900/95 text-white shadow-2xl backdrop-blur-xl flex items-center gap-3 border border-slate-700/80 animate-slideDown pointer-events-none">
+          <span className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-slate-950 font-black text-xs shrink-0">✓</span>
+          <span className="text-xs font-black tracking-tight text-white">{confettiMsg}</span>
         </div>
       )}
 

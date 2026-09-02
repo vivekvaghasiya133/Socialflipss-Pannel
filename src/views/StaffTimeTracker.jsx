@@ -48,7 +48,7 @@ export default function StaffTimeTracker() {
 
   const showToast = (msg) => {
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(""), 4000);
+    setTimeout(() => setToastMsg(""), 3500);
   };
 
   const handlePunchIn = async () => {
@@ -64,11 +64,11 @@ export default function StaffTimeTracker() {
     }
   };
 
-  const handleStartBreak = async (reason = "lunch") => {
+  const handleStartBreak = async (type) => {
     setActionLoading(true);
     try {
-      const res = await startBreak({ reason });
-      showToast(res.data?.message || "Break started! ☕");
+      const res = await startBreak({ type: type || "Tea Break" });
+      showToast(`Break started (${type || "Tea"}). Enjoy! ☕`);
       loadStatus();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to start break");
@@ -81,7 +81,7 @@ export default function StaffTimeTracker() {
     setActionLoading(true);
     try {
       const res = await endBreak();
-      showToast(res.data?.message || "Break ended! Welcome back 🚀");
+      showToast("Break ended! Welcome back to work. 🚀");
       loadStatus();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to end break");
@@ -91,11 +91,11 @@ export default function StaffTimeTracker() {
   };
 
   const handlePunchOut = async () => {
-    if (!window.confirm("Are you sure you want to punch out for the day?")) return;
+    if (!window.confirm("Are you sure you want to Punch Out for today?")) return;
     setActionLoading(true);
     try {
       const res = await punchOut();
-      showToast(res.data?.message || "Punched out successfully! 👋");
+      showToast(res.data?.message || "Punched out! Have a great evening. 🌟");
       loadStatus();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to punch out");
@@ -104,56 +104,63 @@ export default function StaffTimeTracker() {
     }
   };
 
-  const isPunchedIn = timeStatus?.punchedIn;
-  const isOnBreak = timeStatus?.status === "on_break";
-  const myLog = timeStatus?.log;
-
-  // Format Elapsed Time
-  const getElapsedString = () => {
-    if (!myLog?.punchInTime || !isPunchedIn) return "0h 00m";
-    const diffMins = Math.max(0, Math.floor((new Date() - new Date(myLog.punchInTime)) / 60000) - (myLog.totalBreakMinutes || 0));
-    return `${Math.floor(diffMins / 60)}h ${String(diffMins % 60).padStart(2, "0")}m`;
-  };
+  const myLog = timeStatus?.todayLog;
+  const isPunchedIn = timeStatus?.isPunchedIn;
+  const isOnBreak = timeStatus?.isOnBreak;
 
   return (
-    <div className="min-h-screen pb-24 text-slate-100 font-sans">
-      {/* Toast alert */}
+    <div className="max-w-7xl mx-auto space-y-8 font-sans pb-24">
+      {/* ── SLEEK FLOATING ISLAND TOAST ── */}
       {toastMsg && (
-        <div className="fixed top-6 right-6 z-50 p-4 bg-emerald-600 text-white font-bold rounded-2xl shadow-2xl flex items-center gap-3 animate-slideIn">
-          <span>✨</span>
-          <span>{toastMsg}</span>
+        <div className="fixed top-5 left-4 right-4 max-w-md mx-auto z-50 p-4 bg-slate-900/95 text-white font-black text-xs rounded-2xl shadow-2xl backdrop-blur-xl border border-slate-700 flex items-center justify-between animate-slideDown">
+          <div className="flex items-center gap-2.5">
+            <span className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-slate-950 font-bold text-xs">✓</span>
+            <span>{toastMsg}</span>
+          </div>
+          <button onClick={() => setToastMsg("")} className="text-slate-400 hover:text-white font-bold ml-2">✕</button>
         </div>
       )}
 
-      {/* Header */}
-      <div className="mb-6">
-        <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-extrabold uppercase tracking-wider">
-          Smart Operations HRMS
-        </span>
-        <h1 className="text-3xl font-black text-white mt-1 tracking-tight">
-          ⏱️ Staff Time & Productivity Hub
-        </h1>
-        <p className="text-sm text-slate-400">
-          One-tap arrival punch, break tracking, and automated editor performance scoreboard.
-        </p>
+      {/* ── HEADER HERO ── */}
+      <div className="p-8 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-50 border border-orange-200 text-[#FF5200] rounded-full text-xs font-black uppercase tracking-wider mb-2">
+            <span>Smart Operations & Attendance</span>
+          </div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+            <span>⏱️ Staff Time & Productivity Hub</span>
+          </h1>
+          <p className="text-sm text-slate-500 mt-1 font-medium max-w-xl">
+            One-tap shift punch, break logging, and real-time team output scoreboard.
+          </p>
+        </div>
+
+        {/* Live Studio Badge */}
+        <div className="flex items-center gap-3 px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl">
+          <span className="w-3 h-3 rounded-full bg-emerald-500 animate-ping" />
+          <div>
+            <span className="text-xs font-black text-slate-900 block">Surat HQ Studio</span>
+            <span className="text-[10px] text-slate-400 font-bold">Attendance Live</span>
+          </div>
+        </div>
       </div>
 
       {/* ── TOP HERO: DIGITAL CLOCK & USER PUNCH CARD ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Clock & Punch Widget */}
-        <div className="lg:col-span-2 p-7 bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-950 border border-slate-800 rounded-3xl backdrop-blur-xl shadow-2xl relative overflow-hidden flex flex-col justify-between">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+        <div className="lg:col-span-2 p-8 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
             <div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Today's Shift</span>
-              <h2 className="text-xl font-black text-white mt-0.5">Welcome, {user?.name}! 👋</h2>
-              <span className="text-xs text-indigo-400 font-semibold">{user?.position || user?.role?.toUpperCase()}</span>
+              <span className="text-xs font-black text-slate-400 uppercase tracking-wider">Today's Shift</span>
+              <h2 className="text-2xl font-black text-slate-900 mt-0.5">Welcome, {user?.name}! 👋</h2>
+              <span className="text-xs text-[#FF5200] font-black uppercase tracking-wider">{user?.position || user?.role?.toUpperCase()}</span>
             </div>
 
-            <div className="text-right">
-              <span className="text-3xl font-black font-mono text-white tracking-wider block">
+            <div className="text-left sm:text-right">
+              <span className="text-3xl font-black font-mono text-slate-900 tracking-wider block">
                 {currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
               </span>
-              <span className="text-xs font-medium text-slate-400">
+              <span className="text-xs font-semibold text-slate-400">
                 {currentTime.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric", year: "numeric" })}
               </span>
             </div>
@@ -162,67 +169,67 @@ export default function StaffTimeTracker() {
           {/* Current Punch State Banner */}
           <div className="my-6">
             {!isPunchedIn ? (
-              <div className="p-5 bg-slate-950/60 border border-slate-800 rounded-2xl flex items-center justify-between">
+              <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h4 className="font-bold text-white text-base">You haven't punched in yet today.</h4>
-                  <p className="text-xs text-slate-400 mt-0.5">Tap the punch-in button when you arrive at the office.</p>
+                  <h4 className="font-black text-slate-900 text-base">You haven't punched in yet today.</h4>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">Tap the punch-in button when you start your shift.</p>
                 </div>
                 <button
                   disabled={actionLoading}
                   onClick={handlePunchIn}
-                  className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-sm rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-95 transition-all cursor-pointer"
+                  className="px-8 py-3.5 bg-gradient-to-r from-[#FF5200] to-[#FC8019] hover:from-[#E04800] hover:to-[#EB7410] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-orange-500/25 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
                 >
                   🚀 Punch In Now
                 </button>
               </div>
             ) : isOnBreak ? (
-              <div className="p-5 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="p-6 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <span className="text-3xl animate-pulse">☕</span>
                   <div>
-                    <h4 className="font-bold text-amber-300 text-base">You are currently on a Break</h4>
-                    <p className="text-xs text-amber-200/70 mt-0.5">Relax! Your break duration is being logged accurately.</p>
+                    <h4 className="font-black text-amber-900 text-base">You are currently on a Break</h4>
+                    <p className="text-xs text-amber-700 font-medium mt-0.5">Your break duration is being logged accurately.</p>
                   </div>
                 </div>
                 <button
                   disabled={actionLoading}
                   onClick={handleEndBreak}
-                  className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-amber-500/30 active:scale-95 transition-all cursor-pointer"
+                  className="px-6 py-3 bg-[#FF5200] hover:bg-[#E04800] text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md active:scale-95 transition-all cursor-pointer whitespace-nowrap"
                 >
                   End Break & Resume Work ➔
                 </button>
               </div>
             ) : (
-              <div className="p-5 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <span className="h-3.5 w-3.5 rounded-full bg-emerald-500 animate-ping"></span>
                   <div>
-                    <h4 className="font-bold text-white text-base">Shift Active (Working)</h4>
-                    <p className="text-xs text-indigo-300 mt-0.5">
-                      Punched in at: {new Date(myLog.punchInTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    <h4 className="font-black text-emerald-950 text-base">Shift Active (Working)</h4>
+                    <p className="text-xs text-emerald-800 font-medium mt-0.5">
+                      Punched in at: <span className="font-mono font-black">{myLog?.punchInTime || "--:--"}</span>
                     </p>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button
                     disabled={actionLoading}
-                    onClick={() => handleStartBreak("tea")}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                    onClick={() => handleStartBreak("Tea Break")}
+                    className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl shadow-sm transition-all"
                   >
                     ☕ Tea Break
                   </button>
                   <button
                     disabled={actionLoading}
-                    onClick={() => handleStartBreak("lunch")}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                    onClick={() => handleStartBreak("Lunch Break")}
+                    className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl shadow-sm transition-all"
                   >
                     🍱 Lunch Break
                   </button>
                   <button
                     disabled={actionLoading}
                     onClick={handlePunchOut}
-                    className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-300 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                    className="px-4 py-2 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-black text-xs rounded-xl shadow-sm transition-all"
                   >
                     👋 Punch Out
                   </button>
@@ -231,61 +238,61 @@ export default function StaffTimeTracker() {
             )}
           </div>
 
-          {/* Bottom Live Metrics */}
-          <div className="grid grid-cols-3 gap-3 pt-3 border-t border-slate-800 text-center">
-            <div className="p-2.5 bg-slate-950/50 rounded-xl">
-              <span className="text-[10px] text-slate-400 font-semibold uppercase block">In-Time</span>
-              <span className="text-xs font-mono font-bold text-white mt-1 block">
-                {myLog?.punchInTime ? new Date(myLog.punchInTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--:--"}
-              </span>
+          {/* Quick Metrics Footer */}
+          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-100 text-center">
+            <div>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Arrival</span>
+              <span className="text-sm font-black font-mono text-slate-800">{myLog?.punchInTime || "Not Yet"}</span>
             </div>
-            <div className="p-2.5 bg-slate-950/50 rounded-xl">
-              <span className="text-[10px] text-slate-400 font-semibold uppercase block">Total Breaks</span>
-              <span className="text-xs font-mono font-bold text-amber-400 mt-1 block">
-                {myLog?.totalBreakMinutes || 0} mins
-              </span>
+            <div>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Total Break</span>
+              <span className="text-sm font-black font-mono text-slate-800">{myLog?.totalBreakMinutes || 0} mins</span>
             </div>
-            <div className="p-2.5 bg-slate-950/50 rounded-xl">
-              <span className="text-[10px] text-slate-400 font-semibold uppercase block">Net Work Time</span>
-              <span className="text-xs font-mono font-bold text-emerald-400 mt-1 block">
-                {getElapsedString()}
+            <div>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Net Work</span>
+              <span className="text-sm font-black font-mono text-emerald-600">
+                {Math.floor((myLog?.netWorkMinutes || 0) / 60)}h {(myLog?.netWorkMinutes || 0) % 60}m
               </span>
             </div>
           </div>
         </div>
 
-        {/* Right: Gamified Editor / Daily Output Scorecard */}
-        <div className="p-7 bg-slate-900 border border-slate-800 rounded-3xl backdrop-blur-xl shadow-2xl flex flex-col justify-between">
+        {/* Right: Daily Scorecard Card */}
+        <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex justify-between items-start">
-              <span className="text-xs font-extrabold text-indigo-400 uppercase tracking-wider">
-                Daily Productivity Score
+            <div className="flex justify-between items-start mb-4">
+              <span className="text-xs font-black uppercase tracking-wider text-slate-400">Daily Scorecard</span>
+              <span className="w-10 h-10 rounded-2xl bg-orange-50 text-[#FF5200] flex items-center justify-center text-lg font-black">
+                🏆
               </span>
-              <span className="text-2xl">🏆</span>
             </div>
-            <h3 className="text-xl font-black text-white mt-1">Reels Completed Today</h3>
-            <p className="text-xs text-slate-400 mt-1">
-              Automatically credited whenever you mark an assigned reel "Complete" in the Pipeline!
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">Today's Content Score</h3>
+            <p className="text-xs text-slate-500 font-medium mt-1">
+              Automatic credit every time a reel is edited or a shoot is marked complete.
             </p>
+
+            <div className="my-6 p-5 bg-slate-50 border border-slate-100 rounded-2xl space-y-3">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-500 font-semibold">Reels Edited Today:</span>
+                <span className="text-xl font-black font-mono text-[#FF5200]">{myLog?.reelsEditedCount || 0}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-500 font-semibold">Shoots Completed:</span>
+                <span className="text-xl font-black font-mono text-emerald-600">{myLog?.shootsCompletedCount || 0}</span>
+              </div>
+            </div>
           </div>
 
-          <div className="my-6 text-center">
-            <span className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-indigo-400 to-emerald-400 font-mono">
-              {myLog?.reelsEditedCount || 0}
-            </span>
-            <span className="text-xs text-slate-400 block mt-1 font-bold">Reels Finished Today</span>
-          </div>
-
-          <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-2xl">
-            <div className="flex justify-between text-xs font-bold mb-1">
-              <span className="text-slate-400">Daily Target: 3 Reels</span>
-              <span className="text-emerald-400 font-mono">
+          <div>
+            <div className="flex justify-between text-xs font-bold mb-1.5">
+              <span className="text-slate-500">Daily Target: 3 Reels</span>
+              <span className="text-[#FF5200] font-mono font-black">
                 {Math.min(100, Math.round(((myLog?.reelsEditedCount || 0) / 3) * 100))}%
               </span>
             </div>
-            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
               <div
-                className="h-2 rounded-full bg-gradient-to-r from-indigo-500 to-emerald-400 transition-all duration-700"
+                className="h-2 rounded-full bg-gradient-to-r from-[#FF5200] to-emerald-500 transition-all duration-700"
                 style={{ width: `${Math.min(100, ((myLog?.reelsEditedCount || 0) / 3) * 100)}%` }}
               />
             </div>
@@ -293,21 +300,21 @@ export default function StaffTimeTracker() {
         </div>
       </div>
 
-      {/* ── TEAM LIVE PRESENCE BOARD (For Admin & Whole Agency) ── */}
-      <div className="p-6 bg-slate-900/80 border border-slate-800 rounded-3xl backdrop-blur-xl shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
+      {/* ── TEAM LIVE PRESENCE BOARD (Swiggy-tier Clean White Grid) ── */}
+      <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h3 className="text-base font-black text-white flex items-center gap-2">
+            <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
               <span>👥 Live Team Presence & Daily Output</span>
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">Real-time office presence, current status, and reels counter per staff.</p>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Real-time office presence, current status, and reels counter per staff.</p>
           </div>
-          <span className="text-xs font-bold px-3 py-1 bg-slate-800 text-slate-300 rounded-xl">
+          <span className="text-xs font-bold px-3.5 py-1.5 bg-slate-100 text-slate-700 rounded-full">
             {teamOverview.length} Staff Members
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {teamOverview.map((member) => {
             const isWorking = member.status === "punched_in";
             const isBreak = member.status === "on_break";
@@ -316,42 +323,42 @@ export default function StaffTimeTracker() {
             return (
               <div
                 key={member.userId}
-                className="p-4 bg-slate-950/60 border border-slate-800 hover:border-slate-700 rounded-2xl transition-all flex items-center justify-between gap-3"
+                className="p-5 bg-white border border-slate-200/80 hover:border-orange-200 rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-3 group"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3.5">
                   <div className="relative">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center font-bold text-white text-sm">
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#FF5200] to-[#FC8019] flex items-center justify-center font-black text-white text-base shadow-sm">
                       {member.name?.[0]?.toUpperCase() || "U"}
                     </div>
                     <span
-                      className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-slate-950 ${
-                        isWorking ? "bg-emerald-500" : isBreak ? "bg-amber-400" : isOut ? "bg-blue-400" : "bg-slate-600"
+                      className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white ${
+                        isWorking ? "bg-emerald-500" : isBreak ? "bg-amber-400" : isOut ? "bg-blue-400" : "bg-slate-300"
                       }`}
                     />
                   </div>
 
                   <div>
-                    <h4 className="font-bold text-sm text-white">{member.name}</h4>
-                    <span className="text-[10px] text-slate-400 block">{member.position}</span>
+                    <h4 className="font-black text-sm text-slate-900 group-hover:text-[#FF5200] transition-colors">{member.name}</h4>
+                    <span className="text-[11px] text-slate-400 font-medium block">{member.position || member.role}</span>
                   </div>
                 </div>
 
                 <div className="text-right">
                   <span
-                    className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border block mb-1 ${
                       isWorking
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                         : isBreak
-                        ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                        ? "bg-amber-50 text-amber-700 border-amber-200"
                         : isOut
-                        ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                        : "bg-slate-800 text-slate-400 border-slate-700"
+                        ? "bg-blue-50 text-blue-700 border-blue-200"
+                        : "bg-slate-100 text-slate-500 border-slate-200"
                     }`}
                   >
-                    {isWorking ? "Working" : isBreak ? "On Break" : isOut ? "Punched Out" : "Absent"}
+                    {isWorking ? "Working" : isBreak ? "Break" : isOut ? "Left" : "Absent"}
                   </span>
-                  <span className="text-xs font-mono font-bold text-indigo-400 block mt-1">
-                    {member.reelsEdited} Reels Done
+                  <span className="text-xs font-mono font-black text-[#FF5200]">
+                    {member.reelsEditedCount || 0} Reels Done
                   </span>
                 </div>
               </div>
