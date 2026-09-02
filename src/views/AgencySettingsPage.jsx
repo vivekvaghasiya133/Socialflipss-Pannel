@@ -122,6 +122,42 @@ export default function AgencySettingsPage() {
     }
   };
 
+    // Upload Logo from Device
+  const handleLogoFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Please choose an image smaller than 5MB!");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setConfig((prev) => ({ ...prev, logoUrl: reader.result }));
+      showToast("Logo selected! Click Save Agency Branding below to apply. ✨");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Upload Favicon from Device
+  const handleFaviconFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Please choose an image smaller than 2MB!");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setConfig((prev) => ({ ...prev, faviconUrl: reader.result }));
+      showToast("Favicon selected! Click Save Agency Branding below to apply. ✨");
+    };
+    reader.readAsDataURL(file);
+  };
+
   // Save Branding
   const handleSaveBranding = async (e) => {
     e.preventDefault();
@@ -435,57 +471,78 @@ export default function AgencySettingsPage() {
               </div>
 
               <form onSubmit={handleSaveBranding} className="space-y-6 max-w-2xl">
-                {/* Logo & Favicon Card */}
-                <div className="p-6 bg-slate-50/80 border border-slate-200/80 rounded-2xl space-y-5">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Agency Logo & Favicon</h4>
+                {/* Logo & Favicon Direct Upload Card */}
+                <div className="p-6 bg-slate-50/80 border border-slate-200/80 rounded-2xl space-y-6">
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Direct File Upload • Agency Logo & Favicon</h4>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">તમે સીધી તમારી કમ્પ્યુટર અથવા મોબાઈલ ગેલેરીમાંથી ઇમેજ પસંદ કરીને અપલોડ કરી શકો છો.</p>
+                  </div>
 
                   {/* Logo Section */}
                   <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                    <div className="w-20 h-20 rounded-2xl bg-white border border-slate-200 p-1 flex items-center justify-center shadow-sm shrink-0 overflow-hidden">
+                    <div className="relative group cursor-pointer w-20 h-20 rounded-2xl bg-white border border-slate-200 p-1 flex items-center justify-center shadow-sm shrink-0 overflow-hidden">
                       <img
                         src={config?.logoUrl || "/logo.jpg"}
                         alt="Agency Logo"
                         className="w-full h-full object-contain rounded-xl"
                         onError={(e) => { e.target.src = "/logo.jpg"; }}
                       />
+                      <label className="absolute inset-0 bg-black/60 text-white text-[10px] font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-center p-1">
+                        Change
+                        <input type="file" accept="image/*" className="hidden" onChange={handleLogoFileUpload} />
+                      </label>
                     </div>
-                    <div className="flex-1 space-y-1.5">
-                      <label className="text-xs font-bold text-slate-700 block">Company Logo URL / File</label>
+
+                    <div className="flex-1 space-y-2">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <label className="px-4 py-2.5 bg-gradient-to-r from-[#FF5200] to-[#FC8019] hover:from-[#E04800] hover:to-[#EB7410] text-white font-black text-xs rounded-xl shadow-md cursor-pointer transition-all active:scale-95 flex items-center gap-2">
+                          <span>📁</span>
+                          <span>Upload Logo from Device (ઈમેજ પસંદ કરો)</span>
+                          <input type="file" accept="image/*" className="hidden" onChange={handleLogoFileUpload} />
+                        </label>
+                      </div>
+
                       <input
                         type="text"
-                        placeholder="e.g. /logo.jpg or https://yourdomain.com/logo.png"
+                        placeholder="Or direct image URL (https://... or /logo.jpg)"
                         value={config?.logoUrl || ""}
                         onChange={(e) => setConfig({ ...config, logoUrl: e.target.value })}
-                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 font-mono font-medium focus:outline-none focus:border-[#FF5200]"
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 font-mono font-medium focus:outline-none focus:border-[#FF5200]"
                       />
-                      <span className="text-[10px] text-slate-400 block">
-                        Tip: Place your company logo image in <code className="font-mono bg-slate-200/60 px-1 py-0.5 rounded">frontend/public/logo.jpg</code> or paste a direct image URL.
-                      </span>
                     </div>
                   </div>
 
                   {/* Favicon Section */}
                   <div className="flex flex-col sm:flex-row sm:items-center gap-5 pt-4 border-t border-slate-200/80">
-                    <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shadow-sm shrink-0 overflow-hidden">
+                    <div className="relative group cursor-pointer w-14 h-14 rounded-2xl bg-white border border-slate-200 p-1 flex items-center justify-center shadow-sm shrink-0 overflow-hidden">
                       <img
                         src={config?.faviconUrl || "/favicon.ico"}
                         alt="Favicon"
                         className="w-8 h-8 object-contain"
                         onError={(e) => { e.target.src = "/favicon.ico"; }}
                       />
+                      <label className="absolute inset-0 bg-black/60 text-white text-[9px] font-bold flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-center p-0.5">
+                        Change
+                        <input type="file" accept="image/*,.ico" className="hidden" onChange={handleFaviconFileUpload} />
+                      </label>
                     </div>
-                    <div className="flex-1 space-y-1.5">
-                      <label className="text-xs font-bold text-slate-700 block">Browser Tab Favicon URL / Icon (.ico / .png)</label>
+
+                    <div className="flex-1 space-y-2">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <label className="px-4 py-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 font-black text-xs rounded-xl shadow-sm cursor-pointer transition-all active:scale-95 flex items-center gap-2">
+                          <span>📁</span>
+                          <span>Upload Favicon Icon (ફેવિકોન પસંદ કરો)</span>
+                          <input type="file" accept="image/*,.ico" className="hidden" onChange={handleFaviconFileUpload} />
+                        </label>
+                      </div>
+
                       <input
                         type="text"
-                        placeholder="e.g. /favicon.ico or https://yourdomain.com/favicon.png"
+                        placeholder="Or direct favicon URL (https://... or /favicon.ico)"
                         value={config?.faviconUrl || ""}
                         onChange={(e) => setConfig({ ...config, faviconUrl: e.target.value })}
-                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 font-mono font-medium focus:outline-none focus:border-[#FF5200]"
+                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 font-mono font-medium focus:outline-none focus:border-[#FF5200]"
                       />
-                      <span className="text-[10px] text-slate-400 block">
-                        Tip: Place your favicon in <code className="font-mono bg-slate-200/60 px-1 py-0.5 rounded">frontend/public/favicon.ico</code> or paste a direct icon link.
-                      </span>
                     </div>
                   </div>
                 </div>
