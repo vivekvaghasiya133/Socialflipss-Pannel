@@ -42,3 +42,8 @@ export const updateServicePackage = (id, data) => api.put(`/agency-config/servic
 export const deleteServicePackage = (id) => api.delete(`/agency-config/services/${id}`);
 export const updateRolesPermissions = (rolesPermissions) => api.put("/agency-config/roles", { rolesPermissions });
 export const updateWhatsAppTemplates = (whatsAppTemplates) => api.put("/agency-config/whatsapp-templates", { whatsAppTemplates });
+
+// ── STAFF ATTENDANCE HISTORY & LEAVE PORTAL ──
+export const getMyTimeHistory = (params) => api.get("/time-tracking/my-history", { params });
+export const getMyLeaves = () => api.get("/leaves/my-leaves");
+export const applyMyLeave = (data) => api.post("/leaves/apply-my-leave", data);
