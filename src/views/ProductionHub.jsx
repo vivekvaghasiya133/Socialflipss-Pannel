@@ -29,6 +29,10 @@ export default function ProductionHub() {
   const [searchQuery, setSearchQuery] = useState("");
   const [clientFilter, setClientFilter] = useState("");
 
+  // Quotas view more state
+  const [showAllQuotas, setShowAllQuotas] = useState(false);
+  const [quotaSearch, setQuotaSearch] = useState("");
+
   // Modals state
   const [showNewTaskModal, setShowNewTaskModal] = useState(false);
   const [showAssignShooterModal, setShowAssignShooterModal] = useState(null);
@@ -85,7 +89,7 @@ export default function ProductionHub() {
   const triggerCelebration = (msg) => {
     setConfettiMsg(msg);
     setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 4000);
+    setTimeout(() => setShowConfetti(false), 3500);
   };
 
   // ── 1. SCRIPT PASS ➔ ASSIGN SHOOTER SUBMIT ──
@@ -144,7 +148,7 @@ export default function ProductionHub() {
     }
   };
 
-  // ── 3. SHOOT COMPLETE (AUTO SCORE CREDIT TO SHOOTER) ──
+  // ── 3. SHOOT COMPLETE ──
   const handleCompleteShootClick = async (task) => {
     try {
       await completeShoot(task._id, {
@@ -157,7 +161,7 @@ export default function ProductionHub() {
     }
   };
 
-  // ── 4. HANDOFF TO EDIT ➔ STRICT GATE (RAW DATA + EDITOR) ──
+  // ── 4. HANDOFF TO EDIT (STRICT RAW DATA + EDITOR) ──
   const handleHandoffEditSubmit = async (e) => {
     e.preventDefault();
     const form = e.target;
@@ -211,7 +215,7 @@ export default function ProductionHub() {
     }
   };
 
-  // ── 6. QC DECISION (CHANGES OR PASS TO CLIENT) ──
+  // ── 6. QC DECISION ──
   const handleQcDecision = async (taskId, decision) => {
     let qcNotes = "";
     if (decision === "changes_needed") {
@@ -255,8 +259,304 @@ export default function ProductionHub() {
     }
   };
 
+  // Active vs Posted task categorization
+  const activeTasks = tasks.filter((t) => t.stage !== "posted" && t.stage !== "completed");
+  const postedTasks = tasks.filter((t) => t.stage === "posted" || t.stage === "completed");
+
+  // Client Quotas with search and expand
+  const allQuotas = overview?.clientQuotas || [];
+  const filteredQuotas = allQuotas.filter((c) =>
+    c.businessName.toLowerCase().includes(quotaSearch.toLowerCase())
+  );
+  const displayedQuotas = showAllQuotas ? filteredQuotas : filteredQuotas.slice(0, 4);
+
+  // Reusable Single Task Card Renderer
+  const renderTaskCard = (task) => {
+    const isScript = task.stage === "script";
+    const isShoot = task.stage === "shoot";
+    const isEdit = task.stage === "edit";
+    const isQc = task.stage === "qc";
+    const isClientApproval = task.stage === "client_approval";
+    const isPosted = task.stage === "posted" || task.stage === "completed";
+
+    return (
+      <div
+        key={task._id}
+        className="group relative p-6 bg-white hover:bg-white border border-slate-100 hover:border-orange-200 rounded-3xl transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col justify-between"
+      >
+        <div>
+          {/* Card Header */}
+          <div className="flex justify-between items-start gap-2 mb-3">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#FF5200] block">
+                {task.client?.businessName || "Unknown Client"}
+              </span>
+              <h3 className="font-black text-base text-slate-900 mt-0.5 tracking-tight">
+                Reel #{task.reelNumber}: {task.title}
+              </h3>
+            </div>
+
+            <span
+              className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                isScript
+                  ? "bg-amber-50 text-amber-800 border-amber-200"
+                  : isShoot
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                  : isEdit
+                  ? "bg-indigo-50 text-indigo-800 border-indigo-200"
+                  : isQc
+                  ? "bg-cyan-50 text-cyan-800 border-cyan-200"
+                  : isClientApproval
+                  ? "bg-orange-50 text-orange-800 border-orange-200"
+                  : "bg-emerald-50 text-emerald-800 border-emerald-200"
+              }`}
+            >
+              {task.stage.replace("_", " ")}
+            </span>
+          </div>
+
+          {/* ── STAGE 1: SCRIPT VAULT ── */}
+          {isScript && (
+            <div className="p-4 bg-amber-50/40 border border-amber-100 rounded-2xl mb-4 space-y-1.5 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Writer:</span>
+                <span className="font-black text-slate-800">{task.writer?.name || "Unassigned"}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 font-medium">Hook: </span>
+                <span className="text-amber-900 font-bold italic">"{task.hook || "No hook provided yet"}"</span>
+              </div>
+            </div>
+          )}
+
+          {/* ── STAGE 2: SHOOT OPERATIONS ── */}
+          {isShoot && (
+            <div className="p-4 bg-emerald-50/40 border border-emerald-100 rounded-2xl mb-4 space-y-2 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-medium">Shooter:</span>
+                <span className="font-black text-emerald-700">{task.shooter?.name || "Not Assigned"}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-medium">📅 Date & Time:</span>
+                <span className="font-extrabold text-slate-800">
+                  {task.shootDate || "Set Date"} @ {task.shootTime || "Time"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-medium">📍 Location:</span>
+                <span className="text-slate-700 font-semibold truncate max-w-[160px]">
+                  {task.location || "Client Store"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pt-1 border-t border-emerald-100">
+                <span className="text-slate-500 font-medium">Target Reels:</span>
+                <span className="font-mono font-black text-slate-900">{task.targetReels || 1} Reels</span>
+              </div>
+            </div>
+          )}
+
+          {/* ── STAGE 3: VIDEO EDITING ── */}
+          {isEdit && (
+            <div className="p-4 bg-indigo-50/40 border border-indigo-100 rounded-2xl mb-4 space-y-2 text-xs">
+              {task.qcStatus === "changes_requested" && (
+                <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-[11px] mb-2 font-medium">
+                  <span className="font-black block text-amber-800">⚠️ QC Changes Requested:</span>
+                  <span>{task.qcNotes}</span>
+                </div>
+              )}
+              {task.clientApprovalStatus === "changes_requested" && (
+                <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl text-red-900 text-[11px] mb-2 font-medium">
+                  <span className="font-black block text-red-800">⚠️ Client Requested Changes:</span>
+                  <span>{task.clientFeedback}</span>
+                </div>
+              )}
+
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-medium">Assigned Editor:</span>
+                <span className="font-black text-indigo-700">{task.editor?.name || "Unassigned"}</span>
+              </div>
+
+              {task.rawFootageLink && (
+                <div className="pt-2 border-t border-indigo-100">
+                  <a
+                    href={task.rawFootageLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-[#FF5200] font-black underline hover:text-[#E04800]"
+                  >
+                    <span>📁 Open Raw Footage Drive</span>
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── STAGE 4: QC REVIEW ── */}
+          {isQc && (
+            <div className="p-4 bg-cyan-50/40 border border-cyan-100 rounded-2xl mb-4 space-y-2 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-medium">Edited By:</span>
+                <span className="font-black text-slate-800">{task.editor?.name || "Editor"}</span>
+              </div>
+              {task.editedPreviewLink && (
+                <a
+                  href={task.editedPreviewLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-cyan-700 font-black underline"
+                >
+                  <span>🎬 Watch Edited Video Preview</span>
+                </a>
+              )}
+              <p className="text-[10px] text-slate-500 font-medium mt-1">Review video quality before client delivery.</p>
+            </div>
+          )}
+
+          {/* ── STAGE 5: CLIENT APPROVAL ── */}
+          {isClientApproval && (
+            <div className="p-4 bg-orange-50/40 border border-orange-100 rounded-2xl mb-4 space-y-2 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-medium">Client Mobile:</span>
+                <span className="font-black text-slate-800">{task.client?.mobile}</span>
+              </div>
+              {task.editedPreviewLink && (
+                <a
+                  href={task.editedPreviewLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-[#FF5200] font-black underline"
+                >
+                  <span>🎬 Watch Video Preview</span>
+                </a>
+              )}
+            </div>
+          )}
+
+          {/* ── STAGE 6: READY TO POST / COMPLETED ── */}
+          {isPosted && (
+            <div className="p-4 bg-emerald-50/40 border border-emerald-100 rounded-2xl mb-4 space-y-1 text-xs">
+              <span className="text-emerald-700 font-black block">✓ Reel Passed & Approved</span>
+              <span className="text-[11px] text-slate-500 font-medium">Counted towards client's monthly quota!</span>
+            </div>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+          {isScript && (
+            <button
+              onClick={() => setShowAssignShooterModal(task)}
+              className="w-full px-4 py-2.5 bg-gradient-to-r from-[#FF5200] to-[#FC8019] hover:from-[#E04800] hover:to-[#EB7410] text-white text-xs font-black rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span>Pass Script & Assign Shooter ➔</span>
+            </button>
+          )}
+
+          {isShoot && (
+            <div className="w-full space-y-2">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowEditShootModal(task)}
+                  className="flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all"
+                >
+                  ✏️ Edit Shoot Info
+                </button>
+                <button
+                  onClick={() => handleCompleteShootClick(task)}
+                  className="px-3.5 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-black rounded-xl"
+                >
+                  ✓ Shoot Complete
+                </button>
+              </div>
+              <button
+                onClick={() => setShowHandoffEditModal(task)}
+                className="w-full px-4 py-2.5 bg-[#FF5200] hover:bg-[#E04800] text-white text-xs font-black rounded-xl shadow-md flex items-center justify-center gap-1.5"
+              >
+                <span>Handoff to Edit (Assign Raw Data) ➔</span>
+              </button>
+            </div>
+          )}
+
+          {isEdit && (
+            <button
+              onClick={() => setShowSubmitQcModal(task)}
+              className="w-full px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-black rounded-xl shadow-md flex items-center justify-center gap-2"
+            >
+              <span>✂️ Submit Video Link for QC ➔</span>
+            </button>
+          )}
+
+          {isQc && (
+            <div className="w-full flex gap-2">
+              <button
+                onClick={() => handleQcDecision(task._id, "changes_needed")}
+                className="flex-1 px-3 py-2 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-xs font-bold rounded-xl"
+              >
+                🔄 Send Back to Editor
+              </button>
+              <button
+                onClick={() => handleQcDecision(task._id, "approved")}
+                className="flex-1 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-xl shadow-md"
+              >
+                ✓ QC Passed ➔ Client
+              </button>
+            </div>
+          )}
+
+          {isClientApproval && (
+            <div className="w-full space-y-2">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleClientDecision(task._id, "changes_needed")}
+                  className="flex-1 px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold rounded-xl"
+                >
+                  🔄 Client Changes (Back to Edit)
+                </button>
+                <button
+                  onClick={() => handleClientDecision(task._id, "approved")}
+                  className="flex-1 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-xl shadow-md"
+                >
+                  🚀 Client Approved ➔ Post!
+                </button>
+              </div>
+
+              <button
+                onClick={() => {
+                  const text = encodeURIComponent(
+                    `Hello ${task.client?.businessName}! Please review your edited reel: ${task.editedPreviewLink}`
+                  );
+                  window.open(`https://api.whatsapp.com/send?phone=${task.client?.mobile}&text=${text}`);
+                }}
+                className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
+              >
+                <span>WhatsApp Video Link to Client 💬</span>
+              </button>
+            </div>
+          )}
+
+          {isPosted && (
+            <div className="w-full flex justify-between items-center text-xs text-emerald-700 font-bold">
+              <span>✓ Ready to Post on Instagram</span>
+              <button
+                onClick={() => {
+                  const text = encodeURIComponent(
+                    `Congratulations ${task.client?.businessName}! Your reel "${task.title}" is ready for posting! 🎉`
+                  );
+                  window.open(`https://api.whatsapp.com/send?phone=${task.client?.mobile}&text=${text}`);
+                }}
+                className="text-[#FF5200] hover:underline"
+              >
+                WhatsApp Client 💬
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="max-w-7xl mx-auto space-y-8 font-sans pb-20">
+    <div className="max-w-7xl mx-auto space-y-8 font-sans pb-24">
       {/* ── SLEEK FLOATING DYNAMIC ISLAND TOAST (PREMIUM & NON-BLOCKING) ── */}
       {showConfetti && (
         <div className="fixed top-5 left-4 right-4 max-w-sm mx-auto z-50 py-3 px-4 rounded-2xl bg-slate-900/95 text-white shadow-2xl backdrop-blur-xl flex items-center gap-3 border border-slate-700/80 animate-slideDown pointer-events-none">
@@ -290,18 +590,39 @@ export default function ProductionHub() {
         </div>
       </div>
 
-      {/* ── CLIENT DELIVERABLES METERS ── */}
-      {overview?.clientQuotas && overview.clientQuotas.length > 0 && (
+      {/* ── CLIENT DELIVERABLES METERS (WITH VIEW ALL / EXPAND FEATURE) ── */}
+      {allQuotas.length > 0 && (
         <div className="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <span>🎯 Monthly Client Delivery Quotas</span>
-            </h3>
-            <span className="text-xs text-[#FF5200] font-black">{overview.clientQuotas.length} Active Accounts</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                <span>🎯 Monthly Client Delivery Quotas</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">Live deliverable progress across active client accounts.</p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {showAllQuotas && (
+                <input
+                  type="text"
+                  placeholder="Search client quota..."
+                  value={quotaSearch}
+                  onChange={(e) => setQuotaSearch(e.target.value)}
+                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-xs rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#FF5200] w-44 font-medium"
+                />
+              )}
+
+              <button
+                onClick={() => setShowAllQuotas(!showAllQuotas)}
+                className="px-4 py-2 bg-orange-50 hover:bg-orange-100 border border-orange-200 text-[#FF5200] text-xs font-black rounded-xl transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+              >
+                <span>{showAllQuotas ? "Show Less ⌃" : `View All (${allQuotas.length} Accounts) ➔`}</span>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {overview.clientQuotas.slice(0, 4).map((c) => (
+            {displayedQuotas.map((c) => (
               <div
                 key={c._id}
                 className="p-4 bg-slate-50/70 border border-slate-200/80 rounded-2xl hover:border-orange-200 hover:bg-orange-50/30 transition-all"
@@ -332,13 +653,13 @@ export default function ProductionHub() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex p-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-x-auto max-w-full">
           {[
-            { id: "all", label: "All Tasks", icon: "📋", count: tasks.length },
+            { id: "all", label: "Active Tasks", icon: "📋", count: activeTasks.length },
             { id: "script", label: "1. Script Vault", icon: "📝", count: overview?.stageCounts?.script || 0 },
             { id: "shoot", label: "2. Shooting", icon: "🎥", count: overview?.stageCounts?.shoot || 0 },
             { id: "edit", label: "3. Editing", icon: "✂️", count: overview?.stageCounts?.edit || 0 },
             { id: "qc", label: "4. QC Review", icon: "🔍", count: overview?.stageCounts?.qc || 0 },
             { id: "client_approval", label: "5. Client Approval", icon: "👤", count: overview?.stageCounts?.client_approval || 0 },
-            { id: "posted", label: "6. Ready to Post", icon: "🚀", count: overview?.stageCounts?.posted || 0 },
+            { id: "posted", label: "6. Posted Archive", icon: "🚀", count: postedTasks.length },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -392,306 +713,62 @@ export default function ProductionHub() {
         <div className="flex items-center justify-center p-20">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5200]"></div>
         </div>
+      ) : activeTab === "all" ? (
+        <div className="space-y-12">
+          {/* Main Active Tasks (Script, Shoot, Edit, QC, Client Approval) */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black text-slate-900">
+                In-Progress Creative Tasks ({activeTasks.length})
+              </h3>
+              <span className="text-xs font-bold text-[#FF5200] bg-orange-50 px-3 py-1 rounded-full border border-orange-200">
+                Active Production Line
+              </span>
+            </div>
+
+            {activeTasks.length === 0 ? (
+              <div className="p-12 text-center bg-white border border-slate-100 rounded-3xl shadow-sm">
+                <span className="text-4xl block mb-2">🎉</span>
+                <h4 className="text-base font-black text-slate-900">No active in-progress reels!</h4>
+                <p className="text-xs text-slate-500 mt-0.5">All created reels are posted, or create a new reel task.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {activeTasks.map((t) => renderTaskCard(t))}
+              </div>
+            )}
+          </div>
+
+          {/* Separate Dedicated Section for Posted & Completed Archive */}
+          {postedTasks.length > 0 && (
+            <div className="pt-8 border-t border-slate-200">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🚀</span>
+                  <h3 className="text-lg font-black text-slate-900">
+                    Delivered & Posted Archive ({postedTasks.length})
+                  </h3>
+                </div>
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                  Ready on Instagram
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {postedTasks.map((t) => renderTaskCard(t))}
+              </div>
+            </div>
+          )}
+        </div>
       ) : tasks.length === 0 ? (
         <div className="p-16 text-center bg-white border border-slate-100 rounded-3xl shadow-sm">
           <span className="text-5xl block mb-3">🎬</span>
           <h3 className="text-lg font-black text-slate-900">No tasks in this stage</h3>
-          <p className="text-xs text-slate-500 mt-1 font-medium">Add a new script or move tasks through the pipeline.</p>
+          <p className="text-xs text-slate-500 mt-1 font-medium">Move tasks through the pipeline or create a new one.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tasks.map((task) => {
-            const isScript = task.stage === "script";
-            const isShoot = task.stage === "shoot";
-            const isEdit = task.stage === "edit";
-            const isQc = task.stage === "qc";
-            const isClientApproval = task.stage === "client_approval";
-            const isPosted = task.stage === "posted" || task.stage === "completed";
-
-            return (
-              <div
-                key={task._id}
-                className="group relative p-6 bg-white hover:bg-white border border-slate-100 hover:border-orange-200 rounded-3xl transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col justify-between"
-              >
-                <div>
-                  {/* Card Header */}
-                  <div className="flex justify-between items-start gap-2 mb-3">
-                    <div>
-                      <span className="text-[10px] font-black uppercase tracking-wider text-[#FF5200] block">
-                        {task.client?.businessName || "Unknown Client"}
-                      </span>
-                      <h3 className="font-black text-base text-slate-900 mt-0.5 tracking-tight">
-                        Reel #{task.reelNumber}: {task.title}
-                      </h3>
-                    </div>
-
-                    <span
-                      className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-                        isScript
-                          ? "bg-amber-50 text-amber-800 border-amber-200"
-                          : isShoot
-                          ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                          : isEdit
-                          ? "bg-indigo-50 text-indigo-800 border-indigo-200"
-                          : isQc
-                          ? "bg-cyan-50 text-cyan-800 border-cyan-200"
-                          : isClientApproval
-                          ? "bg-orange-50 text-orange-800 border-orange-200"
-                          : "bg-emerald-50 text-emerald-800 border-emerald-200"
-                      }`}
-                    >
-                      {task.stage.replace("_", " ")}
-                    </span>
-                  </div>
-
-                  {/* ── STAGE 1: SCRIPT VAULT ── */}
-                  {isScript && (
-                    <div className="p-4 bg-amber-50/40 border border-amber-100 rounded-2xl mb-4 space-y-1.5 text-xs">
-                      <div className="flex justify-between">
-                        <span className="text-slate-500 font-medium">Writer:</span>
-                        <span className="font-black text-slate-800">{task.writer?.name || "Unassigned"}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500 font-medium">Hook: </span>
-                        <span className="text-amber-900 font-bold italic">"{task.hook || "No hook provided yet"}"</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ── STAGE 2: SHOOT OPERATIONS ── */}
-                  {isShoot && (
-                    <div className="p-4 bg-emerald-50/40 border border-emerald-100 rounded-2xl mb-4 space-y-2 text-xs">
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500 font-medium">Shooter:</span>
-                        <span className="font-black text-emerald-700">{task.shooter?.name || "Not Assigned"}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500 font-medium">📅 Date & Time:</span>
-                        <span className="font-extrabold text-slate-800">
-                          {task.shootDate || "Set Date"} @ {task.shootTime || "Time"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500 font-medium">📍 Location:</span>
-                        <span className="text-slate-700 font-semibold truncate max-w-[160px]">
-                          {task.location || "Client Store"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center pt-1 border-t border-emerald-100">
-                        <span className="text-slate-500 font-medium">Target Reels:</span>
-                        <span className="font-mono font-black text-slate-900">{task.targetReels || 1} Reels</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ── STAGE 3: VIDEO EDITING ── */}
-                  {isEdit && (
-                    <div className="p-4 bg-indigo-50/40 border border-indigo-100 rounded-2xl mb-4 space-y-2 text-xs">
-                      {/* Revision Feedback Alert if coming back from QC or Client */}
-                      {task.qcStatus === "changes_requested" && (
-                        <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-[11px] mb-2 font-medium">
-                          <span className="font-black block text-amber-800">⚠️ QC Changes Requested:</span>
-                          <span>{task.qcNotes}</span>
-                        </div>
-                      )}
-                      {task.clientApprovalStatus === "changes_requested" && (
-                        <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl text-red-900 text-[11px] mb-2 font-medium">
-                          <span className="font-black block text-red-800">⚠️ Client Requested Changes:</span>
-                          <span>{task.clientFeedback}</span>
-                        </div>
-                      )}
-
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500 font-medium">Assigned Editor:</span>
-                        <span className="font-black text-indigo-700">{task.editor?.name || "Unassigned"}</span>
-                      </div>
-
-                      {task.rawFootageLink && (
-                        <div className="pt-2 border-t border-indigo-100">
-                          <a
-                            href={task.rawFootageLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 text-xs text-[#FF5200] font-black underline hover:text-[#E04800]"
-                          >
-                            <span>📁 Open Raw Footage Drive</span>
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* ── STAGE 4: QC REVIEW ── */}
-                  {isQc && (
-                    <div className="p-4 bg-cyan-50/40 border border-cyan-100 rounded-2xl mb-4 space-y-2 text-xs">
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500 font-medium">Edited By:</span>
-                        <span className="font-black text-slate-800">{task.editor?.name || "Editor"}</span>
-                      </div>
-                      {task.editedPreviewLink && (
-                        <a
-                          href={task.editedPreviewLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-cyan-700 font-black underline"
-                        >
-                          <span>🎬 Watch Edited Video Preview</span>
-                        </a>
-                      )}
-                      <p className="text-[10px] text-slate-500 font-medium mt-1">Review video quality before client delivery.</p>
-                    </div>
-                  )}
-
-                  {/* ── STAGE 5: CLIENT APPROVAL ── */}
-                  {isClientApproval && (
-                    <div className="p-4 bg-orange-50/40 border border-orange-100 rounded-2xl mb-4 space-y-2 text-xs">
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500 font-medium">Client Mobile:</span>
-                        <span className="font-black text-slate-800">{task.client?.mobile}</span>
-                      </div>
-                      {task.editedPreviewLink && (
-                        <a
-                          href={task.editedPreviewLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-[#FF5200] font-black underline"
-                        >
-                          <span>🎬 Watch Video Preview</span>
-                        </a>
-                      )}
-                    </div>
-                  )}
-
-                  {/* ── STAGE 6: READY TO POST / COMPLETED ── */}
-                  {isPosted && (
-                    <div className="p-4 bg-emerald-50/40 border border-emerald-100 rounded-2xl mb-4 space-y-1 text-xs">
-                      <span className="text-emerald-700 font-black block">✓ Reel Passed & Approved</span>
-                      <span className="text-[11px] text-slate-500 font-medium">Counted towards client's monthly quota!</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* ── ACTION BUTTONS FOR EACH STAGE ── */}
-                <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                  {/* 1. SCRIPT STAGE ACTION ➔ MUST ASSIGN SHOOT PERSON */}
-                  {isScript && (
-                    <button
-                      onClick={() => setShowAssignShooterModal(task)}
-                      className="w-full px-4 py-2.5 bg-gradient-to-r from-[#FF5200] to-[#FC8019] hover:from-[#E04800] hover:to-[#EB7410] text-white text-xs font-black rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      <span>Pass Script & Assign Shooter ➔</span>
-                    </button>
-                  )}
-
-                  {/* 2. SHOOT STAGE ACTIONS */}
-                  {isShoot && (
-                    <div className="w-full space-y-2">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setShowEditShootModal(task)}
-                          className="flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all"
-                        >
-                          ✏️ Edit Shoot Info
-                        </button>
-                        <button
-                          onClick={() => handleCompleteShootClick(task)}
-                          className="px-3.5 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-black rounded-xl"
-                        >
-                          ✓ Shoot Complete
-                        </button>
-                      </div>
-
-                      {/* Handoff to Edit (Strict Gate) */}
-                      <button
-                        onClick={() => setShowHandoffEditModal(task)}
-                        className="w-full px-4 py-2.5 bg-[#FF5200] hover:bg-[#E04800] text-white text-xs font-black rounded-xl shadow-md flex items-center justify-center gap-1.5"
-                      >
-                        <span>Handoff to Edit (Assign Raw Data) ➔</span>
-                      </button>
-                    </div>
-                  )}
-
-                  {/* 3. EDIT STAGE ACTION */}
-                  {isEdit && (
-                    <button
-                      onClick={() => setShowSubmitQcModal(task)}
-                      className="w-full px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-black rounded-xl shadow-md flex items-center justify-center gap-2"
-                    >
-                      <span>✂️ Submit Video Link for QC ➔</span>
-                    </button>
-                  )}
-
-                  {/* 4. QC REVIEW ACTIONS */}
-                  {isQc && (
-                    <div className="w-full flex gap-2">
-                      <button
-                        onClick={() => handleQcDecision(task._id, "changes_needed")}
-                        className="flex-1 px-3 py-2 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-xs font-bold rounded-xl"
-                      >
-                        🔄 Send Back to Editor
-                      </button>
-                      <button
-                        onClick={() => handleQcDecision(task._id, "approved")}
-                        className="flex-1 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-xl shadow-md"
-                      >
-                        ✓ QC Passed ➔ Client
-                      </button>
-                    </div>
-                  )}
-
-                  {/* 5. CLIENT APPROVAL ACTIONS */}
-                  {isClientApproval && (
-                    <div className="w-full space-y-2">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleClientDecision(task._id, "changes_needed")}
-                          className="flex-1 px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold rounded-xl"
-                        >
-                          🔄 Client Changes (Back to Edit)
-                        </button>
-                        <button
-                          onClick={() => handleClientDecision(task._id, "approved")}
-                          className="flex-1 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-xl shadow-md"
-                        >
-                          🚀 Client Approved ➔ Post!
-                        </button>
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          const text = encodeURIComponent(
-                            `Hello ${task.client?.businessName}! Please review your edited reel: ${task.editedPreviewLink}`
-                          );
-                          window.open(`https://api.whatsapp.com/send?phone=${task.client?.mobile}&text=${text}`);
-                        }}
-                        className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
-                      >
-                        <span>WhatsApp Video Link to Client 💬</span>
-                      </button>
-                    </div>
-                  )}
-
-                  {/* 6. POSTED ACTION */}
-                  {isPosted && (
-                    <div className="w-full flex justify-between items-center text-xs text-emerald-700 font-bold">
-                      <span>✓ Ready to Post on Instagram</span>
-                      <button
-                        onClick={() => {
-                          const text = encodeURIComponent(
-                            `Congratulations ${task.client?.businessName}! Your reel "${task.title}" is ready for posting! 🎉`
-                          );
-                          window.open(`https://api.whatsapp.com/send?phone=${task.client?.mobile}&text=${text}`);
-                        }}
-                        className="text-[#FF5200] hover:underline"
-                      >
-                        WhatsApp Client 💬
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          {tasks.map((task) => renderTaskCard(task))}
         </div>
       )}
 
