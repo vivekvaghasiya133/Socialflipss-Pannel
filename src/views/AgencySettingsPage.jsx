@@ -4,29 +4,32 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   getAgencyConfig,
   updateBranding,
-  addServicePackage,
+  createServicePackage,
   deleteServicePackage,
   updateRolesPermissions,
   updateWhatsAppTemplates,
 } from "../api/agencyOsApi";
-import { useAuth } from "../context/AuthContext";
 
 export default function AgencySettingsPage() {
-  const { user, isAdmin } = useAuth();
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("packages");
   const [toastMsg, setToastMsg] = useState("");
 
-  // New package modal
+  // Modal State for Package
   const [showPkgModal, setShowPkgModal] = useState(false);
   const [pkgForm, setPkgForm] = useState({
     name: "",
     category: "SMM",
-    monthlyFee: 45000,
+    monthlyFee: 35000,
     description: "",
-    deliverables: { reelsCount: 30, shootsCount: 4, carouselsCount: 10, storiesCount: 30 },
+    deliverables: {
+      reelsCount: 15,
+      shootsCount: 2,
+      carouselsCount: 5,
+      storiesCount: 15,
+    },
   });
 
   const loadConfig = useCallback(async () => {
@@ -35,7 +38,7 @@ export default function AgencySettingsPage() {
       const res = await getAgencyConfig();
       if (res.data?.success) setConfig(res.data.config);
     } catch (err) {
-      console.error("Error fetching agency config:", err);
+      console.error("Error loading agency config:", err);
     } finally {
       setLoading(false);
     }
@@ -53,26 +56,29 @@ export default function AgencySettingsPage() {
   // Add Package
   const handleAddPackage = async (e) => {
     e.preventDefault();
+    setSaving(true);
     try {
-      await addServicePackage(pkgForm);
-      showToast("New service package created successfully! ✨");
+      await createServicePackage(pkgForm);
+      showToast("New service package created! 📦");
       setShowPkgModal(false);
       setPkgForm({
         name: "",
         category: "SMM",
-        monthlyFee: 45000,
+        monthlyFee: 35000,
         description: "",
-        deliverables: { reelsCount: 30, shootsCount: 4, carouselsCount: 10, storiesCount: 30 },
+        deliverables: { reelsCount: 15, shootsCount: 2, carouselsCount: 5, storiesCount: 15 },
       });
       loadConfig();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to create package");
+    } finally {
+      setSaving(false);
     }
   };
 
   // Delete Package
   const handleDeletePackage = async (id) => {
-    if (!window.confirm("Are you sure you want to remove this package?")) return;
+    if (!window.confirm("Are you sure you want to delete this service package?")) return;
     try {
       await deleteServicePackage(id);
       showToast("Service package removed.");
@@ -131,7 +137,7 @@ export default function AgencySettingsPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 font-sans pb-24">
+    <div className="max-w-7xl mx-auto space-y-8 font-sans pb-24 text-slate-900">
       {/* ── SLEEK FLOATING ISLAND TOAST ── */}
       {toastMsg && (
         <div className="fixed top-5 left-4 right-4 max-w-md mx-auto z-50 p-4 bg-slate-900/95 text-white font-black text-xs rounded-2xl shadow-2xl backdrop-blur-xl border border-slate-700 flex items-center justify-between animate-slideDown">
@@ -143,7 +149,7 @@ export default function AgencySettingsPage() {
         </div>
       )}
 
-      {/* ── HEADER HERO ── */}
+      {/* ── TOP HEADER HERO ── */}
       <div className="p-8 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-50 border border-orange-200 text-[#FF5200] rounded-full text-xs font-black uppercase tracking-wider mb-2">
@@ -157,15 +163,15 @@ export default function AgencySettingsPage() {
           </p>
         </div>
 
-        {activeTab === "packages" && (
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setShowPkgModal(true)}
-            className="px-6 py-3.5 bg-gradient-to-r from-[#FF5200] to-[#FC8019] hover:from-[#E04800] hover:to-[#EB7410] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-orange-500/25 transition-all flex items-center gap-2 active:scale-95 cursor-pointer self-start md:self-auto"
+            className="px-6 py-3.5 bg-gradient-to-r from-[#FF5200] to-[#FC8019] hover:from-[#E04800] hover:to-[#EB7410] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-orange-500/25 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
           >
             <span>+</span>
             <span>Create Package</span>
           </button>
-        )}
+        </div>
       </div>
 
       {/* ── HORIZONTAL SWIGGY TABS ── */}
@@ -223,13 +229,13 @@ export default function AgencySettingsPage() {
                       <h3 className="text-xl font-black text-slate-900 tracking-tight">{pkg.name}</h3>
                       <p className="text-xs text-slate-500 font-medium mt-1 mb-5">{pkg.description || "Monthly agency retainer package."}</p>
 
-                      <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl space-y-2 mb-6">
+                      <div className="p-4 bg-slate-50/80 rounded-2xl space-y-2 border border-slate-100">
                         <div className="flex justify-between items-center text-xs font-bold">
-                          <span className="text-slate-500">Reels Quota:</span>
+                          <span className="text-slate-500">Reels Delivery:</span>
                           <span className="text-[#FF5200] font-mono font-black">{pkg.deliverables?.reelsCount || 0} Reels</span>
                         </div>
                         <div className="flex justify-between items-center text-xs font-bold">
-                          <span className="text-slate-500">Shoots Quota:</span>
+                          <span className="text-slate-500">Monthly Shoots:</span>
                           <span className="text-emerald-700 font-mono font-black">{pkg.deliverables?.shootsCount || 0} Shoots</span>
                         </div>
                         <div className="flex justify-between items-center text-xs font-bold">
@@ -251,7 +257,7 @@ export default function AgencySettingsPage() {
             </div>
           )}
 
-          {/* ── TAB 2: ROLES & PERMISSIONS MATRIX ── */}
+          {/* ── TAB 2: ROLES & PERMISSIONS MATRIX (FIXED ROLES DISPLAY) ── */}
           {activeTab === "roles" && (
             <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -262,7 +268,7 @@ export default function AgencySettingsPage() {
                 <button
                   disabled={saving}
                   onClick={handleSaveRoles}
-                  className="px-6 py-3 bg-[#FF5200] hover:bg-[#E04800] text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-95"
+                  className="px-6 py-3 bg-[#FF5200] hover:bg-[#E04800] text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-95 cursor-pointer"
                 >
                   {saving ? "Saving..." : "Save Permissions ✓"}
                 </button>
@@ -272,48 +278,62 @@ export default function AgencySettingsPage() {
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-slate-200 text-slate-400 uppercase font-black text-[10px] tracking-wider">
-                      <th className="py-3 px-4">Role</th>
-                      <th className="py-3 px-4 text-center">Can Create Content</th>
-                      <th className="py-3 px-4 text-center">Can Approve Content</th>
-                      <th className="py-3 px-4 text-center">Can Manage Shoots</th>
-                      <th className="py-3 px-4 text-center">Can View Invoices</th>
-                      <th className="py-3 px-4 text-center">Can View Client Portal</th>
+                      <th className="py-3 px-4">Staff Role</th>
+                      <th className="py-3 px-4 text-center">Edit Reels</th>
+                      <th className="py-3 px-4 text-center">Assign Tasks</th>
+                      <th className="py-3 px-4 text-center">Access Shoots</th>
+                      <th className="py-3 px-4 text-center">Manage Clients</th>
+                      <th className="py-3 px-4 text-center">View Invoices</th>
+                      <th className="py-3 px-4 text-center">Manage Staff</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {config?.rolesPermissions?.map((roleItem, idx) => (
-                      <tr key={roleItem.role} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="py-4 px-4 font-black text-slate-900 text-sm uppercase">
-                          {roleItem.role}
+                      <tr key={roleItem.roleKey || roleItem._id || idx} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="py-4 px-4">
+                          <span className="font-extrabold text-slate-900 text-sm block">
+                            {roleItem.roleName || roleItem.roleKey?.toUpperCase() || "Role"}
+                          </span>
+                          <span className="text-[11px] text-[#FF5200] font-mono font-bold block">
+                            @{roleItem.roleKey}
+                          </span>
                         </td>
                         <td className="py-4 px-4 text-center">
                           <input
                             type="checkbox"
-                            checked={roleItem.canCreateContent}
-                            onChange={() => handleTogglePermission(idx, "canCreateContent")}
+                            checked={Boolean(roleItem.canEditProduction)}
+                            onChange={() => handleTogglePermission(idx, "canEditProduction")}
                             className="w-4 h-4 accent-[#FF5200] rounded cursor-pointer"
                           />
                         </td>
                         <td className="py-4 px-4 text-center">
                           <input
                             type="checkbox"
-                            checked={roleItem.canApproveContent}
-                            onChange={() => handleTogglePermission(idx, "canApproveContent")}
+                            checked={Boolean(roleItem.canAssignTasks)}
+                            onChange={() => handleTogglePermission(idx, "canAssignTasks")}
                             className="w-4 h-4 accent-[#FF5200] rounded cursor-pointer"
                           />
                         </td>
                         <td className="py-4 px-4 text-center">
                           <input
                             type="checkbox"
-                            checked={roleItem.canManageShoots}
-                            onChange={() => handleTogglePermission(idx, "canManageShoots")}
+                            checked={Boolean(roleItem.canAccessAllShoots)}
+                            onChange={() => handleTogglePermission(idx, "canAccessAllShoots")}
                             className="w-4 h-4 accent-[#FF5200] rounded cursor-pointer"
                           />
                         </td>
                         <td className="py-4 px-4 text-center">
                           <input
                             type="checkbox"
-                            checked={roleItem.canViewInvoices}
+                            checked={Boolean(roleItem.canManageClients)}
+                            onChange={() => handleTogglePermission(idx, "canManageClients")}
+                            className="w-4 h-4 accent-[#FF5200] rounded cursor-pointer"
+                          />
+                        </td>
+                        <td className="py-4 px-4 text-center">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(roleItem.canViewInvoices)}
                             onChange={() => handleTogglePermission(idx, "canViewInvoices")}
                             className="w-4 h-4 accent-[#FF5200] rounded cursor-pointer"
                           />
@@ -321,8 +341,8 @@ export default function AgencySettingsPage() {
                         <td className="py-4 px-4 text-center">
                           <input
                             type="checkbox"
-                            checked={roleItem.canViewClientPortal}
-                            onChange={() => handleTogglePermission(idx, "canViewClientPortal")}
+                            checked={Boolean(roleItem.canManageStaff)}
+                            onChange={() => handleTogglePermission(idx, "canManageStaff")}
                             className="w-4 h-4 accent-[#FF5200] rounded cursor-pointer"
                           />
                         </td>
@@ -406,42 +426,122 @@ export default function AgencySettingsPage() {
             </div>
           )}
 
-          {/* ── TAB 4: WHITE-LABEL BRANDING ── */}
+          {/* ── TAB 4: WHITE-LABEL BRANDING & LOGO / FAVICON ── */}
           {activeTab === "branding" && (
-            <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm space-y-6">
+            <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm space-y-8">
               <div>
-                <h3 className="text-xl font-black text-slate-900 tracking-tight">White-Label SaaS Branding</h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">Customize your agency name, logo, GST details, and accent theme.</p>
+                <h3 className="text-xl font-black text-slate-900 tracking-tight">White-Label SaaS & Agency Branding</h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">Customize your agency name, company logo, favicon icon, GST number, and contact info.</p>
               </div>
 
-              <form onSubmit={handleSaveBranding} className="space-y-4 max-w-xl">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Agency Brand Name</label>
-                  <input
-                    type="text"
-                    value={config?.agencyName || ""}
-                    onChange={(e) => setConfig({ ...config, agencyName: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-900 font-bold focus:outline-none focus:border-[#FF5200]"
-                  />
+              <form onSubmit={handleSaveBranding} className="space-y-6 max-w-2xl">
+                {/* Logo & Favicon Card */}
+                <div className="p-6 bg-slate-50/80 border border-slate-200/80 rounded-2xl space-y-5">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Agency Logo & Favicon</h4>
+
+                  {/* Logo Section */}
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                    <div className="w-20 h-20 rounded-2xl bg-white border border-slate-200 p-1 flex items-center justify-center shadow-sm shrink-0 overflow-hidden">
+                      <img
+                        src={config?.logoUrl || "/logo.jpg"}
+                        alt="Agency Logo"
+                        className="w-full h-full object-contain rounded-xl"
+                        onError={(e) => { e.target.src = "/logo.jpg"; }}
+                      />
+                    </div>
+                    <div className="flex-1 space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700 block">Company Logo URL / File</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. /logo.jpg or https://yourdomain.com/logo.png"
+                        value={config?.logoUrl || ""}
+                        onChange={(e) => setConfig({ ...config, logoUrl: e.target.value })}
+                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 font-mono font-medium focus:outline-none focus:border-[#FF5200]"
+                      />
+                      <span className="text-[10px] text-slate-400 block">
+                        Tip: Place your company logo image in <code className="font-mono bg-slate-200/60 px-1 py-0.5 rounded">frontend/public/logo.jpg</code> or paste a direct image URL.
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Favicon Section */}
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-5 pt-4 border-t border-slate-200/80">
+                    <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 p-1 flex items-center justify-center shadow-sm shrink-0 overflow-hidden">
+                      <img
+                        src={config?.faviconUrl || "/favicon.ico"}
+                        alt="Favicon"
+                        className="w-8 h-8 object-contain"
+                        onError={(e) => { e.target.src = "/favicon.ico"; }}
+                      />
+                    </div>
+                    <div className="flex-1 space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700 block">Browser Tab Favicon URL / Icon (.ico / .png)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. /favicon.ico or https://yourdomain.com/favicon.png"
+                        value={config?.faviconUrl || ""}
+                        onChange={(e) => setConfig({ ...config, faviconUrl: e.target.value })}
+                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 font-mono font-medium focus:outline-none focus:border-[#FF5200]"
+                      />
+                      <span className="text-[10px] text-slate-400 block">
+                        Tip: Place your favicon in <code className="font-mono bg-slate-200/60 px-1 py-0.5 rounded">frontend/public/favicon.ico</code> or paste a direct icon link.
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">GST / Business Tax Number</label>
-                  <input
-                    type="text"
-                    value={config?.gstNumber || ""}
-                    onChange={(e) => setConfig({ ...config, gstNumber: e.target.value })}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-900 font-medium focus:outline-none focus:border-[#FF5200]"
-                  />
+                {/* Company Details */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">Agency Brand Name</label>
+                    <input
+                      type="text"
+                      value={config?.agencyName || ""}
+                      onChange={(e) => setConfig({ ...config, agencyName: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-bold focus:outline-none focus:border-[#FF5200]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">Agency Tagline</label>
+                    <input
+                      type="text"
+                      value={config?.tagline || ""}
+                      onChange={(e) => setConfig({ ...config, tagline: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:border-[#FF5200]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">Contact Mobile</label>
+                    <input
+                      type="text"
+                      value={config?.contactMobile || ""}
+                      onChange={(e) => setConfig({ ...config, contactMobile: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-semibold focus:outline-none focus:border-[#FF5200]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">GST / Business Tax Number</label>
+                    <input
+                      type="text"
+                      value={config?.gstNumber || ""}
+                      onChange={(e) => setConfig({ ...config, gstNumber: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-mono font-medium focus:outline-none focus:border-[#FF5200]"
+                    />
+                  </div>
                 </div>
 
                 <div className="pt-2">
                   <button
                     type="submit"
                     disabled={saving}
-                    className="px-6 py-3.5 bg-[#FF5200] hover:bg-[#E04800] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-md transition-all active:scale-95"
+                    className="px-8 py-3.5 bg-gradient-to-r from-[#FF5200] to-[#FC8019] hover:from-[#E04800] hover:to-[#EB7410] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-orange-500/25 transition-all active:scale-95 cursor-pointer"
                   >
-                    {saving ? "Updating..." : "Save Agency Branding ✓"}
+                    {saving ? "Updating..." : "Save Agency Branding & Logo ✓"}
                   </button>
                 </div>
               </form>
@@ -487,17 +587,28 @@ export default function AgencySettingsPage() {
                     onChange={(e) => setPkgForm({ ...pkgForm, category: e.target.value })}
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-bold"
                   >
-                    <option value="SMM">SMM (Social Media)</option>
-                    <option value="Performance Marketing">Performance Marketing</option>
-                    <option value="Branding & Content">Branding & Content</option>
-                    <option value="Full Retainer">Full Retainer</option>
+                    <option value="SMM">SMM Retainer</option>
+                    <option value="Production">Video Production</option>
+                    <option value="Editing">Editing Only</option>
+                    <option value="Ads">Performance Ads</option>
                   </select>
                 </div>
               </div>
 
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Package Description</label>
+                <textarea
+                  rows={2}
+                  placeholder="Summary of client deliverables..."
+                  value={pkgForm.description}
+                  onChange={(e) => setPkgForm({ ...pkgForm, description: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Reels Quota</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Reels Count</label>
                   <input
                     type="number"
                     value={pkgForm.deliverables.reelsCount}
@@ -507,11 +618,11 @@ export default function AgencySettingsPage() {
                         deliverables: { ...pkgForm.deliverables, reelsCount: Number(e.target.value) },
                       })
                     }
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-mono"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-bold"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Shoots Quota</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Shoots Count</label>
                   <input
                     type="number"
                     value={pkgForm.deliverables.shootsCount}
@@ -521,20 +632,9 @@ export default function AgencySettingsPage() {
                         deliverables: { ...pkgForm.deliverables, shootsCount: Number(e.target.value) },
                       })
                     }
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-mono"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-bold"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Short Description</label>
-                <textarea
-                  rows={2}
-                  placeholder="Details about shoot locations, strategy calls..."
-                  value={pkgForm.description}
-                  onChange={(e) => setPkgForm({ ...pkgForm, description: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900"
-                />
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
@@ -547,9 +647,10 @@ export default function AgencySettingsPage() {
                 </button>
                 <button
                   type="submit"
+                  disabled={saving}
                   className="px-6 py-2.5 bg-[#FF5200] hover:bg-[#E04800] text-white font-black rounded-xl text-xs shadow-md"
                 >
-                  Save Package ✓
+                  Create Package ✓
                 </button>
               </div>
             </form>

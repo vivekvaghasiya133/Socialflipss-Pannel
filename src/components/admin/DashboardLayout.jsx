@@ -94,9 +94,17 @@ export default function DashboardLayout() {
           background: "linear-gradient(135deg, #FF5200 0%, #FC8019 100%)",
           display: "flex", alignItems: "center", justifyContent: "center",
           color: "#FFFFFF", fontWeight: 900, fontSize: 16,
-          boxShadow: "0 6px 16px rgba(255, 82, 0, 0.3)"
+          boxShadow: "0 6px 16px rgba(255, 82, 0, 0.3)",
+          overflow: "hidden",
+          position: "relative"
         }}>
-          SF
+          <span style={{ position: "absolute", zIndex: 1 }}>SF</span>
+          <img
+            src="/logo.jpg"
+            alt="Logo"
+            style={{ width: "100%", height: "100%", objectFit: "cover", position: "relative", zIndex: 2 }}
+            onError={(e) => { e.target.style.display = "none"; }}
+          />
         </Box>
         <Box>
           <Typography variant="subtitle1" fontWeight={900} sx={{ color: "#1E293B", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
