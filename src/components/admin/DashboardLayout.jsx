@@ -1,4 +1,4 @@
-// FINAL DashboardLayout.jsx with NotificationBell — replace existing
+// FINAL DashboardLayout.jsx with Agency OS Hubs & Mobile Navigation
 import { useState } from "react";
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import {
@@ -30,13 +30,15 @@ import LightbulbIcon from "@mui/icons-material/Lightbulb";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import AssignmentIcon from "@mui/icons-material/Assignment";
+import SettingsIcon from "@mui/icons-material/Settings";
 import { useAuth } from "../../context/AuthContext";
 import NotificationBell from "./../admin/NotificationBell";
+import MobileBottomNav from "../navigation/MobileBottomNav";
 
 const DRAWER_WIDTH = 256;
 
 export default function DashboardLayout() {
-  const { user, logout, isAdmin, canManage } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -59,17 +61,9 @@ export default function DashboardLayout() {
       ],
     },
     {
-      label: "CRM",
+      label: "Production Hub (Agency OS)",
       items: [
-        { label: "Leads", icon: <LeadsIcon />, path: "/admin/leads", roles: ["admin", "manager"] },
-        { label: "Clients", icon: <PeopleIcon />, path: "/admin/clients", roles: ["admin", "manager", "team"] },
-        { label: "Meetings", icon: <EventNoteIcon />, path: "/admin/meetings", roles: ["admin", "manager", "team"] },
-        { label: "Invoices", icon: <ReceiptIcon />, path: "/admin/invoices", roles: ["admin", "manager"] },
-      ],
-    },
-    {
-      label: "Production",
-      items: [
+        { label: "🎬 Production Hub", icon: <VideoIcon />, path: "/admin/production-hub", roles: ["admin", "manager", "team"] },
         { label: "Content Pipeline", icon: <ListAltIcon />, path: "/admin/content-pipeline", roles: ["admin", "manager", "team"] },
         { label: "Projects", icon: <FolderIcon />, path: "/admin/projects", roles: ["admin", "manager", "team"] },
         { label: "Content Calendar", icon: <CalendarIcon />, path: "/admin/content-calendar", roles: ["admin", "manager", "team"] },
@@ -79,15 +73,19 @@ export default function DashboardLayout() {
       ],
     },
     {
-      label: "Resources",
+      label: "Clients & Billing",
       items: [
-        { label: "SOP Library", icon: <MenuBookIcon />, path: "/admin/sop-library", roles: ["admin", "manager", "team"] },
+        { label: "Clients", icon: <PeopleIcon />, path: "/admin/clients", roles: ["admin", "manager", "team"] },
+        { label: "Invoices", icon: <ReceiptIcon />, path: "/admin/invoices", roles: ["admin", "manager"] },
+        { label: "Leads", icon: <LeadsIcon />, path: "/admin/leads", roles: ["admin", "manager"] },
+        { label: "Meetings", icon: <EventNoteIcon />, path: "/admin/meetings", roles: ["admin", "manager", "team"] },
       ],
     },
     {
-      label: "HR & Team",
+      label: "HR & Operations",
       items: [
-        { label: "Staff", icon: <GroupsIcon />, path: "/admin/staff", roles: ["admin", "manager"] },
+        { label: "⏱️ Punch & Time Tracker", icon: <EventNoteIcon />, path: "/admin/time-tracker", roles: ["admin", "manager", "team"] },
+        { label: "Staff Directory", icon: <GroupsIcon />, path: "/admin/staff", roles: ["admin", "manager"] },
         { label: "Attendance", icon: <EventNoteIcon />, path: "/admin/attendance", roles: ["admin", "manager"] },
         { label: "Salary", icon: <WalletIcon />, path: "/admin/salary", roles: ["admin"] },
         { label: "Hisab / Ledger", icon: <WalletIcon />, path: "/admin/hisab", roles: ["admin"] },
@@ -96,10 +94,11 @@ export default function DashboardLayout() {
       ],
     },
     {
-      label: "Tools",
+      label: "System Settings",
       items: [
+        { label: "⚙️ Agency OS Settings", icon: <SettingsIcon />, path: "/admin/agency-settings", roles: ["admin", "manager"] },
         { label: "Reminders", icon: <NotifIcon />, path: "/admin/reminders", roles: ["admin", "manager"] },
-        { label: "Users", icon: <UsersIcon />, path: "/admin/users", roles: ["admin"] },
+        { label: "Users & Access", icon: <UsersIcon />, path: "/admin/users", roles: ["admin"] },
       ],
     },
   ].map(section => ({
@@ -113,12 +112,12 @@ export default function DashboardLayout() {
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
       {/* Brand */}
       <Box sx={{ p: 2.5, display: "flex", alignItems: "center", gap: 1.5 }}>
-        <Box sx={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg,#1a56db,#0891b2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 15 }}>
+        <Box sx={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg,#6366F1,#8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 15, boxShadow: "0 4px 14px rgba(99,102,241,0.4)" }}>
           SF
         </Box>
         <Box>
-          <Typography variant="subtitle1" fontWeight={700} lineHeight={1.1}>SocialFlipss</Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10 }}>Management System</Typography>
+          <Typography variant="subtitle1" fontWeight={800} lineHeight={1.1} sx={{ letterSpacing: "-0.02em" }}>SocialFlipss</Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10, fontWeight: 600 }}>Agency Operating System</Typography>
         </Box>
       </Box>
       <Divider />
@@ -139,11 +138,11 @@ export default function DashboardLayout() {
                 <ListItemButton key={item.path} component={Link} to={item.path} selected={active}
                   sx={{
                     borderRadius: 2, mb: 0.25, py: 0.75,
-                    "&.Mui-selected": { background: theme.palette.primary.light, color: theme.palette.primary.main, "& .MuiListItemIcon-root": { color: theme.palette.primary.main } },
-                    "&:hover": { background: active ? theme.palette.primary.light : "#f3f4f6" },
+                    "&.Mui-selected": { background: "rgba(99,102,241,0.08)", color: "#6366F1", fontWeight: 700, "& .MuiListItemIcon-root": { color: "#6366F1" } },
+                    "&:hover": { background: active ? "rgba(99,102,241,0.12)" : "#f3f4f6" },
                   }}>
-                  <ListItemIcon sx={{ minWidth: 34, color: active ? "primary.main" : "text.secondary" }}>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: active ? 600 : 400, fontSize: 13.5 }} />
+                  <ListItemIcon sx={{ minWidth: 34, color: active ? "#6366F1" : "text.secondary" }}>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: active ? 700 : 500, fontSize: 13 }} />
                 </ListItemButton>
               );
             })}
@@ -157,29 +156,25 @@ export default function DashboardLayout() {
       <Box sx={{ p: 1 }}>
         <ListItemButton component="a" href="/portal" target="_blank" sx={{ borderRadius: 2, color: "#0e9f6e", py: 0.75 }}>
           <ListItemIcon sx={{ minWidth: 34, color: "#0e9f6e" }}><PortalIcon fontSize="small" /></ListItemIcon>
-          <ListItemText primary="Client Portal" primaryTypographyProps={{ fontSize: 13, fontWeight: 500 }} />
-        </ListItemButton>
-        <ListItemButton component="a" href="/lead" target="_blank" sx={{ borderRadius: 2, color: "text.secondary", py: 0.75 }}>
-          <ListItemIcon sx={{ minWidth: 34 }}><OpenInNewIcon fontSize="small" /></ListItemIcon>
-          <ListItemText primary="Lead Form" primaryTypographyProps={{ fontSize: 13 }} />
+          <ListItemText primary="Client Portal" primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }} />
         </ListItemButton>
       </Box>
     </Box>
   );
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh" }}>
-      <Drawer variant="permanent" sx={{ width: DRAWER_WIDTH, flexShrink: 0, display: { xs: "none", md: "block" }, "& .MuiDrawer-paper": { width: DRAWER_WIDTH, boxSizing: "border-box", borderRight: "1px solid #e5e7eb" } }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", background: "#0B0F17" }}>
+      <Drawer variant="permanent" sx={{ width: DRAWER_WIDTH, flexShrink: 0, display: { xs: "none", md: "block" }, "& .MuiDrawer-paper": { width: DRAWER_WIDTH, boxSizing: "border-box", borderRight: "1px solid #1E293B", background: "#0F172A", color: "#F8FAFC" } }}>
         {drawer}
       </Drawer>
-      <Drawer variant="temporary" open={mobileOpen} onClose={() => setMobileOpen(false)} sx={{ display: { xs: "block", md: "none" }, "& .MuiDrawer-paper": { width: DRAWER_WIDTH } }}>
+      <Drawer variant="temporary" open={mobileOpen} onClose={() => setMobileOpen(false)} sx={{ display: { xs: "block", md: "none" }, "& .MuiDrawer-paper": { width: DRAWER_WIDTH, background: "#0F172A", color: "#F8FAFC" } }}>
         {drawer}
       </Drawer>
 
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: "1px solid #e5e7eb", zIndex: 1 }}>
+        <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: "1px solid #1E293B", zIndex: 1, background: "#0F172A", color: "#F8FAFC" }}>
           <Toolbar sx={{ minHeight: "56px !important" }}>
-            <IconButton edge="start" sx={{ mr: 1, display: { md: "none" } }} onClick={() => setMobileOpen(true)}>
+            <IconButton edge="start" sx={{ mr: 1, display: { md: "none" }, color: "#94A3B8" }} onClick={() => setMobileOpen(true)}>
               <MenuIcon />
             </IconButton>
             <Box sx={{ flex: 1 }} />
@@ -191,7 +186,7 @@ export default function DashboardLayout() {
 
             <Tooltip title={`${user?.name} (${user?.email})`}>
               <IconButton onClick={e => setAnchorEl(e.currentTarget)} size="small">
-                <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main", fontSize: 13, fontWeight: 700 }}>
+                <Avatar sx={{ width: 32, height: 32, bgcolor: "#6366F1", fontSize: 13, fontWeight: 700 }}>
                   {user?.name?.[0]?.toUpperCase() || "U"}
                 </Avatar>
               </IconButton>
@@ -214,9 +209,12 @@ export default function DashboardLayout() {
           </Toolbar>
         </AppBar>
 
-        <Box sx={{ flex: 1, p: { xs: 2, md: 3 }, background: "#f4f6fb", minHeight: 0, overflowY: "auto" }}>
+        <Box sx={{ flex: 1, p: { xs: 2, md: 3.5 }, background: "#0B0F17", minHeight: 0, overflowY: "auto", pb: { xs: 12, md: 4 } }}>
           <Outlet />
         </Box>
+
+        {/* Consumer-Grade Mobile App Bottom Bar */}
+        <MobileBottomNav />
       </Box>
     </Box>
   );
