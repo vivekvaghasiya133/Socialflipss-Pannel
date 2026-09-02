@@ -150,9 +150,19 @@ export default function StaffTimeTracker() {
     }
   };
 
-  const myLog = timeStatus?.todayLog;
-  const isPunchedIn = timeStatus?.isPunchedIn;
-  const isOnBreak = timeStatus?.isOnBreak;
+  const myLog = timeStatus?.todayLog || timeStatus?.log;
+  const isPunchedIn = Boolean(
+    timeStatus?.isPunchedIn ??
+    (timeStatus?.punchedIn !== undefined ? timeStatus?.punchedIn : (myLog?.status === "punched_in" || myLog?.status === "on_break"))
+  );
+  const isOnBreak = Boolean(
+    timeStatus?.isOnBreak ??
+    (myLog?.status === "on_break" || (myLog?.breaks && myLog.breaks.some(b => !b.endTime)))
+  );
+  const isPunchedOut = Boolean(
+    timeStatus?.isPunchedOut ??
+    (myLog?.status === "punched_out")
+  );
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 font-sans pb-24">
@@ -249,7 +259,26 @@ export default function StaffTimeTracker() {
 
               {/* Current Punch State Banner */}
               <div className="my-6">
-                {!isPunchedIn ? (
+                {isPunchedOut ? (
+                  <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">👋</span>
+                      <div>
+                        <h4 className="font-black text-slate-900 text-base">Shift Completed for Today!</h4>
+                        <p className="text-xs text-slate-500 font-medium mt-0.5">
+                          Punched out at: <span className="font-mono font-black">{myLog?.punchOutTime ? new Date(myLog.punchOutTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--:--"}</span> • Total Work: <span className="font-bold text-emerald-600 font-mono">{Math.floor((myLog?.totalWorkMinutes || 0) / 60)}h {(myLog?.totalWorkMinutes || 0) % 60}m</span>
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      disabled={actionLoading}
+                      onClick={handlePunchIn}
+                      className="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition-all"
+                    >
+                      Re-Punch In
+                    </button>
+                  </div>
+                ) : !isPunchedIn ? (
                   <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                       <h4 className="font-black text-slate-900 text-base">You haven't punched in yet today.</h4>
