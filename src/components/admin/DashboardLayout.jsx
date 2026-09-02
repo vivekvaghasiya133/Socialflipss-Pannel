@@ -228,7 +228,7 @@ export default function DashboardLayout() {
         onClose={() => setMobileOpen(false)}
         sx={{
           display: { xs: "block", md: "none" },
-          "& .MuiDrawer-paper": { width: DRAWER_WIDTH, bgcolor: "#FFFFFF" }
+          "& .MuiDrawer-paper": { width: DRAWER_WIDTH, bgcolor: "#FFFFFF", pt: { xs: "max(12px, env(safe-area-inset-top, 12px))", md: 0 } }
         }}
       >
         {drawer}
@@ -247,6 +247,7 @@ export default function DashboardLayout() {
             backdropFilter: "blur(12px)",
             color: "#1E293B",
             zIndex: 10,
+            pt: { xs: "max(16px, env(safe-area-inset-top, 16px))", md: 0 },
           }}
         >
           <Toolbar sx={{ minHeight: "64px !important", px: { xs: 2, md: 3 } }}>
