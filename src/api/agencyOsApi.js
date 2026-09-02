@@ -4,11 +4,26 @@ import api from "./index";
 export const getProductionTasks = (params) => api.get("/production/tasks", { params });
 export const getProductionOverview = () => api.get("/production/overview");
 export const createProductionTask = (data) => api.post("/production/tasks", data);
-export const updateScriptStage = (id, data) => api.put(`/production/tasks/${id}/script`, data);
-export const updateShootStage = (id, data) => api.put(`/production/tasks/${id}/shoot`, data);
-export const assignEditor = (id, data) => api.put(`/production/tasks/${id}/assign-editor`, data);
-export const completeEdit = (id, data) => api.put(`/production/tasks/${id}/complete-edit`, data);
-export const deliverTask = (id, data) => api.put(`/production/tasks/${id}/deliver`, data);
+
+// Step 1: Script pass ➔ Shoot person assignment
+export const passScriptToShoot = (id, data) => api.put(`/production/tasks/${id}/pass-script-to-shoot`, data);
+
+// Step 2: Shoot info edit & completion
+export const updateShootInfo = (id, data) => api.put(`/production/tasks/${id}/update-shoot-info`, data);
+export const completeShoot = (id, data) => api.put(`/production/tasks/${id}/complete-shoot`, data);
+
+// Step 3: Raw data link & Editor assignment (Strict Gate)
+export const handoffToEdit = (id, data) => api.put(`/production/tasks/${id}/handoff-to-edit`, data);
+
+// Step 4: Editor submits edited video link ➔ Moves to QC
+export const submitEditToQc = (id, data) => api.put(`/production/tasks/${id}/submit-edit-to-qc`, data);
+
+// Step 5: QC Decision (Changes needed ➔ Back to Edit | Approved ➔ Client Approval)
+export const qcDecision = (id, data) => api.put(`/production/tasks/${id}/qc-decision`, data);
+
+// Step 6: Client Decision (Changes needed ➔ Back to Edit | Approved ➔ Ready to Post)
+export const clientDecision = (id, data) => api.put(`/production/tasks/${id}/client-decision`, data);
+
 export const deleteProductionTask = (id) => api.delete(`/production/tasks/${id}`);
 
 // ── TIME TRACKING & HRMS APIs ──
