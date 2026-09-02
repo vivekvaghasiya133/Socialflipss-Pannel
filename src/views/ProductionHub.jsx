@@ -31,12 +31,12 @@ export default function ProductionHub() {
 
   // Modals state
   const [showNewTaskModal, setShowNewTaskModal] = useState(false);
-  const [showAssignShooterModal, setShowAssignShooterModal] = useState(null); // task to pass to shoot
-  const [showEditShootModal, setShowEditShootModal] = useState(null); // task to edit shoot details
-  const [showHandoffEditModal, setShowHandoffEditModal] = useState(null); // task to handoff to edit
-  const [showSubmitQcModal, setShowSubmitQcModal] = useState(null); // task to submit edit
-  const [showQcReviewModal, setShowQcReviewModal] = useState(null); // task for QC review
-  const [showClientApprovalModal, setShowClientApprovalModal] = useState(null); // task for client review
+  const [showAssignShooterModal, setShowAssignShooterModal] = useState(null);
+  const [showEditShootModal, setShowEditShootModal] = useState(null);
+  const [showHandoffEditModal, setShowHandoffEditModal] = useState(null);
+  const [showSubmitQcModal, setShowSubmitQcModal] = useState(null);
+  const [showQcReviewModal, setShowQcReviewModal] = useState(null);
+  const [showClientApprovalModal, setShowClientApprovalModal] = useState(null);
 
   const [showConfetti, setShowConfetti] = useState(false);
   const [confettiMsg, setConfettiMsg] = useState("");
@@ -256,11 +256,11 @@ export default function ProductionHub() {
   };
 
   return (
-    <div className="min-h-screen pb-24 text-slate-100 font-sans">
+    <div className="max-w-7xl mx-auto space-y-8 font-sans pb-20">
       {/* ── CELEBRATION CONFETTI OVERLAY ── */}
       {showConfetti && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-none transition-all">
-          <div className="p-8 rounded-3xl bg-gradient-to-r from-amber-500 via-indigo-600 to-emerald-500 text-white shadow-2xl scale-110 animate-bounce flex flex-col items-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-none transition-all">
+          <div className="p-8 rounded-3xl bg-gradient-to-r from-[#FF5200] via-orange-500 to-amber-500 text-white shadow-2xl scale-110 animate-bounce flex flex-col items-center">
             <span className="text-5xl mb-2">🎉 🚀 ✨</span>
             <h2 className="text-2xl font-black text-center">{confettiMsg}</h2>
           </div>
@@ -268,26 +268,23 @@ export default function ProductionHub() {
       )}
 
       {/* ── TOP HEADER & QUICK METRICS ── */}
-      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-8 bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-full text-xs font-extrabold uppercase tracking-wider">
-              Complete Creative Production Workflow
-            </span>
-            <span className="text-xs text-slate-400 font-medium">Auto-Notifications</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-50 border border-orange-200 text-[#FF5200] rounded-full text-xs font-black uppercase tracking-wider mb-2">
+            <span>Swiggy-Grade Creative Workflow</span>
           </div>
-          <h1 className="text-3xl font-black text-white mt-1 tracking-tight flex items-center gap-3">
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
             <span>🎬 Production Hub</span>
           </h1>
-          <p className="text-sm text-slate-400">
-            Script ➔ Shoot (Shooter Assign) ➔ Edit (Raw Data Lock) ➔ QC Review ➔ Client Approval ➔ Posted.
+          <p className="text-sm text-slate-500 mt-1 font-medium">
+            Strict 6-Stage Pipeline: Script ➔ Shoot Person Assign ➔ Raw Data Lock ➔ QC Review ➔ Client Approval ➔ Ready to Post.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowNewTaskModal(true)}
-            className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold rounded-2xl shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2 text-sm active:scale-95 cursor-pointer"
+            className="px-6 py-3.5 bg-gradient-to-r from-[#FF5200] to-[#FC8019] hover:from-[#E04800] hover:to-[#EB7410] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-orange-500/25 transition-all flex items-center gap-2 active:scale-95 cursor-pointer"
           >
             <span>✨</span>
             <span>+ New Reel Task</span>
@@ -297,35 +294,35 @@ export default function ProductionHub() {
 
       {/* ── CLIENT DELIVERABLES METERS ── */}
       {overview?.clientQuotas && overview.clientQuotas.length > 0 && (
-        <div className="mb-8 p-5 bg-slate-900/80 border border-slate-800 rounded-3xl backdrop-blur-xl shadow-xl">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <span>🎯 Monthly Client Delivery Meters</span>
+        <div className="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-2">
+              <span>🎯 Monthly Client Delivery Quotas</span>
             </h3>
-            <span className="text-xs text-indigo-400 font-bold">{overview.clientQuotas.length} Active Accounts</span>
+            <span className="text-xs text-[#FF5200] font-black">{overview.clientQuotas.length} Active Accounts</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {overview.clientQuotas.slice(0, 4).map((c) => (
               <div
                 key={c._id}
-                className="p-4 bg-slate-950/60 border border-slate-800/80 rounded-2xl hover:border-slate-700 transition-all"
+                className="p-4 bg-slate-50/70 border border-slate-200/80 rounded-2xl hover:border-orange-200 hover:bg-orange-50/30 transition-all"
               >
                 <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-bold text-sm text-white truncate max-w-[140px]">{c.businessName}</h4>
-                  <span className="text-xs font-mono font-bold text-amber-400">
+                  <h4 className="font-extrabold text-sm text-slate-900 truncate max-w-[140px]">{c.businessName}</h4>
+                  <span className="text-xs font-mono font-black text-[#FF5200]">
                     {c.delivered} / {c.quota} Reels
                   </span>
                 </div>
-                <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
                   <div
-                    className="h-2 rounded-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-700"
+                    className="h-2 rounded-full bg-gradient-to-r from-[#FF5200] to-emerald-500 transition-all duration-700"
                     style={{ width: `${c.percentage}%` }}
                   />
                 </div>
-                <div className="flex justify-between items-center text-[10px] text-slate-400 mt-2">
+                <div className="flex justify-between items-center text-[10px] text-slate-500 mt-2 font-semibold">
                   <span>{c.packageName}</span>
-                  <span className="font-bold text-emerald-400">{c.percentage}% Delivered</span>
+                  <span className="font-black text-emerald-600">{c.percentage}% Delivered</span>
                 </div>
               </div>
             ))}
@@ -333,9 +330,9 @@ export default function ProductionHub() {
         </div>
       )}
 
-      {/* ── 6-STAGE SEGMENTED TABS (Strict Pipeline Progression) ── */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex p-1.5 bg-slate-900/90 border border-slate-800 rounded-2xl backdrop-blur-lg overflow-x-auto max-w-full">
+      {/* ── 6-STAGE SEGMENTED TABS (Swiggy Horizontal Filter Bar) ── */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex p-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-x-auto max-w-full">
           {[
             { id: "all", label: "All Tasks", icon: "📋", count: tasks.length },
             { id: "script", label: "1. Script Vault", icon: "📝", count: overview?.stageCounts?.script || 0 },
@@ -348,17 +345,17 @@ export default function ProductionHub() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === tab.id
-                  ? "bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-600/30"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                  ? "bg-[#FF5200] text-white shadow-md shadow-orange-500/30"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
               <span>{tab.icon}</span>
               <span>{tab.label}</span>
               <span
-                className={`px-1.5 py-0.5 rounded-md text-[10px] font-mono ${
-                  activeTab === tab.id ? "bg-white/20 text-white" : "bg-slate-800 text-slate-400"
+                className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                  activeTab === tab.id ? "bg-white/25 text-white" : "bg-slate-100 text-slate-500"
                 }`}
               >
                 {tab.count}
@@ -372,7 +369,7 @@ export default function ProductionHub() {
           <select
             value={clientFilter}
             onChange={(e) => setClientFilter(e.target.value)}
-            className="px-3 py-2 bg-slate-900 border border-slate-800 text-xs font-semibold rounded-xl text-slate-200 focus:outline-none focus:border-indigo-500"
+            className="px-3 py-2 bg-white border border-slate-200 text-xs font-bold rounded-xl text-slate-700 focus:outline-none focus:border-[#FF5200] shadow-sm"
           >
             <option value="">All Clients</option>
             {clients.map((cl) => (
@@ -387,7 +384,7 @@ export default function ProductionHub() {
             placeholder="Search reel, shooter, editor..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="px-4 py-2 bg-slate-900 border border-slate-800 text-xs rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-48"
+            className="px-4 py-2 bg-white border border-slate-200 text-xs rounded-xl text-slate-700 placeholder-slate-400 focus:outline-none focus:border-[#FF5200] w-48 shadow-sm font-medium"
           />
         </div>
       </div>
@@ -395,16 +392,16 @@ export default function ProductionHub() {
       {/* ── PRODUCTION CARDS GRID ── */}
       {loading ? (
         <div className="flex items-center justify-center p-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF5200]"></div>
         </div>
       ) : tasks.length === 0 ? (
-        <div className="p-16 text-center bg-slate-900/40 border border-slate-800/80 rounded-3xl">
+        <div className="p-16 text-center bg-white border border-slate-100 rounded-3xl shadow-sm">
           <span className="text-5xl block mb-3">🎬</span>
-          <h3 className="text-lg font-bold text-white">No tasks in this stage</h3>
-          <p className="text-xs text-slate-400 mt-1">Add a new script or move tasks through the pipeline.</p>
+          <h3 className="text-lg font-black text-slate-900">No tasks in this stage</h3>
+          <p className="text-xs text-slate-500 mt-1 font-medium">Add a new script or move tasks through the pipeline.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tasks.map((task) => {
             const isScript = task.stage === "script";
             const isShoot = task.stage === "shoot";
@@ -416,33 +413,33 @@ export default function ProductionHub() {
             return (
               <div
                 key={task._id}
-                className="group relative p-5 bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-3xl transition-all duration-300 shadow-lg hover:shadow-2xl flex flex-col justify-between"
+                className="group relative p-6 bg-white hover:bg-white border border-slate-100 hover:border-orange-200 rounded-3xl transition-all duration-300 shadow-sm hover:shadow-xl flex flex-col justify-between"
               >
                 <div>
                   {/* Card Header */}
                   <div className="flex justify-between items-start gap-2 mb-3">
                     <div>
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-400 block">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-[#FF5200] block">
                         {task.client?.businessName || "Unknown Client"}
                       </span>
-                      <h3 className="font-extrabold text-base text-white mt-0.5">
+                      <h3 className="font-black text-base text-slate-900 mt-0.5 tracking-tight">
                         Reel #{task.reelNumber}: {task.title}
                       </h3>
                     </div>
 
                     <span
-                      className={`px-2.5 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border ${
+                      className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
                         isScript
-                          ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                          ? "bg-amber-50 text-amber-800 border-amber-200"
                           : isShoot
-                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-200"
                           : isEdit
-                          ? "bg-purple-500/10 text-purple-400 border-purple-500/30"
+                          ? "bg-indigo-50 text-indigo-800 border-indigo-200"
                           : isQc
-                          ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
+                          ? "bg-cyan-50 text-cyan-800 border-cyan-200"
                           : isClientApproval
-                          ? "bg-orange-500/10 text-orange-400 border-orange-500/30"
-                          : "bg-blue-500/10 text-blue-400 border-blue-500/30"
+                          ? "bg-orange-50 text-orange-800 border-orange-200"
+                          : "bg-emerald-50 text-emerald-800 border-emerald-200"
                       }`}
                     >
                       {task.stage.replace("_", " ")}
@@ -451,71 +448,73 @@ export default function ProductionHub() {
 
                   {/* ── STAGE 1: SCRIPT VAULT ── */}
                   {isScript && (
-                    <div className="p-3.5 bg-slate-950/70 border border-slate-800 rounded-2xl mb-4 space-y-1.5 text-xs">
+                    <div className="p-4 bg-amber-50/40 border border-amber-100 rounded-2xl mb-4 space-y-1.5 text-xs">
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Writer:</span>
-                        <span className="font-bold text-white">{task.writer?.name || "Unassigned"}</span>
+                        <span className="text-slate-500 font-medium">Writer:</span>
+                        <span className="font-black text-slate-800">{task.writer?.name || "Unassigned"}</span>
                       </div>
                       <div>
-                        <span className="text-slate-400">Hook: </span>
-                        <span className="text-amber-300 italic">"{task.hook || "No hook provided yet"}"</span>
+                        <span className="text-slate-500 font-medium">Hook: </span>
+                        <span className="text-amber-900 font-bold italic">"{task.hook || "No hook provided yet"}"</span>
                       </div>
                     </div>
                   )}
 
                   {/* ── STAGE 2: SHOOT OPERATIONS ── */}
                   {isShoot && (
-                    <div className="p-3.5 bg-slate-950/70 border border-emerald-500/20 rounded-2xl mb-4 space-y-2 text-xs">
+                    <div className="p-4 bg-emerald-50/40 border border-emerald-100 rounded-2xl mb-4 space-y-2 text-xs">
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-400">Shooter:</span>
-                        <span className="font-black text-emerald-400">{task.shooter?.name || "Not Assigned"}</span>
+                        <span className="text-slate-500 font-medium">Shooter:</span>
+                        <span className="font-black text-emerald-700">{task.shooter?.name || "Not Assigned"}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-400">📅 Date & Time:</span>
-                        <span className="font-bold text-white">
+                        <span className="text-slate-500 font-medium">📅 Date & Time:</span>
+                        <span className="font-extrabold text-slate-800">
                           {task.shootDate || "Set Date"} @ {task.shootTime || "Time"}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-400">📍 Location:</span>
-                        <span className="text-slate-300 truncate max-w-[160px]">{task.location || "Client Store"}</span>
+                        <span className="text-slate-500 font-medium">📍 Location:</span>
+                        <span className="text-slate-700 font-semibold truncate max-w-[160px]">
+                          {task.location || "Client Store"}
+                        </span>
                       </div>
-                      <div className="flex justify-between items-center pt-1 border-t border-slate-800">
-                        <span className="text-slate-400">Target Reels:</span>
-                        <span className="font-mono font-black text-white">{task.targetReels || 1} Reels</span>
+                      <div className="flex justify-between items-center pt-1 border-t border-emerald-100">
+                        <span className="text-slate-500 font-medium">Target Reels:</span>
+                        <span className="font-mono font-black text-slate-900">{task.targetReels || 1} Reels</span>
                       </div>
                     </div>
                   )}
 
                   {/* ── STAGE 3: VIDEO EDITING ── */}
                   {isEdit && (
-                    <div className="p-3.5 bg-slate-950/70 border border-purple-500/20 rounded-2xl mb-4 space-y-2 text-xs">
+                    <div className="p-4 bg-indigo-50/40 border border-indigo-100 rounded-2xl mb-4 space-y-2 text-xs">
                       {/* Revision Feedback Alert if coming back from QC or Client */}
                       {task.qcStatus === "changes_requested" && (
-                        <div className="p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-300 text-[11px] mb-2">
-                          <span className="font-bold block">⚠️ QC Changes Requested:</span>
+                        <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-[11px] mb-2 font-medium">
+                          <span className="font-black block text-amber-800">⚠️ QC Changes Requested:</span>
                           <span>{task.qcNotes}</span>
                         </div>
                       )}
                       {task.clientApprovalStatus === "changes_requested" && (
-                        <div className="p-2.5 bg-red-500/10 border border-red-500/30 rounded-xl text-red-300 text-[11px] mb-2">
-                          <span className="font-bold block">⚠️ Client Requested Changes:</span>
+                        <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl text-red-900 text-[11px] mb-2 font-medium">
+                          <span className="font-black block text-red-800">⚠️ Client Requested Changes:</span>
                           <span>{task.clientFeedback}</span>
                         </div>
                       )}
 
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-400">Assigned Editor:</span>
-                        <span className="font-black text-purple-400">{task.editor?.name || "Unassigned"}</span>
+                        <span className="text-slate-500 font-medium">Assigned Editor:</span>
+                        <span className="font-black text-indigo-700">{task.editor?.name || "Unassigned"}</span>
                       </div>
 
                       {task.rawFootageLink && (
-                        <div className="pt-1 border-t border-slate-800">
+                        <div className="pt-2 border-t border-indigo-100">
                           <a
                             href={task.rawFootageLink}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 text-xs text-indigo-400 font-bold underline hover:text-indigo-300"
+                            className="inline-flex items-center gap-1.5 text-xs text-[#FF5200] font-black underline hover:text-[#E04800]"
                           >
                             <span>📁 Open Raw Footage Drive</span>
                           </a>
@@ -526,38 +525,38 @@ export default function ProductionHub() {
 
                   {/* ── STAGE 4: QC REVIEW ── */}
                   {isQc && (
-                    <div className="p-3.5 bg-slate-950/70 border border-cyan-500/20 rounded-2xl mb-4 space-y-2 text-xs">
+                    <div className="p-4 bg-cyan-50/40 border border-cyan-100 rounded-2xl mb-4 space-y-2 text-xs">
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-400">Edited By:</span>
-                        <span className="font-bold text-white">{task.editor?.name || "Editor"}</span>
+                        <span className="text-slate-500 font-medium">Edited By:</span>
+                        <span className="font-black text-slate-800">{task.editor?.name || "Editor"}</span>
                       </div>
                       {task.editedPreviewLink && (
                         <a
                           href={task.editedPreviewLink}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-cyan-400 font-bold underline"
+                          className="inline-flex items-center gap-1.5 text-xs text-cyan-700 font-black underline"
                         >
                           <span>🎬 Watch Edited Video Preview</span>
                         </a>
                       )}
-                      <p className="text-[10px] text-slate-400 mt-1">Review video quality before client delivery.</p>
+                      <p className="text-[10px] text-slate-500 font-medium mt-1">Review video quality before client delivery.</p>
                     </div>
                   )}
 
                   {/* ── STAGE 5: CLIENT APPROVAL ── */}
                   {isClientApproval && (
-                    <div className="p-3.5 bg-slate-950/70 border border-orange-500/20 rounded-2xl mb-4 space-y-2 text-xs">
+                    <div className="p-4 bg-orange-50/40 border border-orange-100 rounded-2xl mb-4 space-y-2 text-xs">
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-400">Client Contact:</span>
-                        <span className="font-bold text-white">{task.client?.mobile}</span>
+                        <span className="text-slate-500 font-medium">Client Mobile:</span>
+                        <span className="font-black text-slate-800">{task.client?.mobile}</span>
                       </div>
                       {task.editedPreviewLink && (
                         <a
                           href={task.editedPreviewLink}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-orange-400 font-bold underline"
+                          className="inline-flex items-center gap-1.5 text-xs text-[#FF5200] font-black underline"
                         >
                           <span>🎬 Watch Video Preview</span>
                         </a>
@@ -567,20 +566,20 @@ export default function ProductionHub() {
 
                   {/* ── STAGE 6: READY TO POST / COMPLETED ── */}
                   {isPosted && (
-                    <div className="p-3.5 bg-slate-950/70 border border-blue-500/20 rounded-2xl mb-4 space-y-1 text-xs">
-                      <span className="text-emerald-400 font-extrabold block">✓ Reel Passed & Approved</span>
-                      <span className="text-[11px] text-slate-400">Counted towards client's monthly quota!</span>
+                    <div className="p-4 bg-emerald-50/40 border border-emerald-100 rounded-2xl mb-4 space-y-1 text-xs">
+                      <span className="text-emerald-700 font-black block">✓ Reel Passed & Approved</span>
+                      <span className="text-[11px] text-slate-500 font-medium">Counted towards client's monthly quota!</span>
                     </div>
                   )}
                 </div>
 
                 {/* ── ACTION BUTTONS FOR EACH STAGE ── */}
-                <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
+                <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
                   {/* 1. SCRIPT STAGE ACTION ➔ MUST ASSIGN SHOOT PERSON */}
                   {isScript && (
                     <button
                       onClick={() => setShowAssignShooterModal(task)}
-                      className="w-full px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-black rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="w-full px-4 py-2.5 bg-gradient-to-r from-[#FF5200] to-[#FC8019] hover:from-[#E04800] hover:to-[#EB7410] text-white text-xs font-black rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <span>Pass Script & Assign Shooter ➔</span>
                     </button>
@@ -592,13 +591,13 @@ export default function ProductionHub() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => setShowEditShootModal(task)}
-                          className="flex-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition-all"
+                          className="flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all"
                         >
                           ✏️ Edit Shoot Info
                         </button>
                         <button
                           onClick={() => handleCompleteShootClick(task)}
-                          className="px-3.5 py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-black rounded-xl"
+                          className="px-3.5 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-black rounded-xl"
                         >
                           ✓ Shoot Complete
                         </button>
@@ -607,7 +606,7 @@ export default function ProductionHub() {
                       {/* Handoff to Edit (Strict Gate) */}
                       <button
                         onClick={() => setShowHandoffEditModal(task)}
-                        className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black rounded-xl shadow-lg flex items-center justify-center gap-1.5"
+                        className="w-full px-4 py-2.5 bg-[#FF5200] hover:bg-[#E04800] text-white text-xs font-black rounded-xl shadow-md flex items-center justify-center gap-1.5"
                       >
                         <span>Handoff to Edit (Assign Raw Data) ➔</span>
                       </button>
@@ -618,7 +617,7 @@ export default function ProductionHub() {
                   {isEdit && (
                     <button
                       onClick={() => setShowSubmitQcModal(task)}
-                      className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-black rounded-xl shadow-lg flex items-center justify-center gap-2"
+                      className="w-full px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-black rounded-xl shadow-md flex items-center justify-center gap-2"
                     >
                       <span>✂️ Submit Video Link for QC ➔</span>
                     </button>
@@ -629,7 +628,7 @@ export default function ProductionHub() {
                     <div className="w-full flex gap-2">
                       <button
                         onClick={() => handleQcDecision(task._id, "changes_needed")}
-                        className="flex-1 px-3 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-300 text-xs font-bold rounded-xl"
+                        className="flex-1 px-3 py-2 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-xs font-bold rounded-xl"
                       >
                         🔄 Send Back to Editor
                       </button>
@@ -648,7 +647,7 @@ export default function ProductionHub() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleClientDecision(task._id, "changes_needed")}
-                          className="flex-1 px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 text-amber-300 text-xs font-bold rounded-xl"
+                          className="flex-1 px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold rounded-xl"
                         >
                           🔄 Client Changes (Back to Edit)
                         </button>
@@ -667,7 +666,7 @@ export default function ProductionHub() {
                           );
                           window.open(`https://api.whatsapp.com/send?phone=${task.client?.mobile}&text=${text}`);
                         }}
-                        className="w-full py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
+                        className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
                       >
                         <span>WhatsApp Video Link to Client 💬</span>
                       </button>
@@ -676,7 +675,7 @@ export default function ProductionHub() {
 
                   {/* 6. POSTED ACTION */}
                   {isPosted && (
-                    <div className="w-full flex justify-between items-center text-xs text-emerald-400 font-bold">
+                    <div className="w-full flex justify-between items-center text-xs text-emerald-700 font-bold">
                       <span>✓ Ready to Post on Instagram</span>
                       <button
                         onClick={() => {
@@ -685,7 +684,7 @@ export default function ProductionHub() {
                           );
                           window.open(`https://api.whatsapp.com/send?phone=${task.client?.mobile}&text=${text}`);
                         }}
-                        className="text-indigo-400 hover:underline"
+                        className="text-[#FF5200] hover:underline"
                       >
                         WhatsApp Client 💬
                       </button>
@@ -700,9 +699,9 @@ export default function ProductionHub() {
 
       {/* ── MODAL 1: CREATE NEW REEL TASK ── */}
       {showNewTaskModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl">
-            <h3 className="text-xl font-black text-white mb-4">✨ Create New Reel Task</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white border border-slate-100 rounded-3xl p-8 w-full max-w-md shadow-2xl">
+            <h3 className="text-xl font-black text-slate-900 mb-4">✨ Create New Reel Task</h3>
 
             <form
               onSubmit={async (e) => {
@@ -719,12 +718,12 @@ export default function ProductionHub() {
               className="space-y-4"
             >
               <div>
-                <label className="text-xs font-bold text-slate-400 block mb-1">Client</label>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Client</label>
                 <select
                   required
                   value={newTaskForm.client}
                   onChange={(e) => setNewTaskForm({ ...newTaskForm, client: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-medium"
                 >
                   <option value="">-- Select Client --</option>
                   {clients.map((c) => (
@@ -736,39 +735,39 @@ export default function ProductionHub() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-400 block mb-1">Reel Title / Angle</label>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Reel Title / Angle</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Summer Mango Drink Viral Hook"
                   value={newTaskForm.title}
                   onChange={(e) => setNewTaskForm({ ...newTaskForm, title: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-medium"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-400 block mb-1">Hook / Concept</label>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Hook / Concept</label>
                 <textarea
                   rows={2}
                   placeholder="Viral Hook for the video..."
                   value={newTaskForm.hook}
                   onChange={(e) => setNewTaskForm({ ...newTaskForm, hook: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-medium"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowNewTaskModal(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 font-bold rounded-xl text-xs"
+                  className="px-5 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-xl text-xs shadow-lg"
+                  className="px-6 py-2.5 bg-[#FF5200] hover:bg-[#E04800] text-white font-black rounded-xl text-xs shadow-md"
                 >
                   Save to Script Vault
                 </button>
@@ -780,21 +779,21 @@ export default function ProductionHub() {
 
       {/* ── MODAL 2: PASS SCRIPT & MUST ASSIGN SHOOT PERSON ── */}
       {showAssignShooterModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl">
-            <h3 className="text-lg font-black text-white mb-1">🎥 Pass Script ➔ Assign Shoot Person</h3>
-            <p className="text-xs text-slate-400 mb-4">{showAssignShooterModal.client?.businessName}</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white border border-slate-100 rounded-3xl p-8 w-full max-w-md shadow-2xl">
+            <h3 className="text-lg font-black text-slate-900 mb-1">🎥 Pass Script ➔ Assign Shoot Person</h3>
+            <p className="text-xs text-slate-500 mb-4">{showAssignShooterModal.client?.businessName}</p>
 
-            <form onSubmit={handlePassScriptSubmit} className="space-y-3">
+            <form onSubmit={handlePassScriptSubmit} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">
-                  Shoot Person (Shooter) <span className="text-red-400">*</span>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Shoot Person (Shooter) <span className="text-red-500">*</span>
                 </label>
                 <select
                   name="shooter"
                   required
                   defaultValue={showAssignShooterModal.shooter?._id || ""}
-                  className="w-full px-3 py-2 bg-slate-950 border border-indigo-500/50 rounded-xl text-xs text-white font-bold"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-orange-200 rounded-xl text-xs text-slate-900 font-bold"
                 >
                   <option value="">-- Choose Shooter --</option>
                   {teamMembers.map((m) => (
@@ -807,60 +806,60 @@ export default function ProductionHub() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">
-                    Shoot Date <span className="text-red-400">*</span>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Shoot Date <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
                     name="shootDate"
                     required
                     defaultValue={new Date().toISOString().split("T")[0]}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-semibold"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Shoot Time</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Shoot Time</label>
                   <input
                     type="text"
                     name="shootTime"
                     defaultValue="03:00 PM"
                     placeholder="e.g. 3:00 PM"
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-semibold"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Location / Store</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Location / Store</label>
                 <input
                   type="text"
                   name="location"
                   defaultValue="Client Store / Surat"
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-semibold"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Target Reels to Shoot</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Target Reels to Shoot</label>
                 <input
                   type="number"
                   name="targetReels"
                   defaultValue={showAssignShooterModal.targetReels || 1}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-semibold"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowAssignShooterModal(null)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 font-bold rounded-xl text-xs"
+                  className="px-5 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl text-xs shadow-lg"
+                  className="px-6 py-2.5 bg-[#FF5200] hover:bg-[#E04800] text-white font-black rounded-xl text-xs shadow-md"
                 >
                   Pass & Send to Shoot ➔
                 </button>
@@ -872,18 +871,18 @@ export default function ProductionHub() {
 
       {/* ── MODAL 3: EDIT SHOOT DETAILS AT ANY TIME ── */}
       {showEditShootModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl">
-            <h3 className="text-lg font-black text-white mb-1">✏️ Edit Shoot Person & Details</h3>
-            <p className="text-xs text-slate-400 mb-4">{showEditShootModal.client?.businessName}</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white border border-slate-100 rounded-3xl p-8 w-full max-w-md shadow-2xl">
+            <h3 className="text-lg font-black text-slate-900 mb-1">✏️ Edit Shoot Person & Details</h3>
+            <p className="text-xs text-slate-500 mb-4">{showEditShootModal.client?.businessName}</p>
 
-            <form onSubmit={handleEditShootSubmit} className="space-y-3">
+            <form onSubmit={handleEditShootSubmit} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Shoot Person (Shooter)</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Shoot Person (Shooter)</label>
                 <select
                   name="shooter"
                   defaultValue={showEditShootModal.shooter?._id || ""}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-bold"
                 >
                   <option value="">-- Choose Shooter --</option>
                   {teamMembers.map((m) => (
@@ -896,67 +895,67 @@ export default function ProductionHub() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Shoot Date</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Shoot Date</label>
                   <input
                     type="date"
                     name="shootDate"
                     defaultValue={showEditShootModal.shootDate || ""}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-semibold"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Shoot Time</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Shoot Time</label>
                   <input
                     type="text"
                     name="shootTime"
                     defaultValue={showEditShootModal.shootTime || ""}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-semibold"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Location</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Location</label>
                 <input
                   type="text"
                   name="location"
                   defaultValue={showEditShootModal.location || ""}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-semibold"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Target Reels</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Target Reels</label>
                   <input
                     type="number"
                     name="targetReels"
                     defaultValue={showEditShootModal.targetReels || 1}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-semibold"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Completed Reels</label>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Completed Reels</label>
                   <input
                     type="number"
                     name="completedReels"
                     defaultValue={showEditShootModal.completedReels || 0}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-semibold"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowEditShootModal(null)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 font-bold rounded-xl text-xs"
+                  className="px-5 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-xl text-xs shadow-lg"
+                  className="px-6 py-2.5 bg-[#FF5200] hover:bg-[#E04800] text-white font-black rounded-xl text-xs shadow-md"
                 >
                   Save Changes ✓
                 </button>
@@ -968,17 +967,17 @@ export default function ProductionHub() {
 
       {/* ── MODAL 4: HANDOFF TO EDIT (STRICT RAW DATA & EDITOR GATE) ── */}
       {showHandoffEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl">
-            <h3 className="text-lg font-black text-white mb-1">✂️ Handoff to Edit (Raw Data & Editor)</h3>
-            <p className="text-xs text-amber-400 font-bold mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white border border-slate-100 rounded-3xl p-8 w-full max-w-md shadow-2xl">
+            <h3 className="text-lg font-black text-slate-900 mb-1">✂️ Handoff to Edit (Raw Data & Editor)</h3>
+            <p className="text-xs text-amber-700 bg-amber-50 p-2.5 rounded-xl border border-amber-200 font-bold mb-4">
               ⚠️ રો ડેટા લિંક અને એડિટર અસાઇન કર્યા વગર આગળ નહિ વધે!
             </p>
 
-            <form onSubmit={handleHandoffEditSubmit} className="space-y-3">
+            <form onSubmit={handleHandoffEditSubmit} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">
-                  Raw Footage / Data Link (Google Drive) <span className="text-red-400">*</span>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Raw Footage / Data Link (Google Drive) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="url"
@@ -986,19 +985,19 @@ export default function ProductionHub() {
                   required
                   placeholder="https://drive.google.com/drive/folders/..."
                   defaultValue={showHandoffEditModal.rawFootageLink || ""}
-                  className="w-full px-3 py-2 bg-slate-950 border border-indigo-500/60 rounded-xl text-xs text-white font-mono"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-orange-200 rounded-xl text-xs text-slate-900 font-mono"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">
-                  Assign Video Editor <span className="text-red-400">*</span>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Assign Video Editor <span className="text-red-500">*</span>
                 </label>
                 <select
                   name="editor"
                   required
                   defaultValue={showHandoffEditModal.editor?._id || ""}
-                  className="w-full px-3 py-2 bg-slate-950 border border-indigo-500/60 rounded-xl text-xs text-white font-bold"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-orange-200 rounded-xl text-xs text-slate-900 font-bold"
                 >
                   <option value="">-- Select Video Editor --</option>
                   {teamMembers.map((m) => (
@@ -1010,27 +1009,27 @@ export default function ProductionHub() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Editing Notes / Instructions</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Editing Notes / Instructions</label>
                 <textarea
                   rows={2}
                   name="editorNotes"
                   placeholder="e.g. Keep upbeat music, add Surat foodie captions..."
                   defaultValue={showHandoffEditModal.editorNotes || ""}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowHandoffEditModal(null)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 font-bold rounded-xl text-xs"
+                  className="px-5 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black rounded-xl text-xs shadow-lg"
+                  className="px-6 py-2.5 bg-[#FF5200] hover:bg-[#E04800] text-white font-black rounded-xl text-xs shadow-md"
                 >
                   Send to Editor ➔
                 </button>
@@ -1042,15 +1041,15 @@ export default function ProductionHub() {
 
       {/* ── MODAL 5: SUBMIT EDIT TO QC ── */}
       {showSubmitQcModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl">
-            <h3 className="text-lg font-black text-white mb-1">✂️ Submit Edited Reel for QC</h3>
-            <p className="text-xs text-slate-400 mb-4">{showSubmitQcModal.client?.businessName} - Reel #{showSubmitQcModal.reelNumber}</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white border border-slate-100 rounded-3xl p-8 w-full max-w-md shadow-2xl">
+            <h3 className="text-lg font-black text-slate-900 mb-1">✂️ Submit Edited Reel for QC</h3>
+            <p className="text-xs text-slate-500 mb-4">{showSubmitQcModal.client?.businessName} - Reel #{showSubmitQcModal.reelNumber}</p>
 
-            <form onSubmit={handleSubmitQcSubmit} className="space-y-3">
+            <form onSubmit={handleSubmitQcSubmit} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">
-                  Edited Video Link (Drive / Frame.io / Cloud) <span className="text-red-400">*</span>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Edited Video Link (Drive / Frame.io / Cloud) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="url"
@@ -1058,32 +1057,32 @@ export default function ProductionHub() {
                   required
                   placeholder="https://drive.google.com/file/d/..."
                   defaultValue={showSubmitQcModal.editedPreviewLink || ""}
-                  className="w-full px-3 py-2 bg-slate-950 border border-purple-500/60 rounded-xl text-xs text-white font-mono"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-indigo-200 rounded-xl text-xs text-slate-900 font-mono"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-300 block mb-1">Editor Notes</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Editor Notes</label>
                 <input
                   type="text"
                   name="editorNotes"
                   placeholder="e.g. Cut 1 ready with trending audio"
                   defaultValue={showSubmitQcModal.editorNotes || ""}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowSubmitQcModal(null)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 font-bold rounded-xl text-xs"
+                  className="px-5 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-black rounded-xl text-xs shadow-lg"
+                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-xl text-xs shadow-md"
                 >
                   Submit to QC ➔
                 </button>

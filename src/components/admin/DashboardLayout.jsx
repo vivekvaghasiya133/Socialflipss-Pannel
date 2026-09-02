@@ -1,105 +1,83 @@
-// FINAL DashboardLayout.jsx with Agency OS Hubs & Mobile Navigation
+"use client";
+
 import { useState } from "react";
-import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
+import { Link, useLocation, Outlet } from "react-router-dom";
 import {
   Box, Drawer, AppBar, Toolbar, Typography, List, ListItemButton,
-  ListItemIcon, ListItemText, IconButton, Avatar, Menu, MenuItem,
-  Divider, Tooltip, useTheme, Chip,
+  ListItemIcon, ListItemText, IconButton, Avatar, Chip, Tooltip,
+  Menu, MenuItem, Divider
 } from "@mui/material";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import PeopleIcon from "@mui/icons-material/People";
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import MovieFilterIcon from "@mui/icons-material/MovieFilter";
+import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import AccessTimeFilledIcon from "@mui/icons-material/AccessTimeFilled";
+import BadgeIcon from "@mui/icons-material/Badge";
+import TuneIcon from "@mui/icons-material/Tune";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import GroupsIcon from "@mui/icons-material/Groups";
-import EventNoteIcon from "@mui/icons-material/EventNote";
-import WalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import BeachIcon from "@mui/icons-material/BeachAccess";
-import LeadsIcon from "@mui/icons-material/TrendingUp";
-import UsersIcon from "@mui/icons-material/ManageAccounts";
-import ReceiptIcon from "@mui/icons-material/Receipt";
-import FolderIcon from "@mui/icons-material/Folder";
-import CalendarIcon from "@mui/icons-material/CalendarMonth";
-import NotifIcon from "@mui/icons-material/NotificationsActive";
-import WorkIcon from "@mui/icons-material/WorkHistory";
-import PortalIcon from "@mui/icons-material/OpenInBrowser";
-import VideoIcon from "@mui/icons-material/VideoLibrary";
-import ListAltIcon from "@mui/icons-material/ListAlt";
-import LightbulbIcon from "@mui/icons-material/Lightbulb";
-import BarChartIcon from "@mui/icons-material/BarChart";
-import MenuBookIcon from "@mui/icons-material/MenuBook";
-import AssignmentIcon from "@mui/icons-material/Assignment";
-import SettingsIcon from "@mui/icons-material/Settings";
+import ViewKanbanIcon from "@mui/icons-material/ViewKanban";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import HowToRegIcon from "@mui/icons-material/HowToReg";
+import HandshakeIcon from "@mui/icons-material/Handshake";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+
 import { useAuth } from "../../context/AuthContext";
 import NotificationBell from "./../admin/NotificationBell";
 import MobileBottomNav from "../navigation/MobileBottomNav";
 import InstallAppPrompt from "../navigation/InstallAppPrompt";
 
-const DRAWER_WIDTH = 256;
+const DRAWER_WIDTH = 260;
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
-  const theme = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
 
-  const handleLogout = () => { logout(); navigate("/login"); };
+  const handleLogout = () => {
+    setAnchorEl(null);
+    logout();
+  };
 
-  const isActive = (path) =>
-    path === "/admin"
-      ? location.pathname === "/admin"
-      : location.pathname.startsWith(path);
+  const isActive = (path) => {
+    if (path === "/admin") return location.pathname === "/admin";
+    return location.pathname.startsWith(path);
+  };
 
   const NAV_SECTIONS = [
     {
-      label: "Overview",
+      label: "Core Operations",
       items: [
-        { label: "CEO Dashboard", icon: <DashboardIcon />, path: "/admin", roles: ["admin", "manager"] },
-        { label: "Team Dashboard", icon: <AssignmentIcon />, path: "/admin/team-dashboard", roles: ["admin", "manager", "team"] },
+        { label: "Executive Studio", icon: <DashboardIcon fontSize="small" />, path: "/admin", roles: ["admin", "manager"] },
+        { label: "Production Hub", icon: <MovieFilterIcon fontSize="small" />, path: "/admin/production-hub", roles: ["admin", "manager", "team"], badge: "Active" },
+        { label: "Punch & Time Desk", icon: <AccessTimeFilledIcon fontSize="small" />, path: "/admin/time-tracker", roles: ["admin", "manager", "team"] },
       ],
     },
     {
-      label: "Production Hub (Agency OS)",
+      label: "Creative Pipeline",
       items: [
-        { label: "🎬 Production Hub", icon: <VideoIcon />, path: "/admin/production-hub", roles: ["admin", "manager", "team"] },
-        { label: "Content Pipeline", icon: <ListAltIcon />, path: "/admin/content-pipeline", roles: ["admin", "manager", "team"] },
-        { label: "Projects", icon: <FolderIcon />, path: "/admin/projects", roles: ["admin", "manager", "team"] },
-        { label: "Content Calendar", icon: <CalendarIcon />, path: "/admin/content-calendar", roles: ["admin", "manager", "team"] },
-        { label: "Reels Delivery", icon: <VideoIcon />, path: "/admin/reels-delivery", roles: ["admin", "manager", "team"] },
-        { label: "Strategy Vault", icon: <LightbulbIcon />, path: "/admin/strategy-vault", roles: ["admin", "manager", "team"] },
-        { label: "Content Analytics", icon: <BarChartIcon />, path: "/admin/analytics", roles: ["admin", "manager", "team"] },
+        { label: "Content Pipeline", icon: <ViewKanbanIcon fontSize="small" />, path: "/admin/pipeline", roles: ["admin", "manager", "team"] },
+        { label: "Shoot Calendar", icon: <CalendarMonthIcon fontSize="small" />, path: "/admin/calendar", roles: ["admin", "manager", "team"] },
       ],
     },
     {
-      label: "Clients & Billing",
+      label: "Clients & Finance",
       items: [
-        { label: "Clients", icon: <PeopleIcon />, path: "/admin/clients", roles: ["admin", "manager", "team"] },
-        { label: "Invoices", icon: <ReceiptIcon />, path: "/admin/invoices", roles: ["admin", "manager"] },
-        { label: "Leads", icon: <LeadsIcon />, path: "/admin/leads", roles: ["admin", "manager"] },
-        { label: "Meetings", icon: <EventNoteIcon />, path: "/admin/meetings", roles: ["admin", "manager", "team"] },
+        { label: "Active Clients", icon: <PeopleAltIcon fontSize="small" />, path: "/admin/clients", roles: ["admin", "manager"] },
+        { label: "Invoices & Billing", icon: <ReceiptLongIcon fontSize="small" />, path: "/admin/invoices", roles: ["admin"] },
+        { label: "Leads & Prospects", icon: <HandshakeIcon fontSize="small" />, path: "/admin/leads", roles: ["admin", "manager"] },
+        { label: "Ledger / Hisab", icon: <AccountBalanceWalletIcon fontSize="small" />, path: "/admin/hisab", roles: ["admin"] },
       ],
     },
     {
-      label: "HR & Operations",
+      label: "Staff & Management",
       items: [
-        { label: "⏱️ Punch & Time Tracker", icon: <EventNoteIcon />, path: "/admin/time-tracker", roles: ["admin", "manager", "team"] },
-        { label: "Staff Directory", icon: <GroupsIcon />, path: "/admin/staff", roles: ["admin", "manager"] },
-        { label: "Attendance", icon: <EventNoteIcon />, path: "/admin/attendance", roles: ["admin", "manager"] },
-        { label: "Salary", icon: <WalletIcon />, path: "/admin/salary", roles: ["admin"] },
-        { label: "Hisab / Ledger", icon: <WalletIcon />, path: "/admin/hisab", roles: ["admin"] },
-        { label: "Leaves", icon: <BeachIcon />, path: "/admin/leaves", roles: ["admin", "manager"] },
-        { label: "Work Logs", icon: <WorkIcon />, path: "/admin/worklogs", roles: ["admin", "manager", "team"] },
-      ],
-    },
-    {
-      label: "System Settings",
-      items: [
-        { label: "⚙️ Agency OS Settings", icon: <SettingsIcon />, path: "/admin/agency-settings", roles: ["admin", "manager"] },
-        { label: "Reminders", icon: <NotifIcon />, path: "/admin/reminders", roles: ["admin", "manager"] },
-        { label: "Users & Access", icon: <UsersIcon />, path: "/admin/users", roles: ["admin"] },
+        { label: "Staff Directory", icon: <BadgeIcon fontSize="small" />, path: "/admin/staff", roles: ["admin", "manager"] },
+        { label: "Live Attendance", icon: <HowToRegIcon fontSize="small" />, path: "/admin/attendance", roles: ["admin", "manager"] },
+        { label: "Agency OS Settings", icon: <TuneIcon fontSize="small" />, path: "/admin/agency-settings", roles: ["admin"] },
       ],
     },
   ].map(section => ({
@@ -107,116 +85,243 @@ export default function DashboardLayout() {
     items: section.items.filter(item => item.roles.includes(user?.role || "team")),
   })).filter(section => section.items.length > 0);
 
-  const ROLE_COLOR = { admin: "error", manager: "warning", team: "info" };
-
   const drawer = (
-    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      {/* Brand */}
-      <Box sx={{ p: 2.5, display: "flex", alignItems: "center", gap: 1.5 }}>
-        <Box sx={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg,#6366F1,#8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 15, boxShadow: "0 4px 14px rgba(99,102,241,0.4)" }}>
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "#FFFFFF" }}>
+      {/* Swiggy-tier Brand Header */}
+      <Box sx={{ p: 2.5, display: "flex", alignItems: "center", gap: 1.5, borderBottom: "1px solid #F1F5F9" }}>
+        <Box sx={{
+          width: 42, height: 42, borderRadius: "14px",
+          background: "linear-gradient(135deg, #FF5200 0%, #FC8019 100%)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "#FFFFFF", fontWeight: 900, fontSize: 16,
+          boxShadow: "0 6px 16px rgba(255, 82, 0, 0.3)"
+        }}>
           SF
         </Box>
         <Box>
-          <Typography variant="subtitle1" fontWeight={800} lineHeight={1.1} sx={{ letterSpacing: "-0.02em" }}>SocialFlipss</Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10, fontWeight: 600 }}>Agency Operating System</Typography>
+          <Typography variant="subtitle1" fontWeight={900} sx={{ color: "#1E293B", letterSpacing: "-0.02em", lineHeight: 1.1 }}>
+            SocialFlipss
+          </Typography>
+          <Typography variant="caption" sx={{ color: "#FF5200", fontSize: 10, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+            Agency OS • Pro
+          </Typography>
         </Box>
       </Box>
-      <Divider />
 
+      {/* Navigation List */}
       <List sx={{
-        flex: 1, px: 1, pt: 1, overflowY: "auto",
+        flex: 1, px: 1.5, py: 1.5, overflowY: "auto",
         "&::-webkit-scrollbar": { width: 4 },
-        "&::-webkit-scrollbar-thumb": { background: "#e5e7eb", borderRadius: 2 },
+        "&::-webkit-scrollbar-thumb": { background: "#CBD5E1", borderRadius: 2 },
       }}>
         {NAV_SECTIONS.map(section => (
-          <Box key={section.label}>
-            <Typography variant="caption" sx={{ px: 1.5, py: 0.75, display: "block", color: "text.disabled", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", fontSize: 9.5 }}>
+          <Box key={section.label} sx={{ mb: 1.5 }}>
+            <Typography variant="caption" sx={{
+              px: 1.5, py: 0.5, display: "block",
+              color: "#94A3B8", fontWeight: 800,
+              textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 9.5
+            }}>
               {section.label}
             </Typography>
+
             {section.items.map(item => {
               const active = isActive(item.path);
               return (
-                <ListItemButton key={item.path} component={Link} to={item.path} selected={active}
+                <ListItemButton
+                  key={item.path}
+                  component={Link}
+                  to={item.path}
+                  selected={active}
                   sx={{
-                    borderRadius: 2, mb: 0.25, py: 0.75,
-                    "&.Mui-selected": { background: "linear-gradient(90deg, rgba(99,102,241,0.2) 0%, rgba(99,102,241,0.04) 100%)", color: "#A5B4FC", borderLeft: "3px solid #6366F1", fontWeight: 700, "& .MuiListItemIcon-root": { color: "#818CF8" } },
-                    "&:hover": { background: "rgba(255,255,255,0.06)", color: "#FFFFFF", "& .MuiListItemIcon-root": { color: "#A5B4FC" } },
-                    color: active ? "#A5B4FC" : "#94A3B8",
+                    borderRadius: "12px", mb: 0.5, py: 0.9, px: 1.5,
+                    color: active ? "#FF5200" : "#475569",
+                    background: active ? "linear-gradient(90deg, #FFF5ED 0%, #FFEFE6 100%)" : "transparent",
+                    borderLeft: active ? "3px solid #FF5200" : "3px solid transparent",
+                    "&:hover": {
+                      background: active ? "linear-gradient(90deg, #FFF5ED 0%, #FFEFE6 100%)" : "#F8FAFC",
+                      color: active ? "#FF5200" : "#0F172A",
+                    },
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <ListItemIcon sx={{
+                    minWidth: 32,
+                    color: active ? "#FF5200" : "#64748B",
                   }}>
-                  <ListItemIcon sx={{ minWidth: 34, color: active ? "#6366F1" : "text.secondary" }}>{item.icon}</ListItemIcon>
-                  <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: active ? 700 : 500, fontSize: 13 }} />
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{
+                      fontWeight: active ? 800 : 600,
+                      fontSize: 13,
+                    }}
+                  />
+                  {item.badge && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black border border-emerald-200">
+                      {item.badge}
+                    </span>
+                  )}
                 </ListItemButton>
               );
             })}
-            <Box sx={{ mb: 0.75 }} />
           </Box>
         ))}
       </List>
 
-      <Divider />
       {/* Client Portal Link */}
-      <Box sx={{ p: 1 }}>
-        <ListItemButton component="a" href="/portal" target="_blank" sx={{ borderRadius: 2, color: "#0e9f6e", py: 0.75 }}>
-          <ListItemIcon sx={{ minWidth: 34, color: "#0e9f6e" }}><PortalIcon fontSize="small" /></ListItemIcon>
-          <ListItemText primary="Client Portal" primaryTypographyProps={{ fontSize: 13, fontWeight: 600 }} />
+      <Box sx={{ p: 1.5, borderTop: "1px solid #F1F5F9" }}>
+        <ListItemButton
+          component="a"
+          href="/portal"
+          target="_blank"
+          sx={{
+            borderRadius: "12px",
+            color: "#059669",
+            bgcolor: "#ECFDF5",
+            py: 1,
+            "&:hover": { bgcolor: "#D1FAE5" }
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 32, color: "#059669" }}>
+            <OpenInNewIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Client Portal" primaryTypographyProps={{ fontSize: 13, fontWeight: 700 }} />
         </ListItemButton>
       </Box>
     </Box>
   );
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", background: "#0B0F17" }}>
-      <Drawer variant="permanent" sx={{ width: DRAWER_WIDTH, flexShrink: 0, display: { xs: "none", md: "block" }, "& .MuiDrawer-paper": { width: DRAWER_WIDTH, boxSizing: "border-box", borderRight: "1px solid rgba(255,255,255,0.07)", background: "#090D16", color: "#F8FAFC" } }}>
-        {drawer}
-      </Drawer>
-      <Drawer variant="temporary" open={mobileOpen} onClose={() => setMobileOpen(false)} sx={{ display: { xs: "block", md: "none" }, "& .MuiDrawer-paper": { width: DRAWER_WIDTH, background: "#090D16", color: "#F8FAFC" } }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#F4F6FB" }}>
+      {/* Desktop Sidebar */}
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: DRAWER_WIDTH,
+          flexShrink: 0,
+          display: { xs: "none", md: "block" },
+          "& .MuiDrawer-paper": {
+            width: DRAWER_WIDTH,
+            boxSizing: "border-box",
+            borderRight: "1px solid #E2E8F0",
+            bgcolor: "#FFFFFF",
+            boxShadow: "4px 0 20px rgba(0, 0, 0, 0.02)"
+          }
+        }}
+      >
         {drawer}
       </Drawer>
 
+      {/* Mobile Drawer */}
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        sx={{
+          display: { xs: "block", md: "none" },
+          "& .MuiDrawer-paper": { width: DRAWER_WIDTH, bgcolor: "#FFFFFF" }
+        }}
+      >
+        {drawer}
+      </Drawer>
+
+      {/* Main Content Area */}
       <Box sx={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: "1px solid rgba(255,255,255,0.07)", zIndex: 1, background: "rgba(9,13,22,0.85)", backdropFilter: "blur(16px)", color: "#F8FAFC" }}>
-          <Toolbar sx={{ minHeight: "56px !important" }}>
-            <IconButton edge="start" sx={{ mr: 1, display: { md: "none" }, color: "#94A3B8" }} onClick={() => setMobileOpen(true)}>
+        {/* Top Header */}
+        <AppBar
+          position="sticky"
+          color="inherit"
+          elevation={0}
+          sx={{
+            borderBottom: "1px solid #E2E8F0",
+            bgcolor: "rgba(255, 255, 255, 0.95)",
+            backdropFilter: "blur(12px)",
+            color: "#1E293B",
+            zIndex: 10,
+          }}
+        >
+          <Toolbar sx={{ minHeight: "64px !important", px: { xs: 2, md: 3 } }}>
+            <IconButton
+              edge="start"
+              sx={{ mr: 1, display: { md: "none" }, color: "#64748B" }}
+              onClick={() => setMobileOpen(true)}
+            >
               <MenuIcon />
             </IconButton>
+
+            {/* Studio Status Badge */}
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-200 rounded-full text-xs text-slate-600 font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Surat Studio HQ • Live</span>
+            </div>
+
             <Box sx={{ flex: 1 }} />
 
-            {/* 🔔 Notification Bell */}
+            {/* In-App Prompts */}
             <InstallAppPrompt />
             <NotificationBell />
 
-            <Chip label={user?.role?.toUpperCase()} color={ROLE_COLOR[user?.role] || "default"} size="small" sx={{ mr: 1.5, fontWeight: 700, fontSize: 10 }} />
+            {/* Role Chip */}
+            <Chip
+              label={user?.role?.toUpperCase() || "ADMIN"}
+              size="small"
+              sx={{
+                mr: 1.5,
+                fontWeight: 800,
+                fontSize: 10,
+                bgcolor: "#FFF5ED",
+                color: "#FF5200",
+                border: "1px solid #FFD5B8"
+              }}
+            />
 
+            {/* User Avatar */}
             <Tooltip title={`${user?.name} (${user?.email})`}>
               <IconButton onClick={e => setAnchorEl(e.currentTarget)} size="small">
-                <Avatar sx={{ width: 32, height: 32, bgcolor: "#6366F1", fontSize: 13, fontWeight: 700 }}>
-                  {user?.name?.[0]?.toUpperCase() || "U"}
+                <Avatar sx={{
+                  width: 36, height: 36,
+                  bgcolor: "#FF5200",
+                  fontSize: 14, fontWeight: 800,
+                  boxShadow: "0 2px 8px rgba(255, 82, 0, 0.3)"
+                }}>
+                  {user?.name?.[0]?.toUpperCase() || "V"}
                 </Avatar>
               </IconButton>
             </Tooltip>
-            <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}
+
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={() => setAnchorEl(null)}
               transformOrigin={{ horizontal: "right", vertical: "top" }}
-              anchorOrigin={{ horizontal: "right", vertical: "bottom" }}>
+              anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+              PaperProps={{
+                sx: { borderRadius: "16px", mt: 1, boxShadow: "0 10px 30px rgba(0,0,0,0.08)", minWidth: 200 }
+              }}
+            >
               <MenuItem disabled>
                 <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
                 <Box>
-                  <Typography variant="body2" fontWeight={600}>{user?.name}</Typography>
+                  <Typography variant="body2" fontWeight={700} color="#1E293B">{user?.name}</Typography>
                   <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
                 </Box>
               </MenuItem>
               <Divider />
-              <MenuItem onClick={handleLogout}>
-                <ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>Logout
+              <MenuItem onClick={handleLogout} sx={{ color: "#EF4444", fontWeight: 700 }}>
+                <ListItemIcon sx={{ color: "#EF4444" }}><LogoutIcon fontSize="small" /></ListItemIcon>
+                Logout
               </MenuItem>
             </Menu>
           </Toolbar>
         </AppBar>
 
-        <Box sx={{ flex: 1, p: { xs: 2, md: 3.5 }, background: "#0B0F17", minHeight: 0, overflowY: "auto", pb: { xs: 12, md: 4 } }}>
+        {/* Page Content Container */}
+        <Box sx={{ flex: 1, p: { xs: 2, md: 4 }, bgcolor: "#F4F6FB", minHeight: 0, overflowY: "auto", pb: { xs: 12, md: 6 } }}>
           <Outlet />
         </Box>
 
-        {/* Consumer-Grade Mobile App Bottom Bar */}
+        {/* Mobile Bottom Bar */}
         <MobileBottomNav />
       </Box>
     </Box>
