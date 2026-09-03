@@ -14,6 +14,7 @@ export default function PortalLogin() {
   const [info, setInfo] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [branding, setBranding] = useState(null);
+  const [imgError, setImgError] = useState(false);
 
   // Password login
   const [email, setEmail] = useState("");
@@ -112,14 +113,17 @@ export default function PortalLogin() {
           {/* Logo & Title */}
           <div className="text-center mb-6">
             <div className="inline-flex items-center justify-center p-1.5 bg-white rounded-2xl shadow-md shadow-orange-500/10 border border-slate-100 mb-3.5">
-              <div className="w-14 h-14 rounded-xl overflow-hidden flex items-center justify-center bg-slate-950">
-                <img
-                  src={branding?.logoUrl || "/logo.jpg"}
-                  alt="SocialFlipss Logo"
-                  className="w-full h-full object-cover"
-                  onError={(e) => { e.target.style.display = "none"; }}
-                />
-                <span className="text-white font-black text-lg tracking-wider">SF</span>
+              <div className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center bg-slate-950 shadow-inner">
+                {!imgError ? (
+                  <img
+                    src={branding?.logoUrl || "/logo.jpg"}
+                    alt="SocialFlipss Logo"
+                    className="w-full h-full object-cover"
+                    onError={() => setImgError(true)}
+                  />
+                ) : (
+                  <span className="text-white font-black text-xl tracking-wider">SF</span>
+                )}
               </div>
             </div>
 
