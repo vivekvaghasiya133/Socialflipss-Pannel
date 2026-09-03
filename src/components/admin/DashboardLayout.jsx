@@ -116,7 +116,7 @@ export default function DashboardLayout() {
     {
       label: "Core Operations",
       items: [
-        { label: "Executive Studio", icon: <DashboardIcon fontSize="small" />, path: "/admin", roles: ["admin", "manager"] },
+        { label: "Executive Studio", icon: <DashboardIcon fontSize="small" />, path: "/admin", roles: ["admin", "manager", "team", "editor", "shooter", "writer"] },
         { label: "Production Hub", icon: <MovieFilterIcon fontSize="small" />, path: "/admin/production-hub", roles: ["admin", "manager", "team", "editor", "shooter", "writer"], badge: "Active" },
         { label: "Punch & Time Desk", icon: <AccessTimeFilledIcon fontSize="small" />, path: "/admin/time-tracking", roles: ["admin", "manager", "team", "editor", "shooter", "writer"] },
       ],
@@ -335,7 +335,8 @@ export default function DashboardLayout() {
 
             {/* Right Header Utilities */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <InstallAppPrompt />
+              {/* InstallAppPrompt removed */}
+
               <NotificationBell />
 
               {/* User Role Chip */}

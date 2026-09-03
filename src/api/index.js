@@ -22,9 +22,14 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
-      localStorage.removeItem("sf_token");
-      window.location.href = "/login";
+    if (err.response?.status === 401 && typeof window !== "undefined") {
+      const isLoginRequest = err.config?.url?.includes("/auth/login");
+      if (!isLoginRequest) {
+        localStorage.removeItem("sf_token");
+        if (window.location.pathname !== "/login") {
+          window.location.href = "/login";
+        }
+      }
     }
     return Promise.reject(err);
   }
