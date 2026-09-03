@@ -38,6 +38,7 @@ export const getTeamTimeOverview = (params) => api.get("/time-tracking/team-over
 export const getAgencyConfig = () => api.get("/agency-config");
 export const updateBranding = (data) => api.put("/agency-config/branding", data);
 export const addServicePackage = (data) => api.post("/agency-config/services", data);
+export const createServicePackage = addServicePackage;
 export const updateServicePackage = (id, data) => api.put(`/agency-config/services/${id}`, data);
 export const deleteServicePackage = (id) => api.delete(`/agency-config/services/${id}`);
 export const updateRolesPermissions = (rolesPermissions) => api.put("/agency-config/roles", { rolesPermissions });

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, Outlet } from "react-router-dom";
 import {
   Box, Drawer, AppBar, Toolbar, Typography, List, ListItemButton,
   ListItemIcon, ListItemText, IconButton, Avatar, Chip, Tooltip,
-  Menu, MenuItem, Divider
+  Menu, MenuItem, Divider, Dialog, DialogTitle, DialogContent,
+  DialogActions, TextField, Alert, Button,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -20,8 +21,6 @@ import TuneIcon from "@mui/icons-material/Tune";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ViewKanbanIcon from "@mui/icons-material/ViewKanban";
 import VpnKeyIcon from "@mui/icons-material/VpnKey";
-import { changePassword } from "../../api/leadsApi";
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert } from "@mui/material";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import HowToRegIcon from "@mui/icons-material/HowToReg";
 import HandshakeIcon from "@mui/icons-material/Handshake";
@@ -29,7 +28,7 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 
 import { useAuth } from "../../context/AuthContext";
 import { getAgencyConfig } from "../../api/agencyOsApi";
-import { useEffect } from "react";
+import { changePassword } from "../../api/leadsApi";
 import NotificationBell from "./../admin/NotificationBell";
 import MobileBottomNav from "../navigation/MobileBottomNav";
 import InstallAppPrompt from "../navigation/InstallAppPrompt";
@@ -42,13 +41,41 @@ export default function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [agencyBranding, setAgencyBranding] = useState(null);
+
+  // Change Password State
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [passwordError, setPasswordError] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
 
-  const handleChangePasswordSubmit = async () => {
+  useEffect(() => {
+    getAgencyConfig()
+      .then((res) => {
+        if (res.data?.success && res.data.config) {
+          const cfg = res.data.config;
+          setAgencyBranding(cfg);
+          if (cfg.faviconUrl && typeof document !== "undefined") {
+            let link = document.querySelector("link[rel*='icon']");
+            if (!link) {
+              link = document.createElement("link");
+              link.rel = "icon";
+              document.head.appendChild(link);
+            }
+            link.href = cfg.faviconUrl;
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleLogout = () => {
+    setAnchorEl(null);
+    logout();
+  };
+
+  const handleChangePasswordSubmit = async (e) => {
+    if (e) e.preventDefault();
     if (!passwordForm.currentPassword || !passwordForm.newPassword) {
       setPasswordError("Please enter both current and new passwords.");
       return;
@@ -80,31 +107,6 @@ export default function DashboardLayout() {
     }
   };
 
-  useEffect(() => {
-    getAgencyConfig()
-      .then((res) => {
-        if (res.data?.success && res.data.config) {
-          const cfg = res.data.config;
-          setAgencyBranding(cfg);
-          if (cfg.faviconUrl && typeof document !== "undefined") {
-            let link = document.querySelector("link[rel*='icon']");
-            if (!link) {
-              link = document.createElement("link");
-              link.rel = "icon";
-              document.head.appendChild(link);
-            }
-            link.href = cfg.faviconUrl;
-          }
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  const handleLogout = () => {
-    setAnchorEl(null);
-    logout();
-  };
-
   const isActive = (path) => {
     if (path === "/admin") return location.pathname === "/admin";
     return location.pathname.startsWith(path);
@@ -115,15 +117,15 @@ export default function DashboardLayout() {
       label: "Core Operations",
       items: [
         { label: "Executive Studio", icon: <DashboardIcon fontSize="small" />, path: "/admin", roles: ["admin", "manager"] },
-        { label: "Production Hub", icon: <MovieFilterIcon fontSize="small" />, path: "/admin/production-hub", roles: ["admin", "manager", "team"], badge: "Active" },
-        { label: "Punch & Time Desk", icon: <AccessTimeFilledIcon fontSize="small" />, path: "/admin/time-tracker", roles: ["admin", "manager", "team"] },
+        { label: "Production Hub", icon: <MovieFilterIcon fontSize="small" />, path: "/admin/production-hub", roles: ["admin", "manager", "team", "editor", "shooter", "writer"], badge: "Active" },
+        { label: "Punch & Time Desk", icon: <AccessTimeFilledIcon fontSize="small" />, path: "/admin/time-tracking", roles: ["admin", "manager", "team", "editor", "shooter", "writer"] },
       ],
     },
     {
       label: "Creative Pipeline",
       items: [
-        { label: "Content Pipeline", icon: <ViewKanbanIcon fontSize="small" />, path: "/admin/pipeline", roles: ["admin", "manager", "team"] },
-        { label: "Shoot Calendar", icon: <CalendarMonthIcon fontSize="small" />, path: "/admin/calendar", roles: ["admin", "manager", "team"] },
+        { label: "Content Pipeline", icon: <ViewKanbanIcon fontSize="small" />, path: "/admin/pipeline", roles: ["admin", "manager", "team", "editor", "shooter", "writer"] },
+        { label: "Shoot Calendar", icon: <CalendarMonthIcon fontSize="small" />, path: "/admin/calendar", roles: ["admin", "manager", "team", "editor", "shooter", "writer"] },
       ],
     },
     {
@@ -143,14 +145,11 @@ export default function DashboardLayout() {
         { label: "Agency OS Settings", icon: <TuneIcon fontSize="small" />, path: "/admin/agency-settings", roles: ["admin"] },
       ],
     },
-  ].map(section => ({
-    ...section,
-    items: section.items.filter(item => item.roles.includes(user?.role || "team")),
-  })).filter(section => section.items.length > 0);
+  ];
 
   const drawer = (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column", bgcolor: "#FFFFFF" }}>
-      {/* Swiggy-tier Brand Header */}
+      {/* Brand Header */}
       <Box sx={{ p: 2.5, display: "flex", alignItems: "center", gap: 1.5, borderBottom: "1px solid #F1F5F9" }}>
         <Box sx={{
           width: 42, height: 42, borderRadius: "14px",
@@ -180,22 +179,23 @@ export default function DashboardLayout() {
       </Box>
 
       {/* Navigation List */}
-      <List sx={{
-        flex: 1, px: 1.5, py: 1.5, overflowY: "auto",
-        "&::-webkit-scrollbar": { width: 4 },
-        "&::-webkit-scrollbar-thumb": { background: "#CBD5E1", borderRadius: 2 },
-      }}>
-        {NAV_SECTIONS.map(section => (
-          <Box key={section.label} sx={{ mb: 1.5 }}>
-            <Typography variant="caption" sx={{
-              px: 1.5, py: 0.5, display: "block",
-              color: "#94A3B8", fontWeight: 800,
-              textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 9.5
-            }}>
+      <List sx={{ flex: 1, px: 2, py: 1.5, overflowY: "auto" }}>
+        {NAV_SECTIONS.map((section) => (
+          <Box key={section.label} sx={{ mb: 2 }}>
+            <Typography
+              variant="caption"
+              sx={{
+                px: 1.5, py: 0.5, display: "block",
+                color: "#94A3B8", fontWeight: 800, fontSize: 10,
+                letterSpacing: "0.08em", textTransform: "uppercase"
+              }}
+            >
               {section.label}
             </Typography>
-
-            {section.items.map(item => {
+            {section.items.map((item) => {
+              if (item.roles && !item.roles.includes(user?.role || "team")) {
+                return null;
+              }
               const active = isActive(item.path);
               return (
                 <ListItemButton
@@ -259,74 +259,6 @@ export default function DashboardLayout() {
           </ListItemIcon>
           <ListItemText primary="Client Portal" primaryTypographyProps={{ fontSize: 13, fontWeight: 700 }} />
         </ListItemButton>
-        {/* ── CHANGE MY PASSWORD DIALOG ── */}
-        <Dialog
-          open={passwordDialogOpen}
-          onClose={() => setPasswordDialogOpen(false)}
-          maxWidth="xs"
-          fullWidth
-          PaperProps={{ sx: { borderRadius: "24px", p: 1 } }}
-        >
-          <DialogTitle sx={{ fontWeight: 800 }}>🔑 Change My Password</DialogTitle>
-          <DialogContent>
-            {passwordError && (
-              <Alert severity="error" sx={{ mb: 2, borderRadius: "12px" }}>
-                {passwordError}
-              </Alert>
-            )}
-
-            <Box component="form" sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-              <TextField
-                fullWidth
-                size="small"
-                type="password"
-                label="Current Password"
-                required
-                value={passwordForm.currentPassword}
-                onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-              />
-              <TextField
-                fullWidth
-                size="small"
-                type="password"
-                label="New Password"
-                required
-                value={passwordForm.newPassword}
-                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-              />
-              <TextField
-                fullWidth
-                size="small"
-                type="password"
-                label="Confirm New Password"
-                required
-                value={passwordForm.confirmPassword}
-                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 2.5 }}>
-            <Button onClick={() => setPasswordDialogOpen(false)} sx={{ fontWeight: 700, color: "#64748B" }}>
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              disabled={passwordLoading}
-              onClick={handleChangePasswordSubmit}
-              sx={{ bgcolor: "#FF5200", fontWeight: 800, borderRadius: "12px", "&:hover": { bgcolor: "#E04800" } }}
-            >
-              {passwordLoading ? "Updating..." : "Update Password ✓"}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Floating Toast Notification */}
-        {toastMsg && (
-          <div className="fixed top-5 left-4 right-4 max-w-sm mx-auto z-50 py-3 px-4 rounded-2xl bg-slate-900/95 text-white shadow-2xl backdrop-blur-xl flex items-center gap-3 border border-slate-700/80 animate-slideDown pointer-events-none">
-            <span className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-slate-950 font-black text-xs shrink-0">✓</span>
-            <span className="text-xs font-black tracking-tight text-white">{toastMsg}</span>
-          </div>
-        )}
       </Box>
     </Box>
   );
@@ -344,9 +276,8 @@ export default function DashboardLayout() {
             width: DRAWER_WIDTH,
             boxSizing: "border-box",
             borderRight: "1px solid #E2E8F0",
-            bgcolor: "#FFFFFF",
-            boxShadow: "4px 0 20px rgba(0, 0, 0, 0.02)"
-          }
+            bgcolor: "#FFFFFF"
+          },
         }}
       >
         {drawer}
@@ -359,7 +290,11 @@ export default function DashboardLayout() {
         onClose={() => setMobileOpen(false)}
         sx={{
           display: { xs: "block", md: "none" },
-          "& .MuiDrawer-paper": { width: DRAWER_WIDTH, bgcolor: "#FFFFFF", pt: { xs: "max(12px, env(safe-area-inset-top, 12px))", md: 0 } }
+          "& .MuiDrawer-paper": {
+            width: DRAWER_WIDTH,
+            bgcolor: "#FFFFFF",
+            pt: { xs: "max(12px, env(safe-area-inset-top, 12px))", md: 0 },
+          },
         }}
       >
         {drawer}
@@ -396,68 +331,70 @@ export default function DashboardLayout() {
               <span>Surat Studio HQ • Live</span>
             </div>
 
-            <Box sx={{ flex: 1 }} />
+            <Box sx={{ flexGrow: 1 }} />
 
-            {/* In-App Prompts */}
-            <InstallAppPrompt />
-            <NotificationBell />
+            {/* Right Header Utilities */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <InstallAppPrompt />
+              <NotificationBell />
 
-            {/* Role Chip */}
-            <Chip
-              label={user?.role?.toUpperCase() || "ADMIN"}
-              size="small"
-              sx={{
-                mr: 1.5,
-                fontWeight: 800,
-                fontSize: 10,
-                bgcolor: "#FFF5ED",
-                color: "#FF5200",
-                border: "1px solid #FFD5B8"
-              }}
-            />
+              {/* User Role Chip */}
+              <Chip
+                label={user?.role?.toUpperCase() || "ADMIN"}
+                size="small"
+                sx={{
+                  fontWeight: 800,
+                  fontSize: 10,
+                  display: { xs: "none", sm: "inline-flex" },
+                  bgcolor: "#FFF5ED",
+                  color: "#FF5200",
+                  border: "1px solid #FFD5B8"
+                }}
+              />
 
-            {/* User Avatar */}
-            <Tooltip title={`${user?.name} (${user?.email})`}>
-              <IconButton onClick={e => setAnchorEl(e.currentTarget)} size="small">
-                <Avatar sx={{
-                  width: 36, height: 36,
-                  bgcolor: "#FF5200",
-                  fontSize: 14, fontWeight: 800,
-                  boxShadow: "0 2px 8px rgba(255, 82, 0, 0.3)"
-                }}>
-                  {user?.name?.[0]?.toUpperCase() || "V"}
-                </Avatar>
-              </IconButton>
-            </Tooltip>
+              {/* User Avatar */}
+              <Tooltip title={`${user?.name} (${user?.email})`}>
+                <IconButton onClick={e => setAnchorEl(e.currentTarget)} size="small">
+                  <Avatar sx={{
+                    width: 36, height: 36,
+                    bgcolor: "#FF5200",
+                    fontSize: 14, fontWeight: 800,
+                    boxShadow: "0 2px 8px rgba(255, 82, 0, 0.3)"
+                  }}>
+                    {user?.name?.[0]?.toUpperCase() || "V"}
+                  </Avatar>
+                </IconButton>
+              </Tooltip>
 
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={() => setAnchorEl(null)}
-              transformOrigin={{ horizontal: "right", vertical: "top" }}
-              anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-              PaperProps={{
-                sx: { borderRadius: "16px", mt: 1, boxShadow: "0 10px 30px rgba(0,0,0,0.08)", minWidth: 200 }
-              }}
-            >
-              <MenuItem disabled>
-                <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
-                <Box>
-                  <Typography variant="body2" fontWeight={700} color="#1E293B">{user?.name}</Typography>
-                  <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
-                </Box>
-              </MenuItem>
-              <Divider />
-              <MenuItem onClick={() => { setAnchorEl(null); setPasswordError(""); setPasswordDialogOpen(true); }}>
-                <ListItemIcon><VpnKeyIcon fontSize="small" sx={{ color: "#FF5200" }} /></ListItemIcon>
-                <Typography variant="body2" fontWeight={700} color="#1E293B">Change My Password</Typography>
-              </MenuItem>
-              <Divider />
-              <MenuItem onClick={handleLogout} sx={{ color: "#EF4444", fontWeight: 700 }}>
-                <ListItemIcon sx={{ color: "#EF4444" }}><LogoutIcon fontSize="small" /></ListItemIcon>
-                Logout
-              </MenuItem>
-            </Menu>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={() => setAnchorEl(null)}
+                transformOrigin={{ horizontal: "right", vertical: "top" }}
+                anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+                PaperProps={{
+                  sx: { borderRadius: "16px", mt: 1, boxShadow: "0 10px 30px rgba(0,0,0,0.08)", minWidth: 200 }
+                }}
+              >
+                <MenuItem disabled>
+                  <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
+                  <Box>
+                    <Typography variant="body2" fontWeight={700} color="#1E293B">{user?.name}</Typography>
+                    <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
+                  </Box>
+                </MenuItem>
+                <Divider />
+                <MenuItem onClick={() => { setAnchorEl(null); setPasswordError(""); setPasswordDialogOpen(true); }}>
+                  <ListItemIcon><VpnKeyIcon fontSize="small" sx={{ color: "#FF5200" }} /></ListItemIcon>
+                  <Typography variant="body2" fontWeight={700} color="#1E293B">Change My Password</Typography>
+                </MenuItem>
+                <Divider />
+                <MenuItem onClick={handleLogout} sx={{ color: "#EF4444", fontWeight: 700 }}>
+                  <ListItemIcon sx={{ color: "#EF4444" }}><LogoutIcon fontSize="small" /></ListItemIcon>
+                  Logout
+                </MenuItem>
+              </Menu>
+            </Box>
           </Toolbar>
         </AppBar>
 
@@ -469,6 +406,75 @@ export default function DashboardLayout() {
         {/* Mobile Bottom Bar */}
         <MobileBottomNav />
       </Box>
+
+      {/* ── CHANGE MY PASSWORD DIALOG ── */}
+      <Dialog
+        open={passwordDialogOpen}
+        onClose={() => setPasswordDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: "24px", p: 1 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 800 }}>🔑 Change My Password</DialogTitle>
+        <DialogContent>
+          {passwordError && (
+            <Alert severity="error" sx={{ mb: 2, borderRadius: "12px" }}>
+              {passwordError}
+            </Alert>
+          )}
+
+          <Box component="form" onSubmit={handleChangePasswordSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+            <TextField
+              fullWidth
+              size="small"
+              type="password"
+              label="Current Password"
+              required
+              value={passwordForm.currentPassword}
+              onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+            />
+            <TextField
+              fullWidth
+              size="small"
+              type="password"
+              label="New Password"
+              required
+              value={passwordForm.newPassword}
+              onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+            />
+            <TextField
+              fullWidth
+              size="small"
+              type="password"
+              label="Confirm New Password"
+              required
+              value={passwordForm.confirmPassword}
+              onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setPasswordDialogOpen(false)} sx={{ fontWeight: 700, color: "#64748B" }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            disabled={passwordLoading}
+            onClick={handleChangePasswordSubmit}
+            sx={{ bgcolor: "#FF5200", fontWeight: 800, borderRadius: "12px", "&:hover": { bgcolor: "#E04800" } }}
+          >
+            {passwordLoading ? "Updating..." : "Update Password ✓"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Floating Toast Notification */}
+      {toastMsg && (
+        <div className="fixed top-5 left-4 right-4 max-w-sm mx-auto z-50 py-3 px-4 rounded-2xl bg-slate-900/95 text-white shadow-2xl backdrop-blur-xl flex items-center gap-3 border border-slate-700/80 pointer-events-none">
+          <span className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-slate-950 font-black text-xs shrink-0">✓</span>
+          <span className="text-xs font-black tracking-tight text-white">{toastMsg}</span>
+        </div>
+      )}
     </Box>
   );
 }
