@@ -73,7 +73,14 @@ export default function ProductionHub() {
       ]);
       if (tasksRes.data?.success) setTasks(tasksRes.data.tasks);
       if (overviewRes.data?.success) setOverview(overviewRes.data);
-      if (clientsRes.data?.clients) setClients(clientsRes.data.clients);
+      if (clientsRes.data?.clients) {
+        const sorted = [...clientsRes.data.clients].sort((a, b) => {
+          if (a.businessName.includes("Chhutak")) return -1;
+          if (b.businessName.includes("Chhutak")) return 1;
+          return a.businessName.localeCompare(b.businessName);
+        });
+        setClients(sorted);
+      }
       if (teamRes.data?.team) setTeamMembers(teamRes.data.team);
     } catch (err) {
       console.error("Error loading production data:", err);
@@ -148,8 +155,28 @@ export default function ProductionHub() {
     }
   };
 
+  // Helper to check if current user is Admin, Manager or Assigned Shooter
+  const canCompleteShoot = (task) => {
+    if (!user) return false;
+    if (user.role === "admin" || user.role === "manager") return true;
+
+    const taskShooterId = task.shooterId?._id || task.shooter?._id || task.shooter;
+    const currentUserId = user._id || user.id;
+    if (taskShooterId && currentUserId && String(taskShooterId) === String(currentUserId)) return true;
+
+    const taskShooterName = (task.shooterId?.name || task.shooter?.name || "").toLowerCase().trim();
+    const currentUserName = (user.name || "").toLowerCase().trim();
+    if (taskShooterName && currentUserName && taskShooterName === currentUserName) return true;
+
+    return false;
+  };
+
   // ── 3. SHOOT COMPLETE ──
   const handleCompleteShootClick = async (task) => {
+    if (!canCompleteShoot(task)) {
+      alert("Access Denied: Only the assigned Shooter (" + (task.shooterId?.name || "Shooter") + "), Admin, or Manager can mark this shoot as complete.");
+      return;
+    }
     try {
       await completeShoot(task._id, {
         completedReels: task.completedReels || task.targetReels || 1,
@@ -455,25 +482,38 @@ export default function ProductionHub() {
           {isShoot && (
             <div className="w-full space-y-2">
               <div className="flex gap-2">
-                <button
-                  onClick={() => setShowEditShootModal(task)}
-                  className="flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all"
-                >
-                  ✏️ Edit Shoot Info
-                </button>
-                <button
-                  onClick={() => handleCompleteShootClick(task)}
-                  className="px-3.5 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-black rounded-xl"
-                >
-                  ✓ Shoot Complete
-                </button>
+                {canCompleteShoot(task) && (
+                  <button
+                    onClick={() => setShowEditShootModal(task)}
+                    className="flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                  >
+                    ✏️ Edit Shoot Info
+                  </button>
+                )}
+                {canCompleteShoot(task) ? (
+                  <button
+                    onClick={() => handleCompleteShootClick(task)}
+                    className="flex-1 px-3.5 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-black rounded-xl transition-all cursor-pointer"
+                  >
+                    ✓ Shoot Complete
+                  </button>
+                ) : (
+                  <div
+                    title={`Only assigned Shooter (${task.shooterId?.name || "Shooter"}), Admin, or Manager can complete this shoot`}
+                    className="flex-1 px-3 py-2 bg-slate-100 text-slate-400 text-[11px] font-bold rounded-xl text-center border border-slate-200 select-none cursor-not-allowed"
+                  >
+                    🔒 Shooter / Admin Only
+                  </div>
+                )}
               </div>
-              <button
-                onClick={() => setShowHandoffEditModal(task)}
-                className="w-full px-4 py-2.5 bg-[#FF5200] hover:bg-[#E04800] text-white text-xs font-black rounded-xl shadow-md flex items-center justify-center gap-1.5"
-              >
-                <span>Handoff to Edit (Assign Raw Data) ➔</span>
-              </button>
+              {(user?.role === "admin" || user?.role === "manager" || canCompleteShoot(task)) && (
+                <button
+                  onClick={() => setShowHandoffEditModal(task)}
+                  className="w-full px-4 py-2.5 bg-[#FF5200] hover:bg-[#E04800] text-white text-xs font-black rounded-xl shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <span>Handoff to Edit (Assign Raw Data) ➔</span>
+                </button>
+              )}
             </div>
           )}
 
@@ -793,7 +833,7 @@ export default function ProductionHub() {
               className="space-y-4"
             >
               <div>
-                <label className="text-xs font-bold text-slate-600 block mb-1">Client</label>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Client (છૂટક કામ માટે ⚡ Chhutak Work પસંદ કરો)</label>
                 <select
                   required
                   value={newTaskForm.client}
