@@ -16,3 +16,6 @@ export const getUsers        = ()           => api.get("/auth/users");
 export const createUser      = (data)       => api.post("/auth/users", data);
 export const updateUser      = (id, data)   => api.put(`/auth/users/${id}`, data);
 export const deactivateUser  = (id)         => api.delete(`/auth/users/${id}`);
+
+// ── Auth Profile & Password ──────────────────────────────────────
+export const changePassword  = (data)       => api.put("/auth/change-password", data);

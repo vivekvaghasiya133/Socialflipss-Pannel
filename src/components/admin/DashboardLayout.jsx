@@ -19,6 +19,9 @@ import BadgeIcon from "@mui/icons-material/Badge";
 import TuneIcon from "@mui/icons-material/Tune";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ViewKanbanIcon from "@mui/icons-material/ViewKanban";
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
+import { changePassword } from "../../api/leadsApi";
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Alert } from "@mui/material";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import HowToRegIcon from "@mui/icons-material/HowToReg";
 import HandshakeIcon from "@mui/icons-material/Handshake";
@@ -39,6 +42,43 @@ export default function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [agencyBranding, setAgencyBranding] = useState(null);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [toastMsg, setToastMsg] = useState("");
+
+  const handleChangePasswordSubmit = async () => {
+    if (!passwordForm.currentPassword || !passwordForm.newPassword) {
+      setPasswordError("Please enter both current and new passwords.");
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError("New passwords do not match!");
+      return;
+    }
+    if (passwordForm.newPassword.length < 6) {
+      setPasswordError("New password must be at least 6 characters.");
+      return;
+    }
+
+    setPasswordLoading(true);
+    setPasswordError("");
+    try {
+      await changePassword({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      });
+      setPasswordDialogOpen(false);
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setToastMsg("Password changed successfully! ✨");
+      setTimeout(() => setToastMsg(""), 3500);
+    } catch (err) {
+      setPasswordError(err.response?.data?.message || "Failed to change password.");
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
 
   useEffect(() => {
     getAgencyConfig()
@@ -219,6 +259,74 @@ export default function DashboardLayout() {
           </ListItemIcon>
           <ListItemText primary="Client Portal" primaryTypographyProps={{ fontSize: 13, fontWeight: 700 }} />
         </ListItemButton>
+        {/* ── CHANGE MY PASSWORD DIALOG ── */}
+        <Dialog
+          open={passwordDialogOpen}
+          onClose={() => setPasswordDialogOpen(false)}
+          maxWidth="xs"
+          fullWidth
+          PaperProps={{ sx: { borderRadius: "24px", p: 1 } }}
+        >
+          <DialogTitle sx={{ fontWeight: 800 }}>🔑 Change My Password</DialogTitle>
+          <DialogContent>
+            {passwordError && (
+              <Alert severity="error" sx={{ mb: 2, borderRadius: "12px" }}>
+                {passwordError}
+              </Alert>
+            )}
+
+            <Box component="form" sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+              <TextField
+                fullWidth
+                size="small"
+                type="password"
+                label="Current Password"
+                required
+                value={passwordForm.currentPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                type="password"
+                label="New Password"
+                required
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                type="password"
+                label="Confirm New Password"
+                required
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2.5 }}>
+            <Button onClick={() => setPasswordDialogOpen(false)} sx={{ fontWeight: 700, color: "#64748B" }}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              disabled={passwordLoading}
+              onClick={handleChangePasswordSubmit}
+              sx={{ bgcolor: "#FF5200", fontWeight: 800, borderRadius: "12px", "&:hover": { bgcolor: "#E04800" } }}
+            >
+              {passwordLoading ? "Updating..." : "Update Password ✓"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Floating Toast Notification */}
+        {toastMsg && (
+          <div className="fixed top-5 left-4 right-4 max-w-sm mx-auto z-50 py-3 px-4 rounded-2xl bg-slate-900/95 text-white shadow-2xl backdrop-blur-xl flex items-center gap-3 border border-slate-700/80 animate-slideDown pointer-events-none">
+            <span className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-slate-950 font-black text-xs shrink-0">✓</span>
+            <span className="text-xs font-black tracking-tight text-white">{toastMsg}</span>
+          </div>
+        )}
       </Box>
     </Box>
   );
@@ -338,6 +446,11 @@ export default function DashboardLayout() {
                   <Typography variant="body2" fontWeight={700} color="#1E293B">{user?.name}</Typography>
                   <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
                 </Box>
+              </MenuItem>
+              <Divider />
+              <MenuItem onClick={() => { setAnchorEl(null); setPasswordError(""); setPasswordDialogOpen(true); }}>
+                <ListItemIcon><VpnKeyIcon fontSize="small" sx={{ color: "#FF5200" }} /></ListItemIcon>
+                <Typography variant="body2" fontWeight={700} color="#1E293B">Change My Password</Typography>
               </MenuItem>
               <Divider />
               <MenuItem onClick={handleLogout} sx={{ color: "#EF4444", fontWeight: 700 }}>
