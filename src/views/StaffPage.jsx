@@ -298,19 +298,46 @@ export default function StaffPage() {
                     <TableCell sx={{ fontWeight: 600, color: "#334155" }}>{s.position}</TableCell>
                     <TableCell>
                       {isLoginActive ? (
-                        <Chip
-                          label={userAcc.role?.toUpperCase()}
-                          size="small"
-                          sx={{
-                            fontWeight: 800,
-                            fontSize: 10,
-                            bgcolor: userAcc.role === "admin" ? "#FEF2F2" : userAcc.role === "manager" ? "#EFF6FF" : "#F0FDF4",
-                            color: userAcc.role === "admin" ? "#DC2626" : userAcc.role === "manager" ? "#2563EB" : "#16A34A",
-                            border: `1px solid ${userAcc.role === "admin" ? "#FECACA" : userAcc.role === "manager" ? "#BFDBFE" : "#BBF7D0"}`,
-                          }}
-                        />
+                        <Tooltip title="Click to manage role or reset password">
+                          <Chip
+                            label={userAcc.role?.toUpperCase()}
+                            size="small"
+                            onClick={() => openPortalDialog(s)}
+                            sx={{
+                              fontWeight: 800,
+                              fontSize: 10,
+                              cursor: "pointer",
+                              bgcolor: userAcc.role === "admin" ? "#FEF2F2" : userAcc.role === "manager" ? "#EFF6FF" : "#F0FDF4",
+                              color: userAcc.role === "admin" ? "#DC2626" : userAcc.role === "manager" ? "#2563EB" : "#16A34A",
+                              border: `1px solid ${userAcc.role === "admin" ? "#FECACA" : userAcc.role === "manager" ? "#BFDBFE" : "#BBF7D0"}`,
+                              "&:hover": { opacity: 0.8 },
+                            }}
+                          />
+                        </Tooltip>
                       ) : (
-                        <span style={{ fontSize: 11, color: "#94A3B8", fontWeight: 600 }}>No Login</span>
+                        <Tooltip title={s.email ? "Click to generate login password" : "Add email first via Edit (✏️)"}>
+                          <span>
+                            <Button
+                              size="small"
+                              onClick={() => openPortalDialog(s)}
+                              disabled={!s.email}
+                              sx={{
+                                textTransform: "none",
+                                fontSize: 11,
+                                fontWeight: 800,
+                                color: s.email ? "#FF5200" : "#94A3B8",
+                                bgcolor: s.email ? "#FFF5ED" : "#F1F5F9",
+                                border: `1px dashed ${s.email ? "#FFD5B8" : "#CBD5E1"}`,
+                                borderRadius: "8px",
+                                px: 1.2,
+                                py: 0.2,
+                                "&:hover": { bgcolor: "#FFEFE6" },
+                              }}
+                            >
+                              {s.email ? "+ Create Login" : "Add Email ✏️"}
+                            </Button>
+                          </span>
+                        </Tooltip>
                       )}
                     </TableCell>
                     <TableCell sx={{ fontSize: 12, color: "text.secondary" }}>{s.department || "—"}</TableCell>
