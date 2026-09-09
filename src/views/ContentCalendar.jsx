@@ -14,6 +14,7 @@ import AccessTimeIcon     from "@mui/icons-material/AccessTime";
 import PlaceIcon          from "@mui/icons-material/Place";
 import MovieIcon          from "@mui/icons-material/Movie";
 import LaunchIcon         from "@mui/icons-material/Launch";
+import CheckCircleIcon    from "@mui/icons-material/CheckCircle";
 import { getContent, getContentStats } from "../api/projectsApi";
 import { getClients }                  from "../api/clientsApi";
 import { getProductionTasks }          from "../api/agencyOsApi";
@@ -32,6 +33,16 @@ const STAGE_STYLE = {
 };
 
 const TYPE_EMOJI = { reel:"🎬", post:"📸", story:"📖", carousel:"🖼️", youtube:"▶️", other:"📄" };
+
+// Helper to check if a shoot has been completed
+const isShootCompleted = (shoot) => {
+  return (
+    shoot.shootStatus === "done" ||
+    shoot.shootCompletedAt != null ||
+    (shoot.stage !== "script" && shoot.stage !== "shoot") ||
+    (Number(shoot.completedReels) > 0)
+  );
+};
 
 export default function ContentCalendar() {
   const navigate = useNavigate();
@@ -79,7 +90,7 @@ export default function ContentCalendar() {
   const prevMonth = () => { if (month === 0) { setYear(y => y - 1); setMonth(11); } else setMonth(m => m - 1); };
   const nextMonth = () => { if (month === 11) { setYear(y => y + 1); setMonth(0); } else setMonth(m => m + 1); };
 
-  // ── BUILD SHOOT SCHEDULE MAP (shootDate ➔ Tasks with time & shooter) ──
+  // ── BUILD SHOOT SCHEDULE MAP (shootDate ➔ Tasks with time, shooter, and status) ──
   const shootsMap = {};
   let totalShootsInMonth = 0;
   let totalReelsToShootInMonth = 0;
@@ -98,7 +109,7 @@ export default function ContentCalendar() {
         shootsMap[sDate].push(task);
         totalShootsInMonth++;
         totalReelsToShootInMonth += (task.targetReels || 1);
-        if (task.shootStatus === "done" || task.stage !== "shoot" && task.stage !== "script") {
+        if (isShootCompleted(task)) {
           completedShootsInMonth++;
         }
       }
@@ -140,7 +151,7 @@ export default function ContentCalendar() {
             <span>📅 Shoot & Content Calendar</span>
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Live schedule highlighting shooting dates, time slots, locations, and reel deliveries.
+            Live schedule highlighting shooting dates, time slots, locations, and shoot completion states.
           </Typography>
         </Box>
         <FormControl size="small" sx={{ minWidth: 220 }}>
@@ -165,6 +176,16 @@ export default function ContentCalendar() {
           </Card>
         </Grid>
         <Grid item xs={6} sm={3} md={2.4}>
+          <Card sx={{ p: 2, borderRadius: 2.5, border: "1.5px solid #bbf7d0", bgcolor: "#f0fdf4", boxShadow: "0 2px 6px rgba(16, 185, 129, 0.08)" }}>
+            <Typography variant="caption" sx={{ fontWeight: 800, color: "#166534", textTransform: "uppercase", fontSize: 10 }}>
+              ✓ Shoots Completed
+            </Typography>
+            <Typography variant="h5" sx={{ fontWeight: 900, color: "#15803d", mt: 0.5 }}>
+              {completedShootsInMonth}
+            </Typography>
+          </Card>
+        </Grid>
+        <Grid item xs={6} sm={3} md={2.4}>
           <Card sx={{ p: 2, borderRadius: 2.5, border: "1.5px solid #fed7aa", bgcolor: "#fffaf5" }}>
             <Typography variant="caption" sx={{ fontWeight: 800, color: "#ea580c", textTransform: "uppercase", fontSize: 10 }}>
               🎯 Target Reels To Shoot
@@ -175,17 +196,7 @@ export default function ContentCalendar() {
           </Card>
         </Grid>
         <Grid item xs={6} sm={3} md={2.4}>
-          <Card sx={{ p: 2, borderRadius: 2.5, border: "1.5px solid #bbf7d0", bgcolor: "#f0fdf4" }}>
-            <Typography variant="caption" sx={{ fontWeight: 800, color: "#166534", textTransform: "uppercase", fontSize: 10 }}>
-              ✓ Shoots Completed
-            </Typography>
-            <Typography variant="h5" sx={{ fontWeight: 900, color: "#15803d", mt: 0.5 }}>
-              {completedShootsInMonth}
-            </Typography>
-          </Card>
-        </Grid>
-        <Grid item xs={6} sm={3} md={2.4}>
-          <Card sx={{ p: 2, borderRadius: 2.5, border: "1px solid #e2e8f0", bgcolor: "#fff" }}>
+          <Card sx={{ p: 2, borderRadius: 2.5, border: "1.5px solid #e2e8f0", bgcolor: "#fff" }}>
             <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", textTransform: "uppercase", fontSize: 10 }}>
               🎬 Editing Stage
             </Typography>
@@ -195,7 +206,7 @@ export default function ContentCalendar() {
           </Card>
         </Grid>
         <Grid item xs={6} sm={3} md={2.4}>
-          <Card sx={{ p: 2, borderRadius: 2.5, border: "1px solid #e2e8f0", bgcolor: "#fff" }}>
+          <Card sx={{ p: 2, borderRadius: 2.5, border: "1.5px solid #e2e8f0", bgcolor: "#fff" }}>
             <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary", textTransform: "uppercase", fontSize: 10 }}>
               🚀 Ready / Posted
             </Typography>
@@ -254,6 +265,10 @@ export default function ContentCalendar() {
                     const isSelected= selectedDay === day;
                     const hasShoots = dayShoots.length > 0;
 
+                    // Check if all shoots on this date are finished vs pending
+                    const allDone = hasShoots && dayShoots.every(s => isShootCompleted(s));
+                    const anyPending = hasShoots && dayShoots.some(s => !isShootCompleted(s));
+
                     return (
                       <Box
                         key={day}
@@ -263,22 +278,28 @@ export default function ContentCalendar() {
                           borderRadius: 2,
                           p: 0.75,
                           cursor: "pointer",
-                          // 🌟 VIBRANT HIGHLIGHTING WHEN SHOOTS ARE SCHEDULED 🌟
+                          // 🌟 DYNAMIC COLOR: GREEN IF COMPLETED, ORANGE IF UPCOMING 🌟
                           border: isSelected
-                            ? "2.5px solid #ea580c"
+                            ? (allDone ? "2.5px solid #059669" : "2.5px solid #ea580c")
+                            : allDone
+                            ? "2px solid #10b981"
                             : hasShoots
                             ? "2px solid #f97316"
                             : isToday
                             ? "2px solid #3b82f6"
                             : "1px solid #e2e8f0",
                           background: isSelected
-                            ? "#fff7ed"
+                            ? (allDone ? "#ecfdf5" : "#fff7ed")
+                            : allDone
+                            ? "linear-gradient(180deg, #f0fdf4 0%, #ecfdf5 100%)"
                             : hasShoots
                             ? "linear-gradient(180deg, #fffbf5 0%, #fff7ed 100%)"
                             : isSun
                             ? "#f8fafc"
                             : "#ffffff",
-                          boxShadow: hasShoots
+                          boxShadow: allDone
+                            ? "0 4px 12px rgba(16, 185, 129, 0.18)"
+                            : hasShoots
                             ? "0 4px 12px rgba(249, 115, 22, 0.16)"
                             : isSelected
                             ? "0 4px 12px rgba(234, 88, 12, 0.2)"
@@ -299,7 +320,7 @@ export default function ContentCalendar() {
                           <Typography sx={{
                             fontSize: { xs: 11, sm: 12 },
                             fontWeight: (hasShoots || isToday || isSelected) ? 900 : 600,
-                            color: hasShoots ? "#ea580c" : isToday ? "#2563eb" : isSun ? "#94a3b8" : "#334155",
+                            color: allDone ? "#047857" : hasShoots ? "#ea580c" : isToday ? "#2563eb" : isSun ? "#94a3b8" : "#334155",
                             lineHeight: 1,
                           }}>
                             {day}
@@ -309,99 +330,108 @@ export default function ContentCalendar() {
                               width: 8,
                               height: 8,
                               borderRadius: "50%",
-                              bgcolor: "#ea580c",
-                              boxShadow: "0 0 6px #ea580c"
+                              bgcolor: allDone ? "#10b981" : "#ea580c",
+                              boxShadow: allDone ? "0 0 6px #10b981" : "0 0 6px #ea580c"
                             }} />
                           )}
                         </Box>
 
-                        {/* 🎥 SCHEDULED SHOOTS PILL (PROMINENTLY HIGHLIGHTED WITH TIME) */}
-                        {dayShoots.map(shoot => (
-                          <Tooltip
-                            key={shoot._id}
-                            title={
-                              <Box sx={{ p: 0.5 }}>
-                                <Typography variant="subtitle2" fontWeight={800} color="#fed7aa">
-                                  🎥 Shoot Scheduled • {shoot.shootTime || "Time TBD"}
-                                </Typography>
-                                <Typography variant="body2" fontWeight={700}>
-                                  🏢 {shoot.client?.businessName}
-                                </Typography>
-                                <Typography variant="caption" sx={{ display: "block", color: "rgba(255,255,255,0.9)" }}>
-                                  Reel #{shoot.reelNumber}: {shoot.title}
-                                </Typography>
-                                <Typography variant="caption" sx={{ display: "block", color: "#fdba74" }}>
-                                  Shooter: {shoot.shooter?.name || "TBD"}
-                                </Typography>
-                                {shoot.location && (
-                                  <Typography variant="caption" sx={{ display: "block", color: "rgba(255,255,255,0.7)" }}>
-                                    📍 {shoot.location}
+                        {/* 🎥 SHOOTS PILL (COLOR CODED BY COMPLETION STATUS) */}
+                        {dayShoots.map(shoot => {
+                          const isDone = isShootCompleted(shoot);
+
+                          return (
+                            <Tooltip
+                              key={shoot._id}
+                              title={
+                                <Box sx={{ p: 0.5 }}>
+                                  <Typography variant="subtitle2" fontWeight={800} color={isDone ? "#a7f3d0" : "#fed7aa"}>
+                                    {isDone ? "✓ Shoot Completed" : "⏰ Shoot Scheduled"} • {shoot.shootTime || "Time TBD"}
                                   </Typography>
-                                )}
-                              </Box>
-                            }
-                            arrow
-                          >
-                            <Box sx={{
-                              background: "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)",
-                              border: "1px solid #fdba74",
-                              borderRadius: 1.5,
-                              p: 0.5,
-                              mb: 0.4,
-                              boxShadow: "0 1px 2px rgba(249, 115, 22, 0.12)"
-                            }}>
-                              {/* Time Tag */}
-                              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 0.5 }}>
-                                <Box sx={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 0.3,
-                                  bgcolor: "#ea580c",
-                                  color: "#ffffff",
-                                  px: 0.5,
-                                  py: 0.15,
-                                  borderRadius: 0.75,
-                                  fontSize: { xs: 8, sm: 9 },
-                                  fontWeight: 900,
-                                  letterSpacing: "0.2px"
-                                }}>
-                                  <span>⏰</span>
-                                  <span>{shoot.shootTime || "Time TBD"}</span>
+                                  <Typography variant="body2" fontWeight={700}>
+                                    🏢 {shoot.client?.businessName}
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ display: "block", color: "rgba(255,255,255,0.9)" }}>
+                                    Reel #{shoot.reelNumber}: {shoot.title}
+                                  </Typography>
+                                  <Typography variant="caption" sx={{ display: "block", color: isDone ? "#86efac" : "#fdba74" }}>
+                                    Shooter: {shoot.shooter?.name || "TBD"} {isDone ? "(Done ✓)" : ""}
+                                  </Typography>
+                                  {shoot.location && (
+                                    <Typography variant="caption" sx={{ display: "block", color: "rgba(255,255,255,0.7)" }}>
+                                      📍 {shoot.location}
+                                    </Typography>
+                                  )}
                                 </Box>
-                                <Typography sx={{ fontSize: 8.5, fontWeight: 800, color: "#c2410c" }}>
-                                  🎯 {shoot.targetReels || 1}R
+                              }
+                              arrow
+                            >
+                              <Box sx={{
+                                background: isDone
+                                  ? "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)"
+                                  : "linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)",
+                                border: isDone ? "1px solid #86efac" : "1px solid #fdba74",
+                                borderRadius: 1.5,
+                                p: 0.5,
+                                mb: 0.4,
+                                boxShadow: isDone
+                                  ? "0 1px 3px rgba(16, 185, 129, 0.15)"
+                                  : "0 1px 2px rgba(249, 115, 22, 0.12)"
+                              }}>
+                                {/* Time Tag & Done Indicator */}
+                                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 0.5 }}>
+                                  <Box sx={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 0.3,
+                                    bgcolor: isDone ? "#059669" : "#ea580c",
+                                    color: "#ffffff",
+                                    px: 0.5,
+                                    py: 0.15,
+                                    borderRadius: 0.75,
+                                    fontSize: { xs: 8, sm: 9 },
+                                    fontWeight: 900,
+                                    letterSpacing: "0.2px",
+                                    boxShadow: isDone ? "0 1px 2px rgba(5, 150, 105, 0.3)" : "none"
+                                  }}>
+                                    <span>{isDone ? "✓" : "⏰"}</span>
+                                    <span>{shoot.shootTime || (isDone ? "Done" : "Time TBD")}</span>
+                                  </Box>
+                                  <Typography sx={{ fontSize: 8.5, fontWeight: 800, color: isDone ? "#065f46" : "#c2410c" }}>
+                                    🎯 {isDone ? (shoot.completedReels || shoot.targetReels || 1) : (shoot.targetReels || 1)}R
+                                  </Typography>
+                                </Box>
+
+                                {/* Client Name */}
+                                <Typography sx={{
+                                  fontSize: { xs: 9, sm: 10 },
+                                  fontWeight: 800,
+                                  color: isDone ? "#065f46" : "#9a3412",
+                                  mt: 0.25,
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  lineHeight: 1.2
+                                }}>
+                                  🏢 {shoot.client?.businessName || "Client"}
+                                </Typography>
+
+                                {/* Reel title / Shooter */}
+                                <Typography sx={{
+                                  fontSize: { xs: 8, sm: 8.5 },
+                                  fontWeight: 700,
+                                  color: isDone ? "#047857" : "#b45309",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  mt: 0.1
+                                }}>
+                                  {shoot.shooter?.name ? `🎥 ${shoot.shooter.name.split(" ")[0]} ${isDone ? "✓" : ""}` : `Reel #${shoot.reelNumber}`}
                                 </Typography>
                               </Box>
-
-                              {/* Client Name */}
-                              <Typography sx={{
-                                fontSize: { xs: 9, sm: 10 },
-                                fontWeight: 800,
-                                color: "#9a3412",
-                                mt: 0.25,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                                lineHeight: 1.2
-                              }}>
-                                {shoot.client?.businessName || "Client"}
-                              </Typography>
-
-                              {/* Reel title / Shooter */}
-                              <Typography sx={{
-                                fontSize: { xs: 8, sm: 8.5 },
-                                fontWeight: 600,
-                                color: "#b45309",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                                mt: 0.1
-                              }}>
-                                {shoot.shooter?.name ? `🎥 ${shoot.shooter.name.split(" ")[0]}` : `Reel #${shoot.reelNumber}`}
-                              </Typography>
-                            </Box>
-                          </Tooltip>
-                        ))}
+                            </Tooltip>
+                          );
+                        })}
 
                         {/* Legacy content items (if any) */}
                         {items.slice(0, 2).map(item => {
@@ -429,7 +459,13 @@ export default function ContentCalendar() {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, p: 0.5, px: 1, bgcolor: "#fff7ed", border: "1.5px solid #f97316", borderRadius: 1.5 }}>
                   <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: "#ea580c" }} />
                   <Typography variant="caption" sx={{ fontWeight: 800, color: "#9a3412", fontSize: 11 }}>
-                    ⏰ 🎥 Scheduled Shoot with Time
+                    ⏰ Upcoming Shoot
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, p: 0.5, px: 1, bgcolor: "#f0fdf4", border: "1.5px solid #10b981", borderRadius: 1.5 }}>
+                  <Box sx={{ width: 10, height: 10, borderRadius: "50%", bgcolor: "#059669" }} />
+                  <Typography variant="caption" sx={{ fontWeight: 800, color: "#166534", fontSize: 11 }}>
+                    ✓ Completed Shoot
                   </Typography>
                 </Box>
                 {Object.entries(STAGE_STYLE).map(([k, s]) => (
@@ -473,97 +509,103 @@ export default function ContentCalendar() {
                   <Box sx={{ py: 3, textAlign: "center", color: "text.secondary" }}>
                     <VideocamIcon sx={{ fontSize: 32, opacity: 0.3, mb: 1 }} />
                     <Typography variant="body2" fontWeight={600}>No shoot scheduled for this date.</Typography>
-                    <Typography variant="caption" color="text.disabled">Click on highlighted dates (e.g. Day 10) to see shoots.</Typography>
+                    <Typography variant="caption" color="text.disabled">Click on highlighted dates to see shoots.</Typography>
                   </Box>
                 ) : (
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                    {selectedShoots.map(shoot => (
-                      <Box
-                        key={shoot._id}
-                        sx={{
-                          p: 2,
-                          bgcolor: "#ffffff",
-                          borderRadius: 2.5,
-                          border: "1.5px solid #fed7aa",
-                          boxShadow: "0 2px 6px rgba(249, 115, 22, 0.08)"
-                        }}
-                      >
-                        {/* Time Banner */}
-                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                          <Box sx={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 0.5,
-                            bgcolor: "#ea580c",
-                            color: "#fff",
-                            px: 1,
-                            py: 0.3,
-                            borderRadius: 1.5,
-                            fontSize: 11,
-                            fontWeight: 900
-                          }}>
-                            <AccessTimeIcon sx={{ fontSize: 13 }} />
-                            <span>{shoot.shootTime || "Time TBD"}</span>
-                          </Box>
-                          <Chip
-                            label={shoot.shootStatus === "done" ? "Shoot Completed" : "Scheduled"}
-                            size="small"
-                            color={shoot.shootStatus === "done" ? "success" : "warning"}
-                            sx={{ fontWeight: 800, fontSize: 10, height: 20 }}
-                          />
-                        </Box>
+                    {selectedShoots.map(shoot => {
+                      const isDone = isShootCompleted(shoot);
 
-                        {/* Client & Reel Info */}
-                        <Typography variant="subtitle2" fontWeight={900} color="#9a3412" gutterBottom>
-                          🏢 {shoot.client?.businessName || "Client"}
-                        </Typography>
-
-                        <Typography variant="body2" fontWeight={700} color="#1e293b" sx={{ mb: 0.5 }}>
-                          Reel #{shoot.reelNumber}: {shoot.title}
-                        </Typography>
-
-                        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mt: 1, pt: 1, borderTop: "1px dashed #fed7aa" }}>
-                          {/* Shooter */}
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: 12 }}>
-                            <VideocamIcon sx={{ fontSize: 16, color: "#ea580c" }} />
-                            <Typography variant="caption" sx={{ fontWeight: 700, color: "#334155" }}>
-                              Shooter: <strong>{shoot.shooter?.name || "Not assigned"}</strong>
-                            </Typography>
+                      return (
+                        <Box
+                          key={shoot._id}
+                          sx={{
+                            p: 2,
+                            bgcolor: "#ffffff",
+                            borderRadius: 2.5,
+                            border: isDone ? "1.5px solid #86efac" : "1.5px solid #fed7aa",
+                            boxShadow: isDone
+                              ? "0 2px 8px rgba(16, 185, 129, 0.1)"
+                              : "0 2px 6px rgba(249, 115, 22, 0.08)"
+                          }}
+                        >
+                          {/* Time Banner */}
+                          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                            <Box sx={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                              bgcolor: isDone ? "#059669" : "#ea580c",
+                              color: "#fff",
+                              px: 1,
+                              py: 0.3,
+                              borderRadius: 1.5,
+                              fontSize: 11,
+                              fontWeight: 900
+                            }}>
+                              {isDone ? <CheckCircleIcon sx={{ fontSize: 13 }} /> : <AccessTimeIcon sx={{ fontSize: 13 }} />}
+                              <span>{shoot.shootTime || (isDone ? "Completed" : "Time TBD")}</span>
+                            </Box>
+                            <Chip
+                              label={isDone ? "✓ Shoot Completed" : "⏰ Scheduled"}
+                              size="small"
+                              color={isDone ? "success" : "warning"}
+                              sx={{ fontWeight: 800, fontSize: 10, height: 20 }}
+                            />
                           </Box>
 
-                          {/* Location */}
-                          {shoot.location && (
+                          {/* Client & Reel Info */}
+                          <Typography variant="subtitle2" fontWeight={900} color={isDone ? "#065f46" : "#9a3412"} gutterBottom>
+                            🏢 {shoot.client?.businessName || "Client"}
+                          </Typography>
+
+                          <Typography variant="body2" fontWeight={700} color="#1e293b" sx={{ mb: 0.5 }}>
+                            Reel #{shoot.reelNumber}: {shoot.title}
+                          </Typography>
+
+                          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mt: 1, pt: 1, borderTop: isDone ? "1px dashed #86efac" : "1px dashed #fed7aa" }}>
+                            {/* Shooter */}
                             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: 12 }}>
-                              <PlaceIcon sx={{ fontSize: 16, color: "#dc2626" }} />
-                              <Typography variant="caption" sx={{ fontWeight: 600, color: "#475569" }}>
-                                Location: {shoot.location}
+                              <VideocamIcon sx={{ fontSize: 16, color: isDone ? "#059669" : "#ea580c" }} />
+                              <Typography variant="caption" sx={{ fontWeight: 700, color: "#334155" }}>
+                                Shooter: <strong>{shoot.shooter?.name || "Not assigned"}</strong> {isDone ? "(Finished ✓)" : ""}
                               </Typography>
                             </Box>
-                          )}
 
-                          {/* Target Reels */}
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: 12 }}>
-                            <MovieIcon sx={{ fontSize: 16, color: "#0284c7" }} />
-                            <Typography variant="caption" sx={{ fontWeight: 600, color: "#475569" }}>
-                              Target Output: <strong>{shoot.targetReels || 1} Reel(s)</strong>
-                            </Typography>
+                            {/* Location */}
+                            {shoot.location && (
+                              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: 12 }}>
+                                <PlaceIcon sx={{ fontSize: 16, color: "#dc2626" }} />
+                                <Typography variant="caption" sx={{ fontWeight: 600, color: "#475569" }}>
+                                  Location: {shoot.location}
+                                </Typography>
+                              </Box>
+                            )}
+
+                            {/* Target Reels */}
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: 12 }}>
+                              <MovieIcon sx={{ fontSize: 16, color: "#0284c7" }} />
+                              <Typography variant="caption" sx={{ fontWeight: 600, color: "#475569" }}>
+                                Output: <strong>{isDone ? (shoot.completedReels || shoot.targetReels || 1) : (shoot.targetReels || 1)} Reel(s) {isDone ? "Done" : "Target"}</strong>
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          {/* Action Link */}
+                          <Box sx={{ mt: 1.5, pt: 1, borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end" }}>
+                            <Button
+                              size="small"
+                              variant="text"
+                              endIcon={<LaunchIcon sx={{ fontSize: 13 }} />}
+                              onClick={() => navigate("/admin/production-hub")}
+                              sx={{ fontSize: 11, fontWeight: 800, textTransform: "none", color: isDone ? "#059669" : "#ea580c" }}
+                            >
+                              Open in Production Hub
+                            </Button>
                           </Box>
                         </Box>
-
-                        {/* Action Link */}
-                        <Box sx={{ mt: 1.5, pt: 1, borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end" }}>
-                          <Button
-                            size="small"
-                            variant="text"
-                            endIcon={<LaunchIcon sx={{ fontSize: 13 }} />}
-                            onClick={() => navigate("/admin/production-hub")}
-                            sx={{ fontSize: 11, fontWeight: 800, textTransform: "none", color: "#ea580c" }}
-                          >
-                            Open in Production Hub
-                          </Button>
-                        </Box>
-                      </Box>
-                    ))}
+                      );
+                    })}
                   </Box>
                 )}
               </CardContent>
