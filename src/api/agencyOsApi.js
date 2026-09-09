@@ -4,6 +4,7 @@ import api from "./index";
 export const getProductionTasks = (params) => api.get("/production/tasks", { params });
 export const getProductionOverview = () => api.get("/production/overview");
 export const createProductionTask = (data) => api.post("/production/tasks", data);
+export const updateProductionTask = (id, data) => api.put(`/production/tasks/${id}`, data);
 
 // Step 1: Script pass ➔ Shoot person assignment
 export const passScriptToShoot = (id, data) => api.put(`/production/tasks/${id}/pass-script-to-shoot`, data);
