@@ -23,6 +23,9 @@ import { generateShootScriptPdf } from "../utils/shootScriptPdf";
 
 export default function ProductionHub() {
   const { user } = useAuth();
+  const isManagerOrAdmin = user?.role === "admin" || user?.role === "manager";
+  const [revealedPhones, setRevealedPhones] = useState({});
+  const [globalShowPhones, setGlobalShowPhones] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [overview, setOverview] = useState(null);
   const [clients, setClients] = useState([]);
@@ -622,9 +625,36 @@ export default function ProductionHub() {
                   🏢 {task.client?.businessName || "Unknown Client"}
                 </span>
                 {task.client?.mobile && (
-                  <span className="text-[10px] text-slate-500 font-mono font-semibold bg-slate-100 px-1.5 py-0.5 rounded">
-                    📞 {task.client.mobile}
-                  </span>
+                  isManagerOrAdmin ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setRevealedPhones(prev => ({ ...prev, [task._id]: !prev[task._id] }));
+                      }}
+                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg border transition-all inline-flex items-center gap-1 cursor-pointer select-none ${
+                        (globalShowPhones || revealedPhones[task._id])
+                          ? "bg-slate-100 text-slate-800 border-slate-300 shadow-2xs"
+                          : "bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100"
+                      }`}
+                      title={(globalShowPhones || revealedPhones[task._id]) ? "Click to blur phone number" : "Click to show client phone number (Admin / Manager only)"}
+                    >
+                      <span>📞</span>
+                      <span className={(globalShowPhones || revealedPhones[task._id]) ? "font-black" : "filter blur-[3.5px] select-none"}>
+                        {(globalShowPhones || revealedPhones[task._id]) ? task.client.mobile : (task.client.mobile || "••••••••••")}
+                      </span>
+                      <span className="text-[9px] opacity-75 ml-0.5">
+                        {(globalShowPhones || revealedPhones[task._id]) ? "🙈" : "👁️"}
+                      </span>
+                    </button>
+                  ) : (
+                    <span
+                      className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg bg-slate-100/90 text-slate-400 border border-slate-200/80 inline-flex items-center gap-1 select-none filter blur-[3.5px] cursor-not-allowed opacity-75"
+                      title="🔒 Client phone number is protected for staff privacy"
+                    >
+                      📞 ••••••••••
+                    </span>
+                  )
                 )}
               </div>
               <h3 className="font-black text-base text-slate-900 mt-0.5 tracking-tight">
@@ -834,7 +864,24 @@ export default function ProductionHub() {
             <div className="p-4 bg-orange-50/40 border border-orange-100 rounded-2xl mb-4 space-y-2 text-xs">
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 font-medium">Client Mobile:</span>
-                <span className="font-black text-slate-800">{task.client?.mobile}</span>
+                {isManagerOrAdmin ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className={`font-black font-mono text-slate-800 ${!(globalShowPhones || revealedPhones[task._id]) ? "filter blur-[3.5px] select-none" : ""}`}>
+                      {(globalShowPhones || revealedPhones[task._id]) ? task.client?.mobile : "••••••••••"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setRevealedPhones(prev => ({ ...prev, [task._id]: !prev[task._id] }))}
+                      className="text-[10px] px-2 py-0.5 bg-white border border-orange-200 rounded-md text-orange-800 font-bold hover:bg-orange-100 cursor-pointer"
+                    >
+                      {(globalShowPhones || revealedPhones[task._id]) ? "Hide 🙈" : "Show 👁️"}
+                    </button>
+                  </div>
+                ) : (
+                  <span className="font-black text-slate-400 font-mono filter blur-[3.5px] select-none cursor-not-allowed">
+                    ••••••••••
+                  </span>
+                )}
               </div>
               {task.editedPreviewLink && (
                 <a
@@ -974,17 +1021,23 @@ export default function ProductionHub() {
                 </button>
               </div>
 
-              <button
-                onClick={() => {
-                  const text = encodeURIComponent(
-                    `Hello ${task.client?.businessName}! Please review your edited reel: ${task.editedPreviewLink}`
-                  );
-                  window.open(`https://api.whatsapp.com/send?phone=${task.client?.mobile}&text=${text}`);
-                }}
-                className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
-              >
-                <span>WhatsApp Video Link to Client 💬</span>
-              </button>
+              {isManagerOrAdmin && task.client?.mobile ? (
+                <button
+                  onClick={() => {
+                    const text = encodeURIComponent(
+                      `Hello ${task.client?.businessName}! Please review your edited reel: ${task.editedPreviewLink}`
+                    );
+                    window.open(`https://api.whatsapp.com/send?phone=${task.client?.mobile}&text=${text}`);
+                  }}
+                  className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <span>WhatsApp Video Link to Client 💬</span>
+                </button>
+              ) : (
+                <div className="text-[11px] font-semibold text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-center">
+                  🔒 Client approval delivery is managed by Admin / Manager
+                </div>
+              )}
             </div>
           )}
 
@@ -1034,6 +1087,20 @@ export default function ProductionHub() {
         </div>
 
         <div className="flex items-center gap-3">
+          {isManagerOrAdmin && (
+            <button
+              onClick={() => setGlobalShowPhones(prev => !prev)}
+              className={`px-4 py-3 text-xs font-black uppercase tracking-wider rounded-2xl border transition-all flex items-center gap-2 cursor-pointer shadow-sm ${
+                globalShowPhones
+                  ? "bg-slate-900 text-white border-slate-900 shadow-slate-900/20"
+                  : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+              }`}
+              title="Toggle client phone numbers privacy across all cards (Admin / Manager only)"
+            >
+              <span>{globalShowPhones ? "🙈" : "👁️"}</span>
+              <span>{globalShowPhones ? "Blur Client Numbers" : "Show Client Numbers"}</span>
+            </button>
+          )}
           <button
             onClick={() => setShowNewTaskModal(true)}
             className="px-6 py-3.5 bg-gradient-to-r from-[#FF5200] to-[#FC8019] hover:from-[#E04800] hover:to-[#EB7410] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-orange-500/25 transition-all flex items-center gap-2 active:scale-95 cursor-pointer"

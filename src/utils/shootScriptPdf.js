@@ -572,7 +572,7 @@ export function generateShootScriptPdf(tasks, customClient = null) {
       <div class="meta-group">
         <span class="meta-label">Client / Business</span>
         <span class="meta-val highlight">🏢 ${clientName}</span>
-        ${ownerName || mobile ? `<span style="font-size:11px;color:#64748b;font-weight:600;">${ownerName} · 📞 ${mobile}</span>` : ""}
+        ${ownerName || (mobile && !mobile.includes("•")) ? `<span style="font-size:11px;color:#64748b;font-weight:600;">${ownerName ? ownerName + " · " : ""}📞 ${mobile}</span>` : `<span style="font-size:11px;color:#94a3b8;font-weight:600;">📞 Contact Managed by Agency</span>`}
       </div>
       <div class="meta-group">
         <span class="meta-label">Shoot Session</span>
