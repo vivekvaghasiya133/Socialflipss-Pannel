@@ -147,6 +147,14 @@ export default function ClientsPage() {
               {Object.entries(STATUS_CONFIG).map(([k,v]) => <MenuItem key={k} value={k}>{v.label}</MenuItem>)}
             </Select>
           </FormControl>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => navigate('/admin/agency-billing')}
+            sx={{ textTransform: 'none', fontWeight: 800, borderRadius: 2, borderColor: '#cbd5e1', color: '#6d28d9', ml: 'auto' }}
+          >
+            🤝 All Agencies Directory (B2B)
+          </Button>
         </Box>
       </Card>
 
@@ -164,7 +172,14 @@ export default function ClientsPage() {
             <TableBody>
               {clients.map(c => (
                 <TableRow key={c._id} hover>
-                  <TableCell sx={{ fontWeight:500 }}>{c.businessName}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                      <span>{c.businessName}</span>
+                      {c.clientType === 'agency' && (
+                        <Chip size="small" label="🤝 Agency" sx={{ fontSize: 9, height: 16, bgcolor: '#ede9fe', color: '#6d28d9', fontWeight: 800 }} />
+                      )}
+                    </Box>
+                  </TableCell>
                   <TableCell>{c.ownerName}</TableCell>
                   <TableCell sx={{ fontSize:12 }}>{c.mobile}</TableCell>
                   <TableCell sx={{ fontSize:12 }}>{c.city || "—"}</TableCell>

@@ -55,6 +55,7 @@ export const applyMyLeave = (data) => api.post("/leaves/apply-my-leave", data);
 
 // ── AGENCY (B2B) BILLING & PARTNER APIs ──
 export const getAgencyPartners = () => api.get('/agency-billing/agencies');
+export const createAgencyPartner = (data) => api.post('/agency-billing/agencies', data);
 export const getAgencyBillingSummary = (agencyId, params) => api.get('/agency-billing/summary', { params: { agencyId, ...params } });
 export const generateAgencyInvoice = (data) => api.post('/agency-billing/generate-invoice', data);
 export const updateClientAgencyStatus = (id, data) => api.put(`/agency-billing/agencies/${id}/convert`, data);
