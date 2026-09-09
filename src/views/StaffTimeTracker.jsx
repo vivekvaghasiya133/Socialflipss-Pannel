@@ -9,6 +9,7 @@ import {
   punchOut,
   getTeamTimeOverview,
   getMyTimeHistory,
+  getStaffTimeHistory,
   getMyLeaves,
   applyMyLeave,
 } from "../api/agencyOsApi";
@@ -28,6 +29,78 @@ export default function StaffTimeTracker() {
   // Leave Modal State
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showPunchOutModal, setShowPunchOutModal] = useState(false);
+
+  // Staff Punch History State (Tab & Modal)
+  const [selectedStaffId, setSelectedStaffId] = useState("");
+  const [selectedStaffMonth, setSelectedStaffMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [staffHistoryData, setStaffHistoryData] = useState(null);
+  const [staffHistoryLoading, setStaffHistoryLoading] = useState(false);
+
+  // Modal State for instant card click
+  const [showStaffHistoryModal, setShowStaffHistoryModal] = useState(null);
+  const [modalMonth, setModalMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [modalHistoryData, setModalHistoryData] = useState(null);
+  const [modalLoading, setModalLoading] = useState(false);
+
+  const getRecentMonths = () => {
+    const list = [];
+    const now = new Date();
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const val = d.toISOString().slice(0, 7);
+      const label = d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+      list.push({ val, label });
+    }
+    return list;
+  };
+
+  const loadStaffHistory = async (userId, month) => {
+    if (!userId) return;
+    setStaffHistoryLoading(true);
+    try {
+      const res = await getStaffTimeHistory(userId, { month: month || selectedStaffMonth });
+      if (res.data?.success) {
+        setStaffHistoryData(res.data);
+      }
+    } catch (err) {
+      console.error("Error loading staff history:", err);
+    } finally {
+      setStaffHistoryLoading(false);
+    }
+  };
+
+  const openStaffHistoryModal = async (member) => {
+    setShowStaffHistoryModal(member);
+    const curMonth = selectedStaffMonth || new Date().toISOString().slice(0, 7);
+    setModalMonth(curMonth);
+    setModalLoading(true);
+    try {
+      const res = await getStaffTimeHistory(member.userId, { month: curMonth });
+      if (res.data?.success) {
+        setModalHistoryData(res.data);
+      }
+    } catch (err) {
+      console.error("Error loading modal history:", err);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleModalMonthChange = async (newMonth) => {
+    setModalMonth(newMonth);
+    if (!showStaffHistoryModal) return;
+    setModalLoading(true);
+    try {
+      const res = await getStaffTimeHistory(showStaffHistoryModal.userId, { month: newMonth });
+      if (res.data?.success) {
+        setModalHistoryData(res.data);
+      }
+    } catch (err) {
+      console.error("Error changing modal month:", err);
+    } finally {
+      setModalLoading(false);
+    }
+  };
   const [leaveForm, setLeaveForm] = useState({
     fromDate: new Date().toISOString().split("T")[0],
     toDate: new Date().toISOString().split("T")[0],
@@ -173,7 +246,7 @@ export default function StaffTimeTracker() {
     <div className="max-w-7xl mx-auto space-y-8 font-sans pb-24">
       {/* ── SLEEK FLOATING ISLAND TOAST ── */}
       {toastMsg && (
-        <div className="fixed top-5 left-4 right-4 max-w-md mx-auto z-50 p-4 bg-slate-900/95 text-white font-black text-xs rounded-2xl shadow-2xl backdrop-blur-xl border border-slate-700 flex items-center justify-between animate-slideDown">
+        <div className="fixed top-5 left-4 right-4 max-w-2xl mx-auto z-50 p-4 bg-slate-900/95 text-white font-black text-xs rounded-2xl shadow-2xl backdrop-blur-xl border border-slate-700 flex items-center justify-between animate-slideDown">
           <div className="flex items-center gap-2.5">
             <span className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-slate-950 font-bold text-xs">✓</span>
             <span>{toastMsg}</span>
@@ -214,6 +287,7 @@ export default function StaffTimeTracker() {
           { id: "dashboard", label: "Today's Punch", icon: "⏱️" },
           { id: "history", label: "My Timesheet History", icon: "📅", count: myHistory.length },
           { id: "leaves", label: "My Leaves", icon: "🌴", count: myLeaves.length },
+          { id: "staff_history", label: "👥 Staff Attendance History", icon: "📊" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -440,7 +514,7 @@ export default function StaffTimeTracker() {
                 return (
                   <div
                     key={member.userId}
-                    className="p-5 bg-white border border-slate-200/80 hover:border-orange-200 rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-3 group"
+                    className="p-5 bg-white border border-slate-200/80 hover:border-orange-200 rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-wrap items-center justify-between gap-3 group"
                   >
                     <div className="flex items-center gap-3.5">
                       <div className="relative">
@@ -478,10 +552,249 @@ export default function StaffTimeTracker() {
                         {member.reelsEdited || 0} Reels Done
                       </span>
                     </div>
+                    {/* View Punch History Button */}
+                    <div className="w-full pt-3 mt-1 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => openStaffHistoryModal(member)}
+                        className="w-full py-1.5 px-3 bg-slate-50 hover:bg-[#FF5200] hover:text-white border border-slate-200 hover:border-[#FF5200] text-slate-700 text-xs font-black rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs active:scale-95 group/btn"
+                      >
+                        <span>📅</span>
+                        <span>Punch History (Month & Day)</span>
+                      </button>
+                    </div>
                   </div>
                 );
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 4: ALL STAFF ATTENDANCE HISTORY (MONTH & DAY WISE) ── */}
+      {viewTab === "staff_history" && (
+        <div className="space-y-6">
+          {/* Header & Filter Controls Card */}
+          <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+              <div>
+                <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <span>👥 Staff Punch-In / Punch-Out & Attendance History</span>
+                </h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  Complete day-wise and month-wise records of arrival, departure, breaks, and net work hours.
+                </p>
+              </div>
+
+              <span className="text-xs font-bold px-3.5 py-1.5 bg-orange-50 text-[#FF5200] border border-orange-200 rounded-full shrink-0">
+                {teamOverview.length} Active Staff Members
+              </span>
+            </div>
+
+            {/* Filter Bar: Select Staff & Select Month */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1.5">
+                  👤 Select Staff Member <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedStaffId}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    setSelectedStaffId(id);
+                    loadStaffHistory(id, selectedStaffMonth);
+                  }}
+                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 font-bold focus:outline-[#FF5200]"
+                >
+                  <option value="">-- Choose Staff Member --</option>
+                  {teamOverview.map((m) => (
+                    <option key={m.userId} value={m.userId}>
+                      {m.name} ({m.position || m.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-black text-slate-700 block mb-1.5">
+                  📅 Select Month
+                </label>
+                <select
+                  value={selectedStaffMonth}
+                  onChange={(e) => {
+                    const m = e.target.value;
+                    setSelectedStaffMonth(m);
+                    if (selectedStaffId) loadStaffHistory(selectedStaffId, m);
+                  }}
+                  className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 font-bold focus:outline-[#FF5200]"
+                >
+                  <option value="all">All Available Records</option>
+                  {getRecentMonths().map((rm) => (
+                    <option key={rm.val} value={rm.val}>
+                      {rm.label} ({rm.val})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedStaffId) loadStaffHistory(selectedStaffId, selectedStaffMonth);
+                  }}
+                  className="w-full py-2.5 px-4 bg-[#FF5200] hover:bg-[#E04800] text-white text-xs font-black rounded-xl shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <span>🔄 Refresh History</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Monthly Summary Statistics Cards */}
+            {staffHistoryData?.summary && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 pt-2">
+                <div className="p-4 bg-orange-50/80 border border-orange-200 rounded-2xl">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-orange-700 block mb-0.5">🗓️ Days Present</span>
+                  <span className="text-xl font-black font-mono text-[#FF5200]">{staffHistoryData.summary.daysPresent}</span>
+                  <span className="text-[10px] text-slate-500 block">Days recorded</span>
+                </div>
+
+                <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 block mb-0.5">⏱️ Total Work Hours</span>
+                  <span className="text-xl font-black font-mono text-emerald-700">{staffHistoryData.summary.totalWorkHours}h</span>
+                  <span className="text-[10px] text-slate-500 block">Net on-duty time</span>
+                </div>
+
+                <div className="p-4 bg-purple-50/80 border border-purple-200 rounded-2xl">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-purple-700 block mb-0.5">⚡ Daily Average</span>
+                  <span className="text-xl font-black font-mono text-purple-700">{staffHistoryData.summary.avgDailyWorkHours}h</span>
+                  <span className="text-[10px] text-slate-500 block">Hours / day</span>
+                </div>
+
+                <div className="p-4 bg-amber-50/80 border border-amber-200 rounded-2xl">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 block mb-0.5">☕ Total Breaks</span>
+                  <span className="text-xl font-black font-mono text-amber-700">{staffHistoryData.summary.totalBreakHours}h</span>
+                  <span className="text-[10px] text-slate-500 block">Rest & meals</span>
+                </div>
+
+                <div className="p-4 bg-blue-50/80 border border-blue-200 rounded-2xl">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-blue-700 block mb-0.5">🎬 Reels Output</span>
+                  <span className="text-xl font-black font-mono text-blue-700">{staffHistoryData.summary.totalReelsEdited}</span>
+                  <span className="text-[10px] text-slate-500 block">Reels finished</span>
+                </div>
+
+                <div className="p-4 bg-teal-50/80 border border-teal-200 rounded-2xl">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-teal-700 block mb-0.5">🎥 Shoots Done</span>
+                  <span className="text-xl font-black font-mono text-teal-700">{staffHistoryData.summary.totalShootsDone}</span>
+                  <span className="text-[10px] text-slate-500 block">Shoots credited</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Day-wise History Table */}
+          <div className="p-8 bg-white border border-slate-100 rounded-3xl shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-base font-black text-slate-900 tracking-tight">
+                📅 Day-by-Day Punch In & Out Breakdown
+                {staffHistoryData?.staff?.name && (
+                  <span className="text-sm font-semibold text-slate-500 ml-2">
+                    ({staffHistoryData.staff.name} — {selectedStaffMonth === "all" ? "All Time" : selectedStaffMonth})
+                  </span>
+                )}
+              </h4>
+              <span className="text-xs font-bold text-slate-400">
+                {staffHistoryData?.logs?.length || 0} Records Found
+              </span>
+            </div>
+
+            {staffHistoryLoading ? (
+              <div className="p-12 text-center text-slate-500 text-xs font-medium">Loading staff attendance logs... ⏳</div>
+            ) : !selectedStaffId ? (
+              <div className="p-12 text-center text-slate-400 text-xs font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                👈 Please select a Staff Member from the dropdown above to view their punch-in and punch-out history.
+              </div>
+            ) : (staffHistoryData?.logs || []).length === 0 ? (
+              <div className="p-12 text-center text-slate-400 text-xs font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                No punch records found for this staff member in {selectedStaffMonth === "all" ? "the selected period" : selectedStaffMonth}.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-400 uppercase font-black text-[10px] tracking-wider bg-slate-50/50">
+                      <th className="py-3 px-4 rounded-l-xl">Date</th>
+                      <th className="py-3 px-4">Punch In (Clock In)</th>
+                      <th className="py-3 px-4">Punch Out (Clock Out)</th>
+                      <th className="py-3 px-4">Total Break</th>
+                      <th className="py-3 px-4">Net Working Hours</th>
+                      <th className="py-3 px-4">Output / Score</th>
+                      <th className="py-3 px-4 text-center rounded-r-xl">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium">
+                    {staffHistoryData.logs.map((item) => (
+                      <tr key={item._id} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="py-3.5 px-4 font-black font-mono text-slate-900">
+                          {item.date}
+                        </td>
+                        <td className="py-3.5 px-4 font-semibold text-slate-800">
+                          {item.punchInTime ? (
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                              <span>{new Date(item.punchInTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                              {item.punchInLocation && <span className="text-[10px] text-slate-400 font-normal">({item.punchInLocation})</span>}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">--:--</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 font-semibold text-slate-800">
+                          {item.punchOutTime ? (
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-blue-500" />
+                              <span>{new Date(item.punchOutTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                              {item.punchOutLocation && <span className="text-[10px] text-slate-400 font-normal">({item.punchOutLocation})</span>}
+                            </span>
+                          ) : (
+                            <span className="text-amber-600 font-bold">Currently On-Duty</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-700">
+                          <span className="font-bold text-amber-700">{item.totalBreakMinutes || 0} mins</span>
+                          {item.breaks && item.breaks.length > 0 && (
+                            <span className="text-[10px] text-slate-400 block">
+                              {item.breaks.length} {item.breaks.length === 1 ? "break" : "breaks"}
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 font-mono font-black text-emerald-700 text-sm">
+                          {Math.floor((item.totalWorkMinutes || 0) / 60)}h {(item.totalWorkMinutes || 0) % 60}m
+                        </td>
+                        <td className="py-3.5 px-4 font-mono font-bold text-[#FF5200]">
+                          {(item.reelsEditedCount || 0) > 0 && <span>{item.reelsEditedCount} Reels </span>}
+                          {(item.shootsCompletedCount || 0) > 0 && <span className="text-emerald-600">· {item.shootsCompletedCount} Shoots</span>}
+                          {!(item.reelsEditedCount || 0) && !(item.shootsCompletedCount || 0) && <span className="text-slate-400">-</span>}
+                        </td>
+                        <td className="py-3.5 px-4 text-center">
+                          <span
+                            className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                              item.status === "punched_out"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : item.status === "on_break"
+                                ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                : "bg-blue-50 text-blue-700 border border-blue-200"
+                            }`}
+                          >
+                            {item.status ? item.status.replace("_", " ") : "logged"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}

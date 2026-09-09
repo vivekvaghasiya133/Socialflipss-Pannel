@@ -55,14 +55,14 @@ export default function StaffCalendarView() {
       .finally(() => setLoading(false));
   }, [id, year, month]);
 
-  // Load work logs for selected month
+  // Load work logs & daily video production for selected month
   useEffect(() => {
-    if (staff?.email) {
+    if (staff) {
       const targetMonth = monthStr(year, month);
-      getWorkLogs({ email: staff.email, month: targetMonth })
-        .then((r) => setWorkLogs(r.data))
+      getWorkLogs({ staffId: staff._id, email: staff.email, name: staff.name, month: targetMonth })
+        .then((r) => setWorkLogs(r.data || []))
         .catch(() => {});
-      getWorkLogStats({ email: staff.email, month: targetMonth })
+      getWorkLogStats({ staffId: staff._id, email: staff.email, name: staff.name, month: targetMonth })
         .then((r) => setWorkStats(r.data))
         .catch(() => {});
     }
@@ -80,8 +80,31 @@ export default function StaffCalendarView() {
   // Build record map { "YYYY-MM-DD": { status, note } }
   const recordMap = {};
   records.forEach((r) => {
-    const key = typeof r.staffId === "object" ? r.date : r.date;
     recordMap[r.date] = { status: r.status, note: r.note || "" };
+  });
+
+  // Build daily video map { "YYYY-MM-DD": { videosCreated, videosEdited, details: [] } }
+  const dailyVideoMap = {};
+  if (workStats?.byDate) {
+    Object.keys(workStats.byDate).forEach((d) => {
+      dailyVideoMap[d] = { ...workStats.byDate[d] };
+    });
+  }
+  workLogs.forEach((log) => {
+    if (!log.date) return;
+    const d = log.date.slice(0, 10);
+    if (!dailyVideoMap[d]) {
+      dailyVideoMap[d] = { date: d, videosCreated: 0, videosEdited: 0, totalVideos: 0, details: [] };
+    }
+    if (!workStats?.byDate?.[d]) {
+      dailyVideoMap[d].videosCreated += (log.videosCreated || 0);
+      dailyVideoMap[d].videosEdited += (log.videosEdited || 0);
+      dailyVideoMap[d].totalVideos += ((log.videosCreated || 0) + (log.videosEdited || 0));
+    }
+    if (log.description && !dailyVideoMap[d].details?.includes(log.description)) {
+      if (!dailyVideoMap[d].details) dailyVideoMap[d].details = [];
+      dailyVideoMap[d].details.push(log.description);
+    }
   });
 
   // Build calendar days
@@ -117,7 +140,9 @@ export default function StaffCalendarView() {
             </Avatar>
             <Box sx={{ flex:1 }}>
               <Typography variant="h6" fontWeight={700}>{staff.name}</Typography>
-              <Typography variant="body2" color="text.secondary">{staff.position} {staff.department ? `· ${staff.department}` : ""}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {staff.position} {staff.department ? `· ${staff.department}` : ""}
+              </Typography>
             </Box>
             <Box sx={{ textAlign:"right" }}>
               <Typography variant="caption" color="text.secondary">Monthly Salary</Typography>
@@ -165,54 +190,133 @@ export default function StaffCalendarView() {
                     const day     = i + 1;
                     const dateStr = `${year}-${String(month + 1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
                     const rec     = recordMap[dateStr];
+                    const vData   = dailyVideoMap[dateStr] || { videosCreated: 0, videosEdited: 0, totalVideos: 0, details: [] };
                     const isToday = dateStr === todayStr;
                     const style   = rec ? STATUS_STYLE[rec.status] : null;
                     const isSunday = new Date(year, month, day).getDay() === 0;
+                    const hasVideos = (vData.videosCreated > 0 || vData.videosEdited > 0);
 
                     return (
                       <Tooltip
                         key={day}
                         title={
-                          rec ? (
-                            <Box>
-                              <strong>{style?.label}</strong>
-                              {rec.note && <Box sx={{ mt:0.5, fontSize:11 }}>📝 {rec.note}</Box>}
-                            </Box>
-                          ) : isSunday ? "Sunday" : "No record"
+                          <Box sx={{ p: 0.5 }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#fff" }}>
+                              {day} {MONTHS[month]} {year}
+                            </Typography>
+                            {rec && (
+                              <Box sx={{ mt: 0.5, fontSize: 11, color: style?.border || "#93c5fd" }}>
+                                <strong>Attendance:</strong> {style?.label} {rec.note ? `• ${rec.note}` : ""}
+                              </Box>
+                            )}
+                            {hasVideos && (
+                              <Box sx={{ mt: 1, pt: 0.75, borderTop: "1px solid rgba(255,255,255,0.2)" }}>
+                                <Box sx={{ fontWeight: 800, fontSize: 12, color: "#fef08a", mb: 0.5, display: "flex", gap: 1 }}>
+                                  {vData.videosCreated > 0 && <span>🎬 {vData.videosCreated} Video(s) Shot / Made</span>}
+                                  {vData.videosEdited > 0 && <span>✍️ {vData.videosEdited} Video(s) Edited</span>}
+                                </Box>
+                                {vData.details?.map((d, dIdx) => (
+                                  <Typography key={dIdx} variant="caption" sx={{ display: "block", color: "rgba(255,255,255,0.85)", fontSize: 10, lineHeight: 1.3 }}>
+                                    • {d}
+                                  </Typography>
+                                ))}
+                              </Box>
+                            )}
+                            {!rec && !hasVideos && (
+                              <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.6)" }}>
+                                {isSunday ? "Sunday (Weekend)" : "No attendance or video records"}
+                              </Typography>
+                            )}
+                          </Box>
                         }
                         arrow
                       >
                         <Box sx={{
-                          aspectRatio:"1",
-                          borderRadius:1.5,
-                          display:"flex",
-                          flexDirection:"column",
-                          alignItems:"center",
-                          justifyContent:"center",
-                          cursor: rec ? "pointer" : "default",
+                          aspectRatio: "1",
+                          borderRadius: 2,
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          p: 0.75,
+                          cursor: (rec || hasVideos) ? "pointer" : "default",
                           border: isToday
-                            ? "2px solid #1a56db"
+                            ? "2.5px solid #2563eb"
+                            : hasVideos
+                            ? "1.5px solid #f59e0b"
                             : rec ? `1px solid ${style.border}` : "1px solid #f3f4f6",
                           background: rec
                             ? style.bg
-                            : isSunday ? "#f9fafb" : "#fff",
-                          transition:"transform 0.1s",
-                          "&:hover": rec ? { transform:"scale(1.05)" } : {},
-                          minHeight:36,
+                            : hasVideos ? "#fffbeb" : (isSunday ? "#f9fafb" : "#fff"),
+                          boxShadow: hasVideos ? "0 2px 6px rgba(245, 158, 11, 0.15)" : "none",
+                          transition: "all 0.15s ease",
+                          "&:hover": { transform: "scale(1.04)", zIndex: 2, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" },
+                          minHeight: { xs: 44, sm: 64 },
                         }}>
-                          <Typography sx={{
-                            fontSize: { xs:10, sm:12 },
-                            fontWeight: isToday ? 700 : rec ? 600 : 400,
-                            color: rec ? style.color : isSunday ? "#d1d5db" : isToday ? "#1a56db" : "#374151",
-                            lineHeight:1,
-                          }}>
-                            {day}
-                          </Typography>
-                          {rec && (
-                            <Typography sx={{ fontSize:7, color: style.color, lineHeight:1, mt:0.25, fontWeight:600 }}>
-                              {style.label.slice(0,3).toUpperCase()}
+                          {/* Top: Day Number & Status */}
+                          <Box sx={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <Typography sx={{
+                              fontSize: { xs: 11, sm: 13 },
+                              fontWeight: isToday ? 800 : (rec || hasVideos) ? 700 : 500,
+                              color: isToday ? "#1d4ed8" : (rec ? style.color : (isSunday ? "#9ca3af" : "#1f2937")),
+                              lineHeight: 1,
+                            }}>
+                              {day}
                             </Typography>
-                          )}
+                            {rec && (
+                              <Typography sx={{ fontSize: { xs: 7, sm: 9 }, color: style.color, lineHeight: 1, fontWeight: 700 }}>
+                                {style.label.slice(0, 3).toUpperCase()}
+                              </Typography>
+                            )}
+                          </Box>
+
+                          {/* Middle/Bottom: Daily Video Output Badges */}
+                          <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 0.3, alignItems: "center", mt: "auto" }}>
+                            {vData.videosCreated > 0 && (
+                              <Box sx={{
+                                width: "100%",
+                                textAlign: "center",
+                                py: 0.2,
+                                px: 0.3,
+                                borderRadius: 1,
+                                bgcolor: "#fef3c7",
+                                color: "#92400e",
+                                fontSize: { xs: 8, sm: 10 },
+                                fontWeight: 800,
+                                lineHeight: 1.1,
+                                border: "1px solid #fde68a",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 0.3
+                              }}>
+                                <span>🎬</span>
+                                <span>{vData.videosCreated}</span>
+                              </Box>
+                            )}
+                            {vData.videosEdited > 0 && (
+                              <Box sx={{
+                                width: "100%",
+                                textAlign: "center",
+                                py: 0.2,
+                                px: 0.3,
+                                borderRadius: 1,
+                                bgcolor: "#ede9fe",
+                                color: "#5b21b6",
+                                fontSize: { xs: 8, sm: 10 },
+                                fontWeight: 800,
+                                lineHeight: 1.1,
+                                border: "1px solid #ddd6fe",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: 0.3
+                              }}>
+                                <span>✍️</span>
+                                <span>{vData.videosEdited}</span>
+                              </Box>
+                            )}
+                          </Box>
                         </Box>
                       </Tooltip>
                     );
@@ -221,25 +325,32 @@ export default function StaffCalendarView() {
               )}
 
               {/* Legend */}
-              <Box sx={{ display:"flex", flexWrap:"wrap", gap:1, mt:2.5, pt:2, borderTop:"1px solid #f3f4f6" }}>
+              <Box sx={{ display:"flex", flexWrap:"wrap", gap:1.5, mt:2.5, pt:2, borderTop:"1px solid #f3f4f6" }}>
                 {Object.entries(STATUS_STYLE).map(([key, s]) => (
                   <Box key={key} sx={{ display:"flex", alignItems:"center", gap:0.5 }}>
-                    <Box sx={{ width:12, height:12, borderRadius:2, background:s.bg, border:`1px solid ${s.border}` }} />
+                    <Box sx={{ width:12, height:12, borderRadius:1, background:s.bg, border:`1px solid ${s.border}` }} />
                     <Typography variant="caption" color="text.secondary">{s.label}</Typography>
                   </Box>
                 ))}
                 <Box sx={{ display:"flex", alignItems:"center", gap:0.5 }}>
-                  <Box sx={{ width:12, height:12, borderRadius:2, background:"#fff", border:"2px solid #1a56db" }} />
+                  <Box sx={{ width:12, height:12, borderRadius:1, border:"2px solid #2563eb" }} />
                   <Typography variant="caption" color="text.secondary">Today</Typography>
+                </Box>
+                <Box sx={{ display:"flex", alignItems:"center", gap:0.5, ml: "auto" }}>
+                  <Box sx={{ px: 0.8, py: 0.2, borderRadius: 1, bgcolor: "#fef3c7", border: "1px solid #fde68a", fontSize: 11, fontWeight: 700, color: "#92400e" }}>
+                    🎬 Videos Made
+                  </Box>
+                  <Box sx={{ px: 0.8, py: 0.2, borderRadius: 1, bgcolor: "#ede9fe", border: "1px solid #ddd6fe", fontSize: 11, fontWeight: 700, color: "#5b21b6" }}>
+                    ✍️ Videos Edited
+                  </Box>
                 </Box>
               </Box>
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Summary sidebar */}
+        {/* Sidebar Summary */}
         <Grid item xs={12} md={4}>
-          {/* Attendance summary */}
           <Card sx={{ mb:2 }}>
             <CardContent>
               <Typography variant="h6" mb={1.5}>
@@ -303,14 +414,42 @@ export default function StaffCalendarView() {
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, flexWrap: "wrap", gap: 2 }}>
             <Box>
               <Typography variant="h6" fontWeight={700}>📝 Month Work Logs & Production</Typography>
-              <Typography variant="caption" color="text.secondary">Work records for {MONTHS[month]} {year}</Typography>
+              <Typography variant="caption" color="text.secondary">Daily video production & work records for {MONTHS[month]} {year}</Typography>
             </Box>
             {workStats && (
               <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                <Chip icon={<span>🎬</span>} label={`Videos Made: ${workStats.totalVideos || 0}`} variant="outlined" size="small" />
-                <Chip icon={<span>✍️</span>} label={`Videos Edited: ${workStats.totalVideosEdited || 0}`} variant="outlined" size="small" />
-                <Chip icon={<span>🎨</span>} label={`Posts Designed: ${workStats.totalPosts || 0}`} variant="outlined" size="small" />
-                <Chip icon={<span>⏱️</span>} label={`Hours: ${workStats.totalHours || 0}h`} variant="outlined" size="small" />
+                <Chip
+                  icon={<span style={{ fontSize: 14 }}>🎬</span>}
+                  label={`Videos Made: ${workStats.totalVideos || 0}`}
+                  sx={{ fontWeight: 700, bgcolor: "#fef3c7", color: "#92400e", border: "1px solid #fde68a" }}
+                  size="small"
+                />
+                <Chip
+                  icon={<span style={{ fontSize: 14 }}>✍️</span>}
+                  label={`Videos Edited: ${workStats.totalVideosEdited || 0}`}
+                  sx={{ fontWeight: 700, bgcolor: "#ede9fe", color: "#5b21b6", border: "1px solid #ddd6fe" }}
+                  size="small"
+                />
+                {workStats.totalShoots > 0 && (
+                  <Chip
+                    icon={<span style={{ fontSize: 14 }}>📸</span>}
+                    label={`Shoots: ${workStats.totalShoots}`}
+                    sx={{ fontWeight: 700, bgcolor: "#ecfdf5", color: "#065f46", border: "1px solid #a7f3d0" }}
+                    size="small"
+                  />
+                )}
+                <Chip
+                  icon={<span style={{ fontSize: 14 }}>🎨</span>}
+                  label={`Posts Designed: ${workStats.totalPosts || 0}`}
+                  variant="outlined"
+                  size="small"
+                />
+                <Chip
+                  icon={<span style={{ fontSize: 14 }}>⏱️</span>}
+                  label={`Hours: ${workStats.totalHours || 0}h`}
+                  variant="outlined"
+                  size="small"
+                />
               </Box>
             )}
           </Box>
@@ -328,59 +467,107 @@ export default function StaffCalendarView() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {workLogs.map((log) => (
-                  <TableRow key={log._id} hover>
-                    <TableCell sx={{ fontSize: 12 }}>{new Date(log.date + "T00:00:00").toLocaleDateString("en-IN")}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={log.workType?.replace("_", " ")?.toUpperCase()}
-                        size="small"
-                        sx={{ fontSize: 10, bgcolor: "primary.light", color: "primary.main", fontWeight: 600 }}
-                      />
-                    </TableCell>
-                    <TableCell sx={{ fontSize: 12, maxWidth: 250 }}>
-                      <Typography variant="caption" sx={{ overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient:"vertical" }}>
-                        {log.description}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                        {log.items && log.items.length > 0 ? (
-                          log.items.map((item, idx) => (
-                            <Chip
-                              key={idx}
-                              label={`${item.name}: 🎬 ${item.videosCreated || 0} / ✍️ ${item.videosEdited || 0}`}
-                              size="small"
-                              sx={{ fontSize: 10, bgcolor: "rgba(0, 0, 0, 0.04)" }}
-                            />
-                          ))
-                        ) : (
-                          <>
-                            {log.videosCreated > 0 || log.videosEdited > 0 ? (
-                              <Chip label={`🎬 ${log.videosCreated || 0} / ✍️ ${log.videosEdited || 0}`} size="small" sx={{ fontSize: 10 }} />
-                            ) : null}
-                            {log.postsDesigned > 0 ? (
-                              <Chip label={`🎨 ${log.postsDesigned}`} size="small" sx={{ fontSize: 10 }} />
-                            ) : null}
-                            {log.hoursWorked > 0 ? (
-                              <Chip label={`⏱️ ${log.hoursWorked}h`} size="small" sx={{ fontSize: 10 }} />
-                            ) : null}
-                            {log.clientId?.businessName ? (
-                              <Chip label={`Client: ${log.clientId.businessName}`} size="small" sx={{ fontSize: 10 }} />
-                            ) : null}
-                            {!log.videosCreated && !log.videosEdited && !log.postsDesigned && !log.hoursWorked && !log.clientId && (
-                              <Typography variant="caption" color="text.secondary">—</Typography>
-                            )}
-                          </>
-                        )}
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {workLogs.map((log) => {
+                  const isShoot = log.workType === "shooting";
+                  const isEdit  = log.workType === "video_editing";
+                  const isScript = log.workType === "content_writing";
+                  
+                  return (
+                    <TableRow key={log._id} hover>
+                      <TableCell sx={{ fontSize: 12, fontWeight: 600 }}>
+                        {new Date(log.date + "T00:00:00").toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={
+                            isShoot ? "🎬 SHOOTING" :
+                            isEdit  ? "✍️ VIDEO EDITING" :
+                            isScript ? "📝 SCRIPT WRITING" :
+                            (log.workType?.replace("_", " ")?.toUpperCase() || "GENERAL")
+                          }
+                          size="small"
+                          sx={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            bgcolor: isShoot ? "#fef3c7" : isEdit ? "#ede9fe" : isScript ? "#e0f2fe" : "#f1f5f9",
+                            color: isShoot ? "#92400e" : isEdit ? "#5b21b6" : isScript ? "#0369a1" : "#475569",
+                            border: isShoot ? "1px solid #fde68a" : isEdit ? "1px solid #ddd6fe" : "none"
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ fontSize: 12, maxWidth: 320 }}>
+                        <Typography variant="body2" sx={{ fontSize: 12, fontWeight: 500, color: "text.primary" }}>
+                          {log.description}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, alignItems: "center" }}>
+                          {log.items && log.items.length > 0 ? (
+                            log.items.map((item, idx) => (
+                              <Box key={idx} sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+                                {item.videosCreated > 0 && (
+                                  <Chip
+                                    label={`🎬 ${item.videosCreated} Video${item.videosCreated > 1 ? "s" : ""} Shot`}
+                                    size="small"
+                                    sx={{ fontSize: 11, fontWeight: 700, bgcolor: "#fef3c7", color: "#92400e", border: "1px solid #fde68a" }}
+                                  />
+                                )}
+                                {item.videosEdited > 0 && (
+                                  <Chip
+                                    label={`✍️ ${item.videosEdited} Video${item.videosEdited > 1 ? "s" : ""} Edited`}
+                                    size="small"
+                                    sx={{ fontSize: 11, fontWeight: 700, bgcolor: "#ede9fe", color: "#5b21b6", border: "1px solid #ddd6fe" }}
+                                  />
+                                )}
+                                {item.name && (
+                                  <Chip
+                                    label={item.name}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{ fontSize: 10, fontWeight: 600 }}
+                                  />
+                                )}
+                              </Box>
+                            ))
+                          ) : (
+                            <>
+                              {log.videosCreated > 0 && (
+                                <Chip
+                                  label={`🎬 ${log.videosCreated} Video${log.videosCreated > 1 ? "s" : ""} Shot`}
+                                  size="small"
+                                  sx={{ fontSize: 11, fontWeight: 700, bgcolor: "#fef3c7", color: "#92400e", border: "1px solid #fde68a" }}
+                                />
+                              )}
+                              {log.videosEdited > 0 && (
+                                <Chip
+                                  label={`✍️ ${log.videosEdited} Video${log.videosEdited > 1 ? "s" : ""} Edited`}
+                                  size="small"
+                                  sx={{ fontSize: 11, fontWeight: 700, bgcolor: "#ede9fe", color: "#5b21b6", border: "1px solid #ddd6fe" }}
+                                />
+                              )}
+                              {log.postsDesigned > 0 && (
+                                <Chip label={`🎨 ${log.postsDesigned} Posts`} size="small" sx={{ fontSize: 10 }} />
+                              )}
+                              {log.hoursWorked > 0 && (
+                                <Chip label={`⏱️ ${log.hoursWorked}h`} size="small" variant="outlined" sx={{ fontSize: 10 }} />
+                              )}
+                              {log.clientId?.businessName && (
+                                <Chip label={`Client: ${log.clientId.businessName}`} size="small" variant="outlined" sx={{ fontSize: 10 }} />
+                              )}
+                              {!log.videosCreated && !log.videosEdited && !log.postsDesigned && !log.hoursWorked && !log.clientId && (
+                                <Typography variant="caption" color="text.secondary">—</Typography>
+                              )}
+                            </>
+                          )}
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {workLogs.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                      No work log records found for this month.
+                      No video production or work records found for this month.
                     </TableCell>
                   </TableRow>
                 )}

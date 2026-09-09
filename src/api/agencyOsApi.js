@@ -7,6 +7,7 @@ export const createProductionTask = (data) => api.post("/production/tasks", data
 
 // Step 1: Script pass ➔ Shoot person assignment
 export const passScriptToShoot = (id, data) => api.put(`/production/tasks/${id}/pass-script-to-shoot`, data);
+export const batchPassScriptToShoot = (data) => api.put(`/production/tasks/batch-pass-to-shoot`, data);
 
 // Step 2: Shoot info edit & completion
 export const updateShootInfo = (id, data) => api.put(`/production/tasks/${id}/update-shoot-info`, data);
@@ -14,6 +15,7 @@ export const completeShoot = (id, data) => api.put(`/production/tasks/${id}/comp
 
 // Step 3: Raw data link & Editor assignment (Strict Gate)
 export const handoffToEdit = (id, data) => api.put(`/production/tasks/${id}/handoff-to-edit`, data);
+export const batchHandoffToEdit = (data) => api.put(`/production/tasks/batch-handoff-to-edit`, data);
 
 // Step 4: Editor submits edited video link ➔ Moves to QC
 export const submitEditToQc = (id, data) => api.put(`/production/tasks/${id}/submit-edit-to-qc`, data);
@@ -46,5 +48,6 @@ export const updateWhatsAppTemplates = (whatsAppTemplates) => api.put("/agency-c
 
 // ── STAFF ATTENDANCE HISTORY & LEAVE PORTAL ──
 export const getMyTimeHistory = (params) => api.get("/time-tracking/my-history", { params });
+export const getStaffTimeHistory = (userId, params) => api.get(`/time-tracking/staff-history/${userId}`, { params });
 export const getMyLeaves = () => api.get("/leaves/my-leaves");
 export const applyMyLeave = (data) => api.post("/leaves/apply-my-leave", data);
