@@ -66,10 +66,16 @@ export default function ProductionHub() {
     goal: "Authority",
     priority: "medium",
     reelNumber: "",
+    serviceType: "full",
+    videoPrice: "",
     concept: "",
     hook: "",
     bodyText: "",
     cta: "",
+    editor: "",
+    shooter: "",
+    shootDate: "",
+    rawFootageLink: "",
   });
 
   const loadData = useCallback(async () => {
@@ -621,6 +627,26 @@ export default function ProductionHub() {
           <div className="flex justify-between items-start gap-2 mb-3">
             <div>
               <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                {task.serviceType === 'only_editing' && (
+                  <span className="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-black rounded-lg inline-flex items-center gap-1">
+                    ✂️ Only Editing {task.videoPrice ? `• ₹${task.videoPrice}` : ''}
+                  </span>
+                )}
+                {task.serviceType === 'only_shooting' && (
+                  <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black rounded-lg inline-flex items-center gap-1">
+                    🎥 Only Shooting {task.videoPrice ? `• ₹${task.videoPrice}` : ''}
+                  </span>
+                )}
+                {(!task.serviceType || task.serviceType === 'full') && task.videoPrice > 0 && (
+                  <span className="px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-black rounded-lg inline-flex items-center gap-1">
+                    🎬 Shoot+Edit • ₹{task.videoPrice}
+                  </span>
+                )}
+                {task.billingStatus === 'billed' && (
+                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-black rounded-lg">
+                    ✓ Billed
+                  </span>
+                )}
                 <span className="px-2.5 py-0.5 bg-orange-50 text-[#FF5200] border border-orange-200/80 text-[11px] font-black uppercase tracking-wider rounded-lg inline-flex items-center gap-1 shadow-2xs">
                   🏢 {task.client?.businessName || "Unknown Client"}
                 </span>
@@ -1349,6 +1375,122 @@ export default function ProductionHub() {
                     <span className="font-black font-mono">
                       Reel #{tasks.filter(t => String(t.client?._id || t.client) === String(newTaskForm.client)).length + 1} (Auto-assigned)
                     </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Service Scope Selection & Per-Video Rate */}
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2.5">
+                <label className="text-xs font-bold text-slate-700 block">
+                  ⚡ Service Scope / કામનો પ્રકાર:
+                </label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setNewTaskForm(prev => ({ ...prev, serviceType: 'only_editing' }))}
+                    className={`py-2 px-1 text-[11px] font-black rounded-xl border transition-all text-center ${
+                      newTaskForm.serviceType === 'only_editing'
+                        ? 'bg-purple-600 text-white border-purple-700 shadow-xs'
+                        : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50'
+                    }`}
+                  >
+                    ✂️ Only Editing
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setNewTaskForm(prev => ({ ...prev, serviceType: 'only_shooting' }))}
+                    className={`py-2 px-1 text-[11px] font-black rounded-xl border transition-all text-center ${
+                      newTaskForm.serviceType === 'only_shooting'
+                        ? 'bg-blue-600 text-white border-blue-700 shadow-xs'
+                        : 'bg-white text-blue-700 border-blue-200 hover:bg-blue-50'
+                    }`}
+                  >
+                    🎥 Only Shooting
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setNewTaskForm(prev => ({ ...prev, serviceType: 'full' }))}
+                    className={`py-2 px-1 text-[11px] font-black rounded-xl border transition-all text-center ${
+                      newTaskForm.serviceType === 'full' || !newTaskForm.serviceType
+                        ? 'bg-orange-600 text-white border-orange-700 shadow-xs'
+                        : 'bg-white text-orange-700 border-orange-200 hover:bg-orange-50'
+                    }`}
+                  >
+                    🎬 Shoot+Edit
+                  </button>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                    💰 Video Price / Rate (₹) <span className="text-slate-400 font-normal">(Agency Billing માટે)</span>
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 600, 800, 1500"
+                    value={newTaskForm.videoPrice || ''}
+                    onChange={(e) => setNewTaskForm({ ...newTaskForm, videoPrice: e.target.value })}
+                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 font-bold focus:outline-none focus:border-[#FF5200]"
+                  />
+                </div>
+
+                {/* Conditional Fields for Only Editing */}
+                {newTaskForm.serviceType === 'only_editing' && (
+                  <div className="pt-2 border-t border-slate-200/80 space-y-2">
+                    <div>
+                      <label className="text-[11px] font-bold text-purple-700 block mb-1">🎬 Direct Assign Video Editor</label>
+                      <select
+                        value={newTaskForm.editor || ''}
+                        onChange={(e) => setNewTaskForm({ ...newTaskForm, editor: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl text-xs text-slate-800 font-medium"
+                      >
+                        <option value="">-- Select Editor --</option>
+                        {teamMembers.filter(m => m.role === 'editor' || m.role === 'team' || m.role === 'admin' || m.role === 'manager').map(m => (
+                          <option key={m._id} value={m._id}>{m.name} ({m.role})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold text-purple-700 block mb-1">📂 Raw Footage Drive Link</label>
+                      <input
+                        type="url"
+                        placeholder="https://drive.google.com/..."
+                        value={newTaskForm.rawFootageLink || ''}
+                        onChange={(e) => setNewTaskForm({ ...newTaskForm, rawFootageLink: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl text-xs text-slate-800 font-medium"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Conditional Fields for Only Shooting */}
+                {newTaskForm.serviceType === 'only_shooting' && (
+                  <div className="pt-2 border-t border-slate-200/80 space-y-2">
+                    <div>
+                      <label className="text-[11px] font-bold text-blue-700 block mb-1">🎥 Direct Assign Shooter</label>
+                      <select
+                        value={newTaskForm.shooter || ''}
+                        onChange={(e) => setNewTaskForm({ ...newTaskForm, shooter: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs text-slate-800 font-medium"
+                      >
+                        <option value="">-- Select Shooter --</option>
+                        {teamMembers.filter(m => m.role === 'shooter' || m.role === 'team' || m.role === 'admin' || m.role === 'manager').map(m => (
+                          <option key={m._id} value={m._id}>{m.name} ({m.role})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold text-blue-700 block mb-1">📅 Shoot Date</label>
+                      <input
+                        type="date"
+                        value={newTaskForm.shootDate || ''}
+                        onChange={(e) => setNewTaskForm({ ...newTaskForm, shootDate: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs text-slate-800 font-medium"
+                      />
+                    </div>
                   </div>
                 )}
               </div>

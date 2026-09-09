@@ -73,6 +73,8 @@ const EMPTY_TASK = {
   editor: "",
   rawFootageLink: "",
   editedPreviewLink: "",
+  serviceType: "full",
+  videoPrice: "",
 };
 
 // ── TASK CARD COMPONENT ──
@@ -157,6 +159,38 @@ function PipelineTaskCard({
               />
             )}
           </Box>
+        </Box>
+
+        {/* Service Scope & Rate Badges */}
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 0.8, alignItems: 'center' }}>
+          {task.serviceType === 'only_editing' && (
+            <Chip
+              size="small"
+              label={`✂️ Only Editing${task.videoPrice ? ` • ₹${task.videoPrice}` : ''}`}
+              sx={{ fontSize: 9, height: 18, fontWeight: 800, bgcolor: '#f3e8ff', color: '#7e22ce', border: '1px solid #d8b4fe' }}
+            />
+          )}
+          {task.serviceType === 'only_shooting' && (
+            <Chip
+              size="small"
+              label={`🎥 Only Shooting${task.videoPrice ? ` • ₹${task.videoPrice}` : ''}`}
+              sx={{ fontSize: 9, height: 18, fontWeight: 800, bgcolor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe' }}
+            />
+          )}
+          {(!task.serviceType || task.serviceType === 'full') && task.videoPrice > 0 && (
+            <Chip
+              size="small"
+              label={`🎬 Shoot+Edit • ₹${task.videoPrice}`}
+              sx={{ fontSize: 9, height: 18, fontWeight: 800, bgcolor: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa' }}
+            />
+          )}
+          {task.billingStatus === 'billed' && (
+            <Chip
+              size="small"
+              label="✓ Billed"
+              sx={{ fontSize: 8, height: 16, fontWeight: 800, bgcolor: '#ecfdf5', color: '#047857' }}
+            />
+          )}
         </Box>
 
         {/* Title & Reel # */}
@@ -515,6 +549,8 @@ export default function ContentPipelinePage() {
       editor: item.editor?._id || item.editor || "",
       rawFootageLink: item.rawFootageLink || item.driveLink || "",
       editedPreviewLink: item.editedPreviewLink || "",
+      serviceType: item.serviceType || "full",
+      videoPrice: item.videoPrice || "",
     });
     setDialogOpen(true);
   };
@@ -555,8 +591,12 @@ export default function ContentPipelinePage() {
             shootTime: form.shootTime,
             location: form.location,
             editor: form.editor || null,
+          serviceType: form.serviceType || "full",
+          videoPrice: Number(form.videoPrice) || 0,
             rawFootageLink: form.rawFootageLink,
             editedPreviewLink: form.editedPreviewLink,
+            serviceType: form.serviceType || "full",
+            videoPrice: Number(form.videoPrice) || 0,
           });
           const updated = res.data?.task;
           if (updated) {
@@ -830,6 +870,90 @@ export default function ContentPipelinePage() {
               />
             </Grid>
 
+            {/* Service Scope Selection (Only Editing / Only Shooting / Full) */}
+            <Grid item xs={12} sm={8}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, color: '#475569' }}>
+                  Service Scope / કામનો પ્રકાર:
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Button
+                    size="small"
+                    variant={form.serviceType === 'only_editing' ? 'contained' : 'outlined'}
+                    onClick={() => {
+                      setForm(prev => ({ ...prev, serviceType: 'only_editing', stage: 'edit' }));
+                    }}
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 800,
+                      borderRadius: 2,
+                      fontSize: 11,
+                      bgcolor: form.serviceType === 'only_editing' ? '#7e22ce' : 'transparent',
+                      color: form.serviceType === 'only_editing' ? '#fff' : '#7e22ce',
+                      borderColor: '#c084fc',
+                      '&:hover': { bgcolor: form.serviceType === 'only_editing' ? '#6b21a8' : '#f3e8ff' }
+                    }}
+                  >
+                    ✂️ Only Editing
+                  </Button>
+
+                  <Button
+                    size="small"
+                    variant={form.serviceType === 'only_shooting' ? 'contained' : 'outlined'}
+                    onClick={() => {
+                      setForm(prev => ({ ...prev, serviceType: 'only_shooting', stage: 'shoot' }));
+                    }}
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 800,
+                      borderRadius: 2,
+                      fontSize: 11,
+                      bgcolor: form.serviceType === 'only_shooting' ? '#1d4ed8' : 'transparent',
+                      color: form.serviceType === 'only_shooting' ? '#fff' : '#1d4ed8',
+                      borderColor: '#93c5fd',
+                      '&:hover': { bgcolor: form.serviceType === 'only_shooting' ? '#1e40af' : '#eff6ff' }
+                    }}
+                  >
+                    🎥 Only Shooting
+                  </Button>
+
+                  <Button
+                    size="small"
+                    variant={form.serviceType === 'full' || !form.serviceType ? 'contained' : 'outlined'}
+                    onClick={() => {
+                      setForm(prev => ({ ...prev, serviceType: 'full', stage: prev.stage === 'edit' || prev.stage === 'shoot' ? 'script' : prev.stage }));
+                    }}
+                    sx={{
+                      textTransform: 'none',
+                      fontWeight: 800,
+                      borderRadius: 2,
+                      fontSize: 11,
+                      bgcolor: (form.serviceType === 'full' || !form.serviceType) ? '#ea580c' : 'transparent',
+                      color: (form.serviceType === 'full' || !form.serviceType) ? '#fff' : '#ea580c',
+                      borderColor: '#fdba74',
+                      '&:hover': { bgcolor: (form.serviceType === 'full' || !form.serviceType) ? '#c2410c' : '#fff7ed' }
+                    }}
+                  >
+                    🎬 Shooting + Editing
+                  </Button>
+                </Box>
+              </Box>
+            </Grid>
+
+            {/* Video Price / Rate */}
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                size="small"
+                type="number"
+                label="Video Rate / Price (₹)"
+                placeholder="e.g. 600"
+                value={form.videoPrice}
+                onChange={e => handleFormField('videoPrice', e.target.value)}
+                helperText="Custom price for this reel (Agency Billing)"
+              />
+            </Grid>
+
             {/* Stage */}
             <Grid item xs={12} sm={4}>
               <FormControl fullWidth size="small">
@@ -928,12 +1052,14 @@ export default function ContentPipelinePage() {
               />
             </Grid>
 
-            {/* Shoot Details */}
-            <Grid item xs={12}>
-              <Divider sx={{ my: 0.5 }}>
-                <Chip label="🎥 Shoot Assignment & Scheduling" size="small" sx={{ fontSize: 11, fontWeight: 700 }} />
-              </Divider>
-            </Grid>
+            {/* Shoot Details (Hidden if Only Editing) */}
+            {form.serviceType !== 'only_editing' && (
+              <>
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 0.5 }}>
+                    <Chip label="🎥 Shoot Assignment & Scheduling" size="small" sx={{ fontSize: 11, fontWeight: 700 }} />
+                  </Divider>
+                </Grid>
 
             <Grid item xs={12} sm={4}>
               <FormControl fullWidth size="small">
@@ -996,12 +1122,17 @@ export default function ContentPipelinePage() {
               />
             </Grid>
 
-            {/* Edit Details */}
-            <Grid item xs={12}>
-              <Divider sx={{ my: 0.5 }}>
-                <Chip label="🎬 Video Editing Assignment" size="small" sx={{ fontSize: 11, fontWeight: 700 }} />
-              </Divider>
-            </Grid>
+            </>
+            )}
+
+            {/* Edit Details (Hidden if Only Shooting) */}
+            {form.serviceType !== 'only_shooting' && (
+              <>
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 0.5 }}>
+                    <Chip label="🎬 Video Editing Assignment" size="small" sx={{ fontSize: 11, fontWeight: 700 }} />
+                  </Divider>
+                </Grid>
 
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth size="small">
@@ -1029,6 +1160,8 @@ export default function ContentPipelinePage() {
                 onChange={e => handleFormField("editedPreviewLink", e.target.value)}
               />
             </Grid>
+              </>
+            )}
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>

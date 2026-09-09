@@ -133,6 +133,7 @@ export default function DashboardLayout() {
       items: [
         { label: "Active Clients", icon: <PeopleAltIcon fontSize="small" />, path: "/admin/clients", roles: ["admin", "manager"] },
         { label: "Invoices & Billing", icon: <ReceiptLongIcon fontSize="small" />, path: "/admin/invoices", roles: ["admin"] },
+        { label: "🤝 Agency Billing (B2B)", icon: <ReceiptLongIcon fontSize="small" />, path: "/admin/agency-billing", roles: ["admin", "manager"] },
         { label: "Leads & Prospects", icon: <HandshakeIcon fontSize="small" />, path: "/admin/leads", roles: ["admin", "manager"] },
         { label: "Ledger / Hisab", icon: <AccountBalanceWalletIcon fontSize="small" />, path: "/admin/hisab", roles: ["admin"] },
       ],
