@@ -61,3 +61,5 @@ export const generateAgencyInvoice = (data) => api.post('/agency-billing/generat
 export const updateClientAgencyStatus = (id, data) => api.put(`/agency-billing/agencies/${id}/convert`, data);
 
 export const deleteAgencyPartner = (id, params) => api.delete(`/agency-billing/agencies/${id}`, { params });
+
+export const updateAgencyPartner = (id, data) => api.put(`/agency-billing/agencies/${id}`, data);

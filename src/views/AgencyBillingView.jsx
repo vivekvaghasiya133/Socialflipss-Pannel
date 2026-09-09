@@ -13,6 +13,7 @@ import HandshakeIcon from '@mui/icons-material/Handshake';
 import VideoCameraBackIcon from '@mui/icons-material/VideoCameraBack';
 import ContentCutIcon from '@mui/icons-material/ContentCut';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import MovieFilterIcon from '@mui/icons-material/MovieFilter';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
@@ -26,7 +27,8 @@ import {
   generateAgencyInvoice,
   updateClientAgencyStatus,
   createAgencyPartner,
-  deleteAgencyPartner
+  deleteAgencyPartner,
+  updateAgencyPartner
 } from '../api/agencyOsApi';
 import { getClients } from '../api/clientsApi';
 
@@ -55,6 +57,17 @@ export default function AgencyBillingView() {
   // Convert Client to Agency Modal
   const [showAddAgencyModal, setShowAddAgencyModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [editTarget, setEditTarget] = useState(null);
+  const [editForm, setEditForm] = useState({
+    businessName: '',
+    ownerName: '',
+    mobile: '',
+    email: '',
+    city: 'Surat',
+    defaultShootRate: '',
+    defaultEditRate: '',
+    defaultFullRate: '',
+  });
   const [clientToConvert, setClientToConvert] = useState('');
 
   // Create New Agency Partner Modal
@@ -168,6 +181,50 @@ export default function AgencyBillingView() {
     } catch (err) {
       console.error('generateInvoice error:', err);
       setError(err.response?.data?.message || 'Failed to generate invoice');
+    }
+  };
+
+    // Open Edit Agency Modal
+  const handleOpenEditModal = (ag) => {
+    setEditTarget(ag);
+    setEditForm({
+      businessName: ag.businessName || '',
+      ownerName: ag.ownerName || '',
+      mobile: ag.mobile || '',
+      email: ag.email || '',
+      city: ag.city || 'Surat',
+      defaultShootRate: ag.agencyRates?.defaultShootRate || '',
+      defaultEditRate: ag.agencyRates?.defaultEditRate || '',
+      defaultFullRate: ag.agencyRates?.defaultFullRate || '',
+    });
+  };
+
+  // Save Agency Edits
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+    if (!editTarget) return;
+    try {
+      const res = await updateAgencyPartner(editTarget._id, {
+        businessName: editForm.businessName,
+        ownerName: editForm.ownerName,
+        mobile: editForm.mobile,
+        email: editForm.email,
+        city: editForm.city,
+        agencyRates: {
+          defaultShootRate: Number(editForm.defaultShootRate) || 0,
+          defaultEditRate: Number(editForm.defaultEditRate) || 0,
+          defaultFullRate: Number(editForm.defaultFullRate) || 0,
+        }
+      });
+
+      setToast(res.data?.message || 'Agency details updated successfully! ✨');
+      setEditTarget(null);
+      await loadAgencies();
+      if (selectedAgencyId === editTarget._id) {
+        loadSummary();
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update agency');
     }
   };
 
@@ -527,6 +584,16 @@ export default function AgencyBillingView() {
                             >
                               Open Bill
                             </Button>
+
+                            <Tooltip title="Edit Agency Details & Rates">
+                              <IconButton
+                                size="small"
+                                onClick={() => handleOpenEditModal(ag)}
+                                sx={{ border: '1px solid #e2e8f0', bgcolor: '#f8fafc', '&:hover': { bgcolor: '#f1f5f9' }, p: 0.8 }}
+                              >
+                                <EditIcon sx={{ fontSize: 16, color: '#334155' }} />
+                              </IconButton>
+                            </Tooltip>
 
                             <Tooltip title="Delete or Untag Agency">
                               <IconButton
@@ -1109,6 +1176,131 @@ export default function AgencyBillingView() {
             Confirm & Save
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* ── MODAL: EDIT AGENCY PARTNER DETAILS & RATES ── */}
+      <Dialog
+        open={Boolean(editTarget)}
+        onClose={() => setEditTarget(null)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3.5 } }}
+      >
+        <form onSubmit={handleSaveEdit}>
+          <DialogTitle sx={{ fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 1 }}>
+            <EditIcon sx={{ color: '#FF5200' }} /> Edit Agency Details & Rates (એજન્સી વિગતો અને ભાવ બદલો)
+          </DialogTitle>
+          <DialogContent dividers>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  required
+                  size="small"
+                  label="Agency / Business Name"
+                  value={editForm.businessName}
+                  onChange={(e) => setEditForm({ ...editForm, businessName: e.target.value })}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  required
+                  size="small"
+                  label="Contact Person / Owner Name"
+                  value={editForm.ownerName}
+                  onChange={(e) => setEditForm({ ...editForm, ownerName: e.target.value })}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  required
+                  size="small"
+                  label="Mobile Number (WhatsApp)"
+                  value={editForm.mobile}
+                  onChange={(e) => setEditForm({ ...editForm, mobile: e.target.value })}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Email (Optional)"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="City"
+                  value={editForm.city}
+                  onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Divider sx={{ my: 1 }}>
+                  <Chip label="Default Agreed Rates / નક્કી કરેલા ડિફોલ્ટ ભાવ" size="small" sx={{ fontSize: 11, fontWeight: 700 }} />
+                </Divider>
+              </Grid>
+
+              <Grid item xs={4}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="number"
+                  label="Only Shoot Rate (₹)"
+                  placeholder="e.g. 1000"
+                  value={editForm.defaultShootRate}
+                  onChange={(e) => setEditForm({ ...editForm, defaultShootRate: e.target.value })}
+                />
+              </Grid>
+
+              <Grid item xs={4}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="number"
+                  label="Only Edit Rate (₹)"
+                  placeholder="e.g. 600"
+                  value={editForm.defaultEditRate}
+                  onChange={(e) => setEditForm({ ...editForm, defaultEditRate: e.target.value })}
+                />
+              </Grid>
+
+              <Grid item xs={4}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="number"
+                  label="Full Package Rate (₹)"
+                  placeholder="e.g. 1500"
+                  value={editForm.defaultFullRate}
+                  onChange={(e) => setEditForm({ ...editForm, defaultFullRate: e.target.value })}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setEditTarget(null)} sx={{ fontWeight: 700 }}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{ fontWeight: 800, bgcolor: '#FF5200', '&:hover': { bgcolor: '#e04800' } }}
+            >
+              Save Changes ✨
+            </Button>
+          </DialogActions>
+        </form>
       </Dialog>
 
       {/* ── MODAL: DELETE / UNTAG AGENCY CONFIRMATION ── */}
