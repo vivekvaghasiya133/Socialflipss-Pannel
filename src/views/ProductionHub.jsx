@@ -88,7 +88,7 @@ export default function ProductionHub() {
           search: searchQuery || undefined,
         }),
         getProductionOverview(),
-        getClients({ limit: 100 }),
+        getClients({ limit: 300, all: "true" }),
         getTeamTimeOverview(),
       ]);
       if (tasksRes.data?.success) {
@@ -609,6 +609,25 @@ export default function ProductionHub() {
   const displayedQuotas = showAllQuotas ? filteredQuotas : filteredQuotas.slice(0, 4);
 
   // Reusable Single Task Card Renderer
+    // Separate Direct Clients and Agency Partners
+  const directClients = clients.filter(c =>
+    c.clientType !== 'agency' &&
+    !c.isQuickClient &&
+    !c.businessName?.toLowerCase().includes('agency') &&
+    !c.businessName?.toLowerCase().includes('vardhate') &&
+    !c.businessName?.toLowerCase().includes('patel media') &&
+    !c.businessName?.toLowerCase().includes('chhutak')
+  );
+
+  const agencyClients = clients.filter(c =>
+    c.clientType === 'agency' ||
+    c.isQuickClient ||
+    c.businessName?.toLowerCase().includes('agency') ||
+    c.businessName?.toLowerCase().includes('vardhate') ||
+    c.businessName?.toLowerCase().includes('patel media') ||
+    c.businessName?.toLowerCase().includes('chhutak')
+  );
+
   const renderTaskCard = (task) => {
     const isScript = task.stage === "script";
     const isShoot = task.stage === "shoot";
@@ -1359,15 +1378,42 @@ export default function ProductionHub() {
                 <select
                   required
                   value={newTaskForm.client}
-                  onChange={(e) => setNewTaskForm({ ...newTaskForm, client: e.target.value })}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-medium"
+                  onChange={(e) => {
+                    const selectedId = e.target.value;
+                    const found = clients.find(c => c._id === selectedId);
+                    const isAg = found?.clientType === 'agency' || found?.isQuickClient || found?.businessName?.toLowerCase().includes('agency');
+                    setNewTaskForm(prev => ({
+                      ...prev,
+                      client: selectedId,
+                      videoPrice: (isAg && found?.agencyRates?.defaultShootRate) ? found.agencyRates.defaultShootRate : prev.videoPrice
+                    }));
+                  }}
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-bold"
                 >
-                  <option value="">-- Select Client --</option>
-                  {clients.map((c) => (
-                    <option key={c._id} value={c._id}>
-                      {c.businessName}
-                    </option>
-                  ))}
+                  <option value="">-- Select Client or Agency --</option>
+
+                  {/* 1. All Direct Brand Clients */}
+                  <optgroup label="🏢 DIRECT BRAND CLIENTS (બધા ક્લાયન્ટ્સ)">
+                    {directClients.map((c) => (
+                      <option key={c._id} value={c._id}>
+                        🏢 {c.businessName}
+                      </option>
+                    ))}
+                  </optgroup>
+
+                  {/* 2. Visual Separator as requested */}
+                  <option disabled value="" className="text-slate-400 font-black bg-slate-200">
+                    ──────── 🤝 AGENCY PARTNERS (એજન્સી વર્ક) ────────
+                  </option>
+
+                  {/* 3. Agency Partners / Work */}
+                  <optgroup label="🤝 AGENCY PARTNERS / WORK (Vardhate, Patel Media, etc.)">
+                    {agencyClients.map((c) => (
+                      <option key={c._id} value={c._id} className="font-black text-[#FF5200]">
+                        🤝 {c.businessName} (Agency Work)
+                      </option>
+                    ))}
+                  </optgroup>
                 </select>
                 {newTaskForm.client && (
                   <div className="mt-2 text-[11px] font-bold text-[#FF5200] bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-200/80 flex items-center justify-between">

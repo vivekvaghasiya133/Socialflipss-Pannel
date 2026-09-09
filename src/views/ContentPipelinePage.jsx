@@ -6,7 +6,7 @@ import {
   Box, Typography, Card, CardContent, Chip, Button, IconButton,
   Dialog, DialogTitle, DialogContent, DialogActions, TextField,
   Select, MenuItem, FormControl, InputLabel, Alert, Snackbar,
-  CircularProgress, Tooltip, Avatar, Grid, Divider, InputAdornment,
+  CircularProgress, Tooltip, Avatar, Grid, Divider, InputAdornment, ListSubheader,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -414,7 +414,7 @@ export default function ContentPipelinePage() {
       const [prodRes, legacyRes, cliRes, usrRes] = await Promise.allSettled([
         getProductionTasks(selectedClient !== "all" ? { clientId: selectedClient } : {}),
         api.get("/content", { params: { type: "reel", limit: 300 } }),
-        getClients({ limit: 100 }),
+        getClients({ limit: 300, all: "true" }),
         api.get("/auth/users"),
       ]);
 
@@ -657,6 +657,25 @@ export default function ContentPipelinePage() {
     setForm(prev => ({ ...prev, [key]: val }));
   };
 
+    // Separate Direct Clients and Agency Partners
+  const directClients = clients.filter(c =>
+    c.clientType !== 'agency' &&
+    !c.isQuickClient &&
+    !c.businessName?.toLowerCase().includes('agency') &&
+    !c.businessName?.toLowerCase().includes('vardhate') &&
+    !c.businessName?.toLowerCase().includes('patel media') &&
+    !c.businessName?.toLowerCase().includes('chhutak')
+  );
+
+  const agencyClients = clients.filter(c =>
+    c.clientType === 'agency' ||
+    c.isQuickClient ||
+    c.businessName?.toLowerCase().includes('agency') ||
+    c.businessName?.toLowerCase().includes('vardhate') ||
+    c.businessName?.toLowerCase().includes('patel media') ||
+    c.businessName?.toLowerCase().includes('chhutak')
+  );
+
   // Quick Writers, Shooters, Editors from loaded users
   const writers = users.filter(u => u.role === "writer" || u.role === "admin" || u.role === "manager");
   const shooters = users.filter(u => u.role === "shooter" || u.role === "admin" || u.role === "manager");
@@ -846,11 +865,33 @@ export default function ContentPipelinePage() {
                 <Select
                   value={form.clientId}
                   label="Client"
-                  onChange={e => handleFormField("clientId", e.target.value)}
+                  onChange={e => {
+                    const selectedId = e.target.value;
+                    const found = clients.find(c => c._id === selectedId);
+                    const isAg = found?.clientType === 'agency' || found?.isQuickClient || found?.businessName?.toLowerCase().includes('agency');
+                    setForm(prev => ({
+                      ...prev,
+                      clientId: selectedId,
+                      videoPrice: (isAg && found?.agencyRates?.defaultShootRate) ? found.agencyRates.defaultShootRate : prev.videoPrice
+                    }));
+                  }}
                 >
-                  {clients.map(c => (
+                  <ListSubheader sx={{ fontWeight: 900, color: '#1e293b', bgcolor: '#f8fafc', fontSize: 11 }}>
+                    🏢 DIRECT BRAND CLIENTS (બધા ક્લાયન્ટ્સ)
+                  </ListSubheader>
+                  {directClients.map(c => (
                     <MenuItem key={c._id} value={c._id}>
                       🏢 {c.businessName}
+                    </MenuItem>
+                  ))}
+
+                  <Divider sx={{ my: 1 }} />
+                  <ListSubheader sx={{ fontWeight: 900, color: '#c2410c', bgcolor: '#fff7ed', fontSize: 11 }}>
+                    ──────── 🤝 AGENCY PARTNERS (એજન્સી વર્ક - Vardhate, etc.) ────────
+                  </ListSubheader>
+                  {agencyClients.map(c => (
+                    <MenuItem key={c._id} value={c._id} sx={{ fontWeight: 800, color: '#9a3412' }}>
+                      🤝 {c.businessName} (Agency Work)
                     </MenuItem>
                   ))}
                 </Select>
