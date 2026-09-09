@@ -21,6 +21,24 @@ import { getClients } from "../api/clientsApi";
 import { useAuth } from "../context/AuthContext";
 import { generateShootScriptPdf } from "../utils/shootScriptPdf";
 
+const INITIAL_NEW_TASK_FORM = {
+  client: "",
+  title: "",
+  goal: "Authority",
+  priority: "medium",
+  reelNumber: "",
+  serviceType: "full",
+  videoPrice: "",
+  concept: "",
+  hook: "",
+  bodyText: "",
+  cta: "",
+  editor: "",
+  shooter: "",
+  shootDate: "",
+  rawFootageLink: "",
+};
+
 export default function ProductionHub() {
   const { user } = useAuth();
   const isManagerOrAdmin = user?.role === "admin" || user?.role === "manager";
@@ -41,6 +59,18 @@ export default function ProductionHub() {
 
   // Modals state
   const [showNewTaskModal, setShowNewTaskModal] = useState(false);
+  // Reset & Open / Close Modal Handlers
+  const handleCloseNewTaskModal = () => {
+    setNewTaskForm(INITIAL_NEW_TASK_FORM);
+    setShowAdvancedScriptFields(false);
+    setShowNewTaskModal(false);
+  };
+
+  const handleOpenNewTaskModal = () => {
+    setNewTaskForm(INITIAL_NEW_TASK_FORM);
+    setShowAdvancedScriptFields(false);
+    setShowNewTaskModal(true);
+  };
   const [showAdvancedScriptFields, setShowAdvancedScriptFields] = useState(false);
   const [showAssignShooterModal, setShowAssignShooterModal] = useState(null);
   const [selectedBatchTaskIds, setSelectedBatchTaskIds] = useState([]);
@@ -60,23 +90,7 @@ export default function ProductionHub() {
   const [confettiMsg, setConfettiMsg] = useState("");
 
   // Form states
-  const [newTaskForm, setNewTaskForm] = useState({
-    client: "",
-    title: "",
-    goal: "Authority",
-    priority: "medium",
-    reelNumber: "",
-    serviceType: "full",
-    videoPrice: "",
-    concept: "",
-    hook: "",
-    bodyText: "",
-    cta: "",
-    editor: "",
-    shooter: "",
-    shootDate: "",
-    rawFootageLink: "",
-  });
+  const [newTaskForm, setNewTaskForm] = useState(INITIAL_NEW_TASK_FORM);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -1147,7 +1161,7 @@ export default function ProductionHub() {
             </button>
           )}
           <button
-            onClick={() => setShowNewTaskModal(true)}
+            onClick={handleOpenNewTaskModal}
             className="px-6 py-3.5 bg-gradient-to-r from-[#FF5200] to-[#FC8019] hover:from-[#E04800] hover:to-[#EB7410] text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-orange-500/25 transition-all flex items-center gap-2 active:scale-95 cursor-pointer"
           >
             <span>✨</span>
@@ -1355,7 +1369,7 @@ export default function ProductionHub() {
 
       {/* ── MODAL 1: CREATE NEW REEL TASK ── */}
       {showNewTaskModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div onClick={(e) => { if (e.target === e.currentTarget) handleCloseNewTaskModal(); }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm cursor-pointer">
           <div className="bg-white border border-slate-100 rounded-3xl p-8 w-full max-w-md shadow-2xl">
             <h3 className="text-xl font-black text-slate-900 mb-4">✨ Create New Reel Task</h3>
 
@@ -1364,7 +1378,7 @@ export default function ProductionHub() {
                 e.preventDefault();
                 try {
                   await createProductionTask(newTaskForm);
-                  setShowNewTaskModal(false);
+                  handleCloseNewTaskModal();
                   triggerCelebration("New Reel Task Created in Script Vault! ✨");
                   loadData();
                 } catch (err) {
@@ -1622,8 +1636,8 @@ export default function ProductionHub() {
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setShowNewTaskModal(false)}
-                  className="px-5 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl text-xs"
+                  onClick={handleCloseNewTaskModal}
+                  className="px-5 py-2.5 bg-slate-100 text-slate-600 font-bold rounded-xl text-xs cursor-pointer hover:bg-slate-200 transition-colors"
                 >
                   Cancel
                 </button>

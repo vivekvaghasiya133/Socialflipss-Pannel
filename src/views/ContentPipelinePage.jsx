@@ -523,6 +523,12 @@ export default function ContentPipelinePage() {
     }
   };
 
+    const handleCloseDialog = () => {
+    setForm(EMPTY_TASK);
+    setEditTarget(null);
+    setDialogOpen(false);
+  };
+
   const handleOpenAdd = () => {
     setEditTarget(null);
     setForm(EMPTY_TASK);
@@ -630,7 +636,7 @@ export default function ContentPipelinePage() {
         }
         setToast(`Reel Task created successfully in ${STAGES.find(s => s.key === form.stage)?.label || "Pipeline"}! 🚀`);
       }
-      setDialogOpen(false);
+      handleCloseDialog();
     } catch (err) {
       console.error("Save task error:", err);
       setError(err.response?.data?.message || "Failed to save task.");
@@ -848,7 +854,7 @@ export default function ContentPipelinePage() {
       {/* ── CREATE / EDIT TASK DIALOG ── */}
       <Dialog
         open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        onClose={handleCloseDialog}
         maxWidth="md"
         fullWidth
         PaperProps={{ sx: { borderRadius: 3 } }}
@@ -1206,7 +1212,7 @@ export default function ContentPipelinePage() {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setDialogOpen(false)} sx={{ fontWeight: 700 }}>
+          <Button onClick={handleCloseDialog} sx={{ fontWeight: 700 }}>
             Cancel
           </Button>
           <Button
