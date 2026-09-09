@@ -12,6 +12,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import HandshakeIcon from '@mui/icons-material/Handshake';
 import VideoCameraBackIcon from '@mui/icons-material/VideoCameraBack';
 import ContentCutIcon from '@mui/icons-material/ContentCut';
+import DeleteIcon from '@mui/icons-material/Delete';
 import MovieFilterIcon from '@mui/icons-material/MovieFilter';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
@@ -24,7 +25,8 @@ import {
   getAgencyBillingSummary,
   generateAgencyInvoice,
   updateClientAgencyStatus,
-  createAgencyPartner
+  createAgencyPartner,
+  deleteAgencyPartner
 } from '../api/agencyOsApi';
 import { getClients } from '../api/clientsApi';
 
@@ -52,6 +54,7 @@ export default function AgencyBillingView() {
 
   // Convert Client to Agency Modal
   const [showAddAgencyModal, setShowAddAgencyModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [clientToConvert, setClientToConvert] = useState('');
 
   // Create New Agency Partner Modal
@@ -165,6 +168,22 @@ export default function AgencyBillingView() {
     } catch (err) {
       console.error('generateInvoice error:', err);
       setError(err.response?.data?.message || 'Failed to generate invoice');
+    }
+  };
+
+  // Delete or Untag Agency
+  const handleExecuteDelete = async (actionType) => {
+    if (!deleteTarget) return;
+    try {
+      const res = await deleteAgencyPartner(deleteTarget._id, { action: actionType });
+      setToast(res.data?.message || 'Action completed!');
+      setDeleteTarget(null);
+      await loadAgencies();
+      if (selectedAgencyId === deleteTarget._id) {
+        setSelectedAgencyId('');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete agency');
     }
   };
 
@@ -491,22 +510,35 @@ export default function AgencyBillingView() {
                         </TableCell>
 
                         <TableCell align="center">
-                          <Button
-                            variant="contained"
-                            size="small"
-                            endIcon={<ArrowForwardIcon />}
-                            onClick={() => handleOpenAgencyBilling(ag._id)}
-                            sx={{
-                              textTransform: 'none',
-                              fontWeight: 800,
-                              borderRadius: 2,
-                              fontSize: 11,
-                              bgcolor: '#FF5200',
-                              '&:hover': { bgcolor: '#e04800' }
-                            }}
-                          >
-                            Open Bill
-                          </Button>
+                          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', alignItems: 'center' }}>
+                            <Button
+                              variant="contained"
+                              size="small"
+                              endIcon={<ArrowForwardIcon />}
+                              onClick={() => handleOpenAgencyBilling(ag._id)}
+                              sx={{
+                                textTransform: 'none',
+                                fontWeight: 800,
+                                borderRadius: 2,
+                                fontSize: 11,
+                                bgcolor: '#FF5200',
+                                '&:hover': { bgcolor: '#e04800' }
+                              }}
+                            >
+                              Open Bill
+                            </Button>
+
+                            <Tooltip title="Delete or Untag Agency">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => setDeleteTarget(ag)}
+                                sx={{ border: '1px solid #fee2e2', bgcolor: '#fef2f2', '&:hover': { bgcolor: '#fee2e2' }, p: 0.8 }}
+                              >
+                                <DeleteIcon sx={{ fontSize: 16 }} />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
                         </TableCell>
                       </TableRow>
                     ))
@@ -1075,6 +1107,66 @@ export default function AgencyBillingView() {
           <Button onClick={() => setShowAddAgencyModal(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleConvertClient} sx={{ bgcolor: '#FF5200' }}>
             Confirm & Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── MODAL: DELETE / UNTAG AGENCY CONFIRMATION ── */}
+      <Dialog
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3.5 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 900, color: '#dc2626', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <DeleteIcon /> Delete Agency Partner
+        </DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" sx={{ color: '#334155', mb: 1.5, fontWeight: 600 }}>
+            તમે <strong>"{deleteTarget?.businessName}"</strong> ને કેવી રીતે દૂર કરવા માંગો છો?
+          </Typography>
+
+          <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2.5, border: '1px solid #e2e8f0', mb: 2 }}>
+            <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mb: 0.5 }}>
+              Contact: <b>{deleteTarget?.ownerName}</b> ({deleteTarget?.mobile || 'No phone'})
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+              Total Reels: <b>{deleteTarget?.totalReels || 0}</b> | Unbilled Dues: <b>₹{(deleteTarget?.unbilledAmount || 0).toLocaleString('en-IN')}</b>
+            </Typography>
+          </Box>
+
+          <Typography variant="caption" sx={{ color: '#64748b', display: 'block', lineHeight: 1.6 }}>
+            • <b>Remove Tag Only:</b> ક્લાયન્ટ ડેટાબેઝમાં રહેશે, ફક્ત એજન્સી લિસ્ટમાંથી હટીને સામાન્ય ક્લાયન્ટ બનશે.<br />
+            • <b>Delete Permanently:</b> આ એજન્સી સિસ્ટમમાંથી કાયમ માટે ડિલીટ થઈ જશે.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={() => handleExecuteDelete('untag')}
+            sx={{ textTransform: 'none', fontWeight: 800, borderRadius: 2, borderColor: '#cbd5e1', color: '#475569' }}
+          >
+            🏷️ Remove Tag Only (માત્ર એજન્સી ટેગ હટાવો)
+          </Button>
+
+          <Button
+            fullWidth
+            variant="contained"
+            color="error"
+            onClick={() => handleExecuteDelete('delete')}
+            sx={{ textTransform: 'none', fontWeight: 800, borderRadius: 2 }}
+          >
+            🗑️ Delete Permanently (કાયમ માટે ડિલીટ કરો)
+          </Button>
+
+          <Button
+            fullWidth
+            onClick={() => setDeleteTarget(null)}
+            sx={{ textTransform: 'none', color: '#64748b', fontWeight: 700 }}
+          >
+            Cancel
           </Button>
         </DialogActions>
       </Dialog>
