@@ -30,11 +30,14 @@ import { useAuth } from "../../context/AuthContext";
 import { getAgencyConfig } from "../../api/agencyOsApi";
 import { changePassword } from "../../api/leadsApi";
 import NotificationBell from "./../admin/NotificationBell";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import WhatsAppBotModal from "./WhatsAppBotModal";
 import MobileBottomNav from "../navigation/MobileBottomNav";
 import InstallAppPrompt from "../navigation/InstallAppPrompt";
 
 const DRAWER_WIDTH = 260;
 
+// Dashboard layout
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const location = useLocation();
@@ -48,6 +51,7 @@ export default function DashboardLayout() {
   const [passwordError, setPasswordError] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
+  const [whatsAppModalOpen, setWhatsAppModalOpen] = useState(false);
 
   useEffect(() => {
     getAgencyConfig()
@@ -338,6 +342,22 @@ export default function DashboardLayout() {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               {/* InstallAppPrompt removed */}
 
+              <Tooltip title="Free WhatsApp Auto-Bot (ઓટોમેશન)">
+                <IconButton
+                  size="small"
+                  onClick={() => setWhatsAppModalOpen(true)}
+                  sx={{
+                    border: "1px solid #bbf7d0",
+                    bgcolor: "#f0fdf4",
+                    color: "#16a34a",
+                    "&:hover": { bgcolor: "#dcfce7" },
+                    p: 0.8
+                  }}
+                >
+                  <WhatsAppIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+              </Tooltip>
+
               <NotificationBell />
 
               {/* User Role Chip */}
@@ -477,6 +497,7 @@ export default function DashboardLayout() {
           <span className="text-xs font-black tracking-tight text-white">{toastMsg}</span>
         </div>
       )}
+      <WhatsAppBotModal open={whatsAppModalOpen} onClose={() => setWhatsAppModalOpen(false)} />
     </Box>
   );
 }

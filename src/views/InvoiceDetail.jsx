@@ -13,7 +13,7 @@ import DeleteIcon     from "@mui/icons-material/Delete";
 import PrintIcon      from "@mui/icons-material/Print";
 import WhatsAppIcon   from "@mui/icons-material/WhatsApp";
 import EditIcon       from "@mui/icons-material/Edit";
-import { getInvoiceById, createInvoice, recordPayment, deletePayment, updateInvoice } from "../api/clientsApi";
+import { getInvoiceById, createInvoice, recordPayment, deletePayment, updateInvoice, sendInvoiceWhatsApp } from "../api/clientsApi";
 import { getClients } from "../api/clientsApi";
 import { useAuth } from "../context/AuthContext";
 
@@ -402,23 +402,28 @@ export default function InvoiceDetail() {
     getInvoiceById(id).then(r => setInvoice(r.data));
   };
 
-  const sendWhatsApp = () => {
-    if (!invoice) return;
-    const clientName = invoice.clientId?.ownerName || invoice.clientName || "Client";
-    const total = Number(invoice.totalAmount).toLocaleString("en-IN");
-    const paid = Number(invoice.paidAmount).toLocaleString("en-IN");
-    const pending = Number(invoice.pendingAmount).toLocaleString("en-IN");
+  const [sendingWa, setSendingWa] = useState(false);
 
-    const msg = encodeURIComponent(
-      `Hi ${clientName} 👋\n\n` +
-      `*SocialFlipss — Invoice ${invoice.invoiceNumber}*\n\n` +
-      `Amount: ₹${total}\n` +
-      `Paid: ₹${paid}\n` +
-      `Pending: ₹${pending}\n\n` +
-      `Please complete the pending payment. Thank you! 🙏\n\n` +
-      `– SocialFlipss Team`
-    );
-    window.open(`https://wa.me/91${(invoice.clientId?.mobile || invoice.clientMobile || "").replace(/\D/g,"")}?text=${msg}`, "_blank");
+  const sendWhatsApp = async () => {
+    if (!invoice) return;
+    const clientName = invoice.clientId?.businessName || invoice.clientId?.ownerName || invoice.clientName || "Client";
+    setSendingWa(true);
+    setToast(`Generating PDF & delivering to ${clientName} on WhatsApp... 📄📲`);
+    try {
+      const res = await sendInvoiceWhatsApp(invoice._id);
+      if (res.data.sent) {
+        setToast(`✅ Invoice PDF delivered to ${clientName} (${res.data.phone}) on WhatsApp! 📄`);
+      } else if (res.data.waLink) {
+        setToast("⚠️ WhatsApp Bot is offline. Opening WhatsApp Web with invoice details... 📲");
+        window.open(res.data.waLink, "_blank");
+      } else {
+        setToast(res.data.message || "Invoice processed.");
+      }
+    } catch (err) {
+      setToast(err.response?.data?.message || "Failed to send invoice on WhatsApp.");
+    } finally {
+      setSendingWa(false);
+    }
   };
 
   // ── NEW / EDIT INVOICE FORM ─────────────────────────────────────
@@ -597,8 +602,8 @@ export default function InvoiceDetail() {
           )}
           <Button variant="outlined" size="small" startIcon={<PrintIcon />} onClick={() => printInvoice(invoice)}>Print / PDF</Button>
           {invoice.paymentStatus !== "paid" && (
-            <Button variant="outlined" size="small" color="success" startIcon={<WhatsAppIcon />} onClick={sendWhatsApp}>
-              Send via WhatsApp
+            <Button variant="outlined" size="small" color="success" disabled={sendingWa} startIcon={<WhatsAppIcon />} onClick={sendWhatsApp}>
+              {sendingWa ? "Sending PDF..." : "Send PDF via WhatsApp"}
             </Button>
           )}
           {canManage && invoice.paymentStatus !== "paid" && (

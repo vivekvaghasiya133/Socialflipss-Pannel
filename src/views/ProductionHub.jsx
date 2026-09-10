@@ -36,6 +36,8 @@ const INITIAL_NEW_TASK_FORM = {
   editor: "",
   shooter: "",
   shootDate: "",
+  shootTime: "03:00 PM",
+  location: "",
   rawFootageLink: "",
 };
 
@@ -81,6 +83,8 @@ export default function ProductionHub() {
   const [handoffCardData, setHandoffCardData] = useState({});
   const [masterRawLink, setMasterRawLink] = useState("");
   const [masterEditor, setMasterEditor] = useState("");
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState(null);
+  const [deletingTask, setDeletingTask] = useState(false);
   const [masterNotes, setMasterNotes] = useState("");
   const [showSubmitQcModal, setShowSubmitQcModal] = useState(null);
   const [showQcReviewModal, setShowQcReviewModal] = useState(null);
@@ -102,7 +106,7 @@ export default function ProductionHub() {
           search: searchQuery || undefined,
         }),
         getProductionOverview(),
-        getClients({ limit: 300, all: "true" }),
+        getClients({ status: "active", limit: 300, all: "true" }),
         getTeamTimeOverview(),
       ]);
       if (tasksRes.data?.success) {
@@ -118,7 +122,8 @@ export default function ProductionHub() {
       }
       if (overviewRes.data?.success) setOverview(overviewRes.data);
       if (clientsRes.data?.clients) {
-        const sorted = [...clientsRes.data.clients].sort((a, b) => {
+        const activeClients = clientsRes.data.clients.filter(c => c.status === "active");
+        const sorted = [...activeClients].sort((a, b) => {
           if (a.businessName.includes("Chhutak")) return -1;
           if (b.businessName.includes("Chhutak")) return 1;
           return a.businessName.localeCompare(b.businessName);
@@ -359,6 +364,7 @@ export default function ProductionHub() {
     const shootTime = form.shootTime.value;
     const location = form.location.value;
     const targetReels = Number(targetReelsCount || form.targetReels?.value || 1);
+    const shootNote = form.shootNote?.value || "";
 
     if (!shooter) {
       alert("Please select a Shoot Person (Shooter)!");
@@ -372,25 +378,44 @@ export default function ProductionHub() {
     const taskIdsToPass = selectedBatchTaskIds.length > 0 ? selectedBatchTaskIds : [showAssignShooterModal._id];
 
     try {
+      let res;
       if (taskIdsToPass.length > 1) {
-        await batchPassScriptToShoot({
+        res = await batchPassScriptToShoot({
           taskIds: taskIdsToPass,
           shooter,
           shootDate,
           shootTime,
           location,
           targetReels,
+          shootNote,
         });
-        triggerCelebration(`${taskIdsToPass.length} Scripts Passed to Shoot together! 🎥`);
+        const wa = res.data?.whatsapp;
+        if (wa?.sent) {
+          triggerCelebration(`🎬 ${taskIdsToPass.length} Scripts Passed & Auto WhatsApp Sent! 📲`);
+        } else if (wa?.waLink) {
+          triggerCelebration(`🎬 Scripts Passed! Opening WhatsApp... 📲`);
+          window.open(wa.waLink, "_blank");
+        } else {
+          triggerCelebration(`${taskIdsToPass.length} Scripts Passed to Shoot together! 🎥`);
+        }
       } else {
-        await passScriptToShoot(showAssignShooterModal._id, {
+        res = await passScriptToShoot(showAssignShooterModal._id, {
           shooter,
           shootDate,
           shootTime,
           location,
           targetReels,
+          shootNote,
         });
-        triggerCelebration("Script Passed! Shoot Person Assigned & Notified! 🎥");
+        const wa = res.data?.whatsapp;
+        if (wa?.sent) {
+          triggerCelebration(`🎥 Script Passed & Auto WhatsApp Sent to Shooter! 📲`);
+        } else if (wa?.waLink) {
+          triggerCelebration(`Script Passed! Opening WhatsApp... 📲`);
+          window.open(wa.waLink, "_blank");
+        } else {
+          triggerCelebration("Script Passed! Shoot Person Assigned & Notified! 🎥");
+        }
       }
       setShowAssignShooterModal(null);
       loadData();
@@ -411,6 +436,7 @@ export default function ProductionHub() {
         location: form.location.value,
         targetReels: Number(form.targetReels.value),
         completedReels: Number(form.completedReels.value),
+        shootNote: form.shootNote?.value || "",
       });
       triggerCelebration("Shoot details updated successfully! 🎬");
       setShowEditShootModal(null);
@@ -421,29 +447,17 @@ export default function ProductionHub() {
   };
 
   // Helper to check if user can delete task (Admin, Manager, Shooter, or Creator)
+  // 🔒 STRICT PRIVACY & PERMISSION: ONLY Admin can delete production cards!
   const canDeleteTask = (task) => {
-    if (!user) return true;
-    if (user.role === "admin" || user.role === "manager") return true;
-    const taskShooterId = task.shooterId?._id || task.shooter?._id || task.shooter;
-    const currentUserId = user._id || user.id;
-    if (taskShooterId && currentUserId && String(taskShooterId) === String(currentUserId)) return true;
-    const creatorId = task.createdBy?._id || task.createdBy;
-    if (creatorId && currentUserId && String(creatorId) === String(currentUserId)) return true;
-    return false;
+    return user?.role === "admin";
   };
 
-  const handleDeleteTask = async (task) => {
-    const clientName = task.client?.businessName || "Client";
-    const confirmMsg = `Are you sure you want to delete Reel #${task.reelNumber} ("${task.title}") for ${clientName}?\n\nThis will remove the card and update ${clientName}'s reels progress bar.`;
-    if (!window.confirm(confirmMsg)) return;
-
-    try {
-      await deleteProductionTask(task._id);
-      triggerCelebration("Card deleted & Client Quota updated! 🗑️");
-      await loadData();
-    } catch (err) {
-      alert(err.response?.data?.message || "Failed to delete task");
+  const handleDeleteTask = (task) => {
+    if (user?.role !== "admin") {
+      alert("🔒 Access Denied: Only Admin can delete Reel Tasks.");
+      return;
     }
+    setDeleteConfirmModal(task);
   };
 
   // Helper to check if current user is Admin, Manager or Assigned Shooter
@@ -465,14 +479,28 @@ export default function ProductionHub() {
   // ── 3. SHOOT COMPLETE ──
   const handleCompleteShootClick = async (task) => {
     if (!canCompleteShoot(task)) {
-      alert("Access Denied: Only the assigned Shooter (" + (task.shooterId?.name || "Shooter") + "), Admin, or Manager can mark this shoot as complete.");
+      alert("Access Denied: Only the assigned Shooter (" + (task.shooter?.name || task.shooterId?.name || "Shooter") + "), Admin, or Manager can mark this shoot as complete.");
       return;
     }
     try {
+      let rawFootageLink = task.rawFootageLink || "";
+      if (task.serviceType === "only_shooting" && !rawFootageLink) {
+        const inputLink = prompt("શૂટ પૂર્ણ થઈ ગયું! શું Raw Footage Drive Link ઉમેરવી છે? (Optional - સીધું OK કરી શકો છો):", "");
+        if (inputLink && inputLink.trim()) {
+          rawFootageLink = inputLink.trim();
+        }
+      }
+
       await completeShoot(task._id, {
         completedReels: task.completedReels || task.targetReels || 1,
+        rawFootageLink: rawFootageLink,
       });
-      triggerCelebration("Shoot marked Complete! +1 Shoot credited to Shooter! 🏆");
+
+      if (task.serviceType === "only_shooting") {
+        triggerCelebration("Shoot Finished & Delivered to Agency! Task Completed & Archived! 🏆🎉");
+      } else {
+        triggerCelebration("Shoot marked Complete! +1 Shoot credited to Shooter! 🏆");
+      }
       loadData();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to complete shoot");
@@ -524,12 +552,21 @@ export default function ProductionHub() {
         };
       });
 
+      let res;
       if (handoffs.length > 1) {
-        await batchHandoffToEdit({ handoffs });
+        res = await batchHandoffToEdit({ handoffs });
         triggerCelebration(`${handoffs.length} Reels Handed Off to Video Editing! ✂️`);
       } else {
-        await handoffToEdit(handoffs[0].taskId, handoffs[0]);
-        triggerCelebration(`Reel #${selectedTasks[0].reelNumber} Handed Off to Video Editing! ✂️`);
+        res = await handoffToEdit(handoffs[0].taskId, handoffs[0]);
+        const wa = res.data?.whatsapp;
+        if (wa?.sent) {
+          triggerCelebration(`Reel #${selectedTasks[0].reelNumber} Handed Off & Auto WhatsApp Sent! 📲`);
+        } else if (wa?.waLink) {
+          triggerCelebration(`Reel #${selectedTasks[0].reelNumber} Handed Off! Opening WhatsApp... 📲`);
+          window.open(wa.waLink, "_blank");
+        } else {
+          triggerCelebration(`Reel #${selectedTasks[0].reelNumber} Handed Off to Video Editing! ✂️`);
+        }
       }
 
       setShowHandoffEditModal(null);
@@ -662,20 +699,22 @@ export default function ProductionHub() {
               <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
                 {task.serviceType === 'only_editing' && (
                   <span className="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-black rounded-lg inline-flex items-center gap-1">
-                    ✂️ Only Editing {task.videoPrice ? `• ₹${task.videoPrice}` : ''}
+                    ✂️ Only Editing{isManagerOrAdmin && task.videoPrice ? ` • ₹${task.videoPrice}` : ''}
                   </span>
                 )}
                 {task.serviceType === 'only_shooting' && (
                   <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black rounded-lg inline-flex items-center gap-1">
-                    🎥 Only Shooting {task.videoPrice ? `• ₹${task.videoPrice}` : ''}
+                    🎥 Only Shooting{isManagerOrAdmin && task.videoPrice ? ` • ₹${task.videoPrice}` : ''}
                   </span>
                 )}
-                {(!task.serviceType || task.serviceType === 'full') && task.videoPrice > 0 && (
-                  <span className="px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-black rounded-lg inline-flex items-center gap-1">
-                    🎬 Shoot+Edit • ₹{task.videoPrice}
-                  </span>
+                {(!task.serviceType || task.serviceType === 'full') && (
+                  isManagerOrAdmin && task.videoPrice > 0 ? (
+                    <span className="px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-black rounded-lg inline-flex items-center gap-1">
+                      🎬 Shoot+Edit • ₹{task.videoPrice}
+                    </span>
+                  ) : null
                 )}
-                {task.billingStatus === 'billed' && (
+                {isManagerOrAdmin && task.billingStatus === 'billed' && (
                   <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-black rounded-lg">
                     ✓ Billed
                   </span>
@@ -765,8 +804,26 @@ export default function ProductionHub() {
               </span>
               <div className="min-w-0">
                 <span className="text-[9px] font-black text-slate-400 uppercase block leading-none">Shooter</span>
-                <span className="font-black text-slate-800 truncate block text-[11px] mt-0.5">
-                  {task.shooter?.name || <span className="text-slate-400 font-normal italic">Unassigned</span>}
+                <span className="font-black text-slate-800 truncate flex items-center gap-1 text-[11px] mt-0.5">
+                  {task.serviceType === "only_editing" ? (
+                    <span className="text-slate-400 font-normal italic">N/A (Only Edit)</span>
+                  ) : (
+                    <>
+                      <span>{task.shooter?.name || <span className="text-slate-400 font-normal italic">Unassigned</span>}</span>
+                      {task.shooter?.mobile && (
+                        <a
+                          href={`https://wa.me/91${task.shooter.mobile.replace(/\D/g, "")}?text=${encodeURIComponent("Hello " + (task.shooter.name || "Shooter") + ", regarding Reel #" + task.reelNumber + " for " + (task.client?.businessName || "Client"))}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#25D366] hover:text-[#128C7E] ml-0.5"
+                          title={`Chat with ${task.shooter.name} on WhatsApp`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          🟢
+                        </a>
+                      )}
+                    </>
+                  )}
                 </span>
               </div>
             </div>
@@ -778,8 +835,26 @@ export default function ProductionHub() {
               </span>
               <div className="min-w-0">
                 <span className="text-[9px] font-black text-slate-400 uppercase block leading-none">Editor</span>
-                <span className="font-black text-slate-800 truncate block text-[11px] mt-0.5">
-                  {task.editor?.name || <span className="text-slate-400 font-normal italic">Unassigned</span>}
+                <span className="font-black text-slate-800 truncate flex items-center gap-1 text-[11px] mt-0.5">
+                  {task.serviceType === "only_shooting" ? (
+                    <span className="text-slate-400 font-normal italic">N/A (Only Shoot)</span>
+                  ) : (
+                    <>
+                      <span>{task.editor?.name || <span className="text-slate-400 font-normal italic">Unassigned</span>}</span>
+                      {task.editor?.mobile && (
+                        <a
+                          href={`https://wa.me/91${task.editor.mobile.replace(/\D/g, "")}?text=${encodeURIComponent("Hello " + (task.editor.name || "Editor") + ", regarding Reel #" + task.reelNumber + " for " + (task.client?.businessName || "Client"))}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#25D366] hover:text-[#128C7E] ml-0.5"
+                          title={`Chat with ${task.editor.name} on WhatsApp`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          🟢
+                        </a>
+                      )}
+                    </>
+                  )}
                 </span>
               </div>
             </div>
@@ -858,6 +933,12 @@ export default function ProductionHub() {
                 <span className="text-slate-500 font-medium">Target Reels:</span>
                 <span className="font-mono font-black text-slate-900">{task.targetReels || 1} Reels</span>
               </div>
+              {task.shootNote && (
+                <div className="p-2 bg-white/90 rounded-xl border border-emerald-200/80 text-[11px] text-slate-700 shadow-2xs">
+                  <span className="font-black text-emerald-800 block text-[10px] uppercase tracking-wider">📝 Shoot Note:</span>
+                  <span className="italic font-medium">{task.shootNote}</span>
+                </div>
+              )}
             </div>
           )}
 
@@ -1004,35 +1085,57 @@ export default function ProductionHub() {
                 </button>
               </div>
 
-              <div>
-                {task.shootStatus === "done" ? (
-                  <div className="w-full px-3.5 py-2 bg-emerald-600 text-white text-xs font-black rounded-xl text-center flex items-center justify-center gap-1.5 shadow-sm select-none">
-                    <span>✓</span> Shoot Completed
+              {task.serviceType === "only_shooting" ? (
+                <div>
+                  {(user?.role === "admin" || user?.role === "manager" || canCompleteShoot(task)) ? (
+                    <button
+                      onClick={() => handleCompleteShootClick(task)}
+                      className="w-full px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black rounded-xl shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95 shadow-emerald-200"
+                    >
+                      <span>🏁 Finish Shoot (Mark Delivered & Archive) ✓</span>
+                    </button>
+                  ) : (
+                    <div
+                      title={`Only assigned Shooter (${task.shooter?.name || "Shooter"}), Admin, or Manager can complete this shoot`}
+                      className="w-full px-3 py-2 bg-slate-100 text-slate-400 text-[11px] font-bold rounded-xl text-center border border-slate-200 select-none cursor-not-allowed"
+                    >
+                      🔒 Shooter / Admin Only
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div>
+                    {task.shootStatus === "done" ? (
+                      <div className="w-full px-3.5 py-2 bg-emerald-600 text-white text-xs font-black rounded-xl text-center flex items-center justify-center gap-1.5 shadow-sm select-none">
+                        <span>✓</span> Shoot Completed
+                      </div>
+                    ) : canCompleteShoot(task) ? (
+                      <button
+                        onClick={() => handleCompleteShootClick(task)}
+                        className="w-full px-3.5 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-black rounded-xl transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 shadow-2xs"
+                      >
+                        <span>✓</span> Shoot Complete
+                      </button>
+                    ) : (
+                      <div
+                        title={`Only assigned Shooter (${task.shooter?.name || task.shooterId?.name || "Shooter"}), Admin, or Manager can complete this shoot`}
+                        className="w-full px-3 py-2 bg-slate-100 text-slate-400 text-[11px] font-bold rounded-xl text-center border border-slate-200 select-none cursor-not-allowed"
+                      >
+                        🔒 Shooter / Admin Only
+                      </div>
+                    )}
                   </div>
-                ) : canCompleteShoot(task) ? (
-                  <button
-                    onClick={() => handleCompleteShootClick(task)}
-                    className="w-full px-3.5 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-black rounded-xl transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 shadow-2xs"
-                  >
-                    <span>✓</span> Shoot Complete
-                  </button>
-                ) : (
-                  <div
-                    title={`Only assigned Shooter (${task.shooterId?.name || "Shooter"}), Admin, or Manager can complete this shoot`}
-                    className="w-full px-3 py-2 bg-slate-100 text-slate-400 text-[11px] font-bold rounded-xl text-center border border-slate-200 select-none cursor-not-allowed"
-                  >
-                    🔒 Shooter / Admin Only
-                  </div>
-                )}
-              </div>
 
-              {(user?.role === "admin" || user?.role === "manager" || canCompleteShoot(task)) && (
-                <button
-                  onClick={() => openHandoffEditModal(task)}
-                  className={`w-full px-4 py-2.5 bg-[#FF5200] hover:bg-[#E04800] text-white text-xs font-black rounded-xl shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer ${task.shootStatus === "done" ? "ring-2 ring-orange-400 ring-offset-2 shadow-orange-200 shadow-lg" : ""}`}
-                >
-                  <span>Handoff to Edit (Assign Raw Data) ➔</span>
-                </button>
+                  {(user?.role === "admin" || user?.role === "manager" || canCompleteShoot(task)) && (
+                    <button
+                      onClick={() => openHandoffEditModal(task)}
+                      className={`w-full px-4 py-2.5 bg-[#FF5200] hover:bg-[#E04800] text-white text-xs font-black rounded-xl shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer ${task.shootStatus === "done" ? "ring-2 ring-orange-400 ring-offset-2 shadow-orange-200 shadow-lg" : ""}`}
+                    >
+                      <span>Handoff to Edit (Assign Raw Data) ➔</span>
+                    </button>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -1399,7 +1502,7 @@ export default function ProductionHub() {
                     setNewTaskForm(prev => ({
                       ...prev,
                       client: selectedId,
-                      videoPrice: (isAg && found?.agencyRates?.defaultShootRate) ? found.agencyRates.defaultShootRate : prev.videoPrice
+                      videoPrice: (isManagerOrAdmin && isAg && found?.agencyRates?.defaultShootRate) ? found.agencyRates.defaultShootRate : prev.videoPrice
                     }));
                   }}
                   className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 font-bold"
@@ -1482,18 +1585,20 @@ export default function ProductionHub() {
                   </button>
                 </div>
 
-                <div>
-                  <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                    💰 Video Price / Rate (₹) <span className="text-slate-400 font-normal">(Agency Billing માટે)</span>
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="e.g. 600, 800, 1500"
-                    value={newTaskForm.videoPrice || ''}
-                    onChange={(e) => setNewTaskForm({ ...newTaskForm, videoPrice: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 font-bold focus:outline-none focus:border-[#FF5200]"
-                  />
-                </div>
+                {isManagerOrAdmin && (
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                      💰 Video Price / Rate (₹) <span className="text-slate-400 font-normal">(Agency Billing માટે)</span>
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 600, 800, 1500"
+                      value={newTaskForm.videoPrice || ''}
+                      onChange={(e) => setNewTaskForm({ ...newTaskForm, videoPrice: e.target.value })}
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 font-bold focus:outline-none focus:border-[#FF5200]"
+                    />
+                  </div>
+                )}
 
                 {/* Conditional Fields for Only Editing */}
                 {newTaskForm.serviceType === 'only_editing' && (
@@ -1507,7 +1612,7 @@ export default function ProductionHub() {
                       >
                         <option value="">-- Select Editor --</option>
                         {teamMembers.filter(m => m.role === 'editor' || m.role === 'team' || m.role === 'admin' || m.role === 'manager').map(m => (
-                          <option key={m._id} value={m._id}>{m.name} ({m.role})</option>
+                          <option key={m.userId || m._id} value={m.userId || m._id}>{m.name} ({m.position || m.role})</option>
                         ))}
                       </select>
                     </div>
@@ -1537,17 +1642,40 @@ export default function ProductionHub() {
                       >
                         <option value="">-- Select Shooter --</option>
                         {teamMembers.filter(m => m.role === 'shooter' || m.role === 'team' || m.role === 'admin' || m.role === 'manager').map(m => (
-                          <option key={m._id} value={m._id}>{m.name} ({m.role})</option>
+                          <option key={m.userId || m._id} value={m.userId || m._id}>{m.name} ({m.position || m.role})</option>
                         ))}
                       </select>
                     </div>
 
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[11px] font-bold text-blue-700 block mb-1">📅 Shoot Date</label>
+                        <input
+                          type="date"
+                          value={newTaskForm.shootDate || ''}
+                          onChange={(e) => setNewTaskForm({ ...newTaskForm, shootDate: e.target.value })}
+                          className="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs text-slate-800 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-bold text-blue-700 block mb-1">⏰ Shoot Time / સમય</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. 03:00 PM"
+                          value={newTaskForm.shootTime || ''}
+                          onChange={(e) => setNewTaskForm({ ...newTaskForm, shootTime: e.target.value })}
+                          className="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs text-slate-800 font-medium"
+                        />
+                      </div>
+                    </div>
+
                     <div>
-                      <label className="text-[11px] font-bold text-blue-700 block mb-1">📅 Shoot Date</label>
+                      <label className="text-[11px] font-bold text-blue-700 block mb-1">📍 Shoot Location / સ્થળ</label>
                       <input
-                        type="date"
-                        value={newTaskForm.shootDate || ''}
-                        onChange={(e) => setNewTaskForm({ ...newTaskForm, shootDate: e.target.value })}
+                        type="text"
+                        placeholder="e.g. Client Store / Surat / Studio"
+                        value={newTaskForm.location || ''}
+                        onChange={(e) => setNewTaskForm({ ...newTaskForm, location: e.target.value })}
                         className="w-full px-3 py-2 bg-white border border-blue-200 rounded-xl text-xs text-slate-800 font-medium"
                       />
                     </div>
@@ -1734,6 +1862,19 @@ export default function ProductionHub() {
                 />
               </div>
 
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  📝 Note / Instructions for Shooter (શૂટર માટે સૂચના)
+                </label>
+                <textarea
+                  name="shootNote"
+                  rows={2}
+                  defaultValue={showAssignShooterModal.shootNote || ""}
+                  placeholder="e.g. Bring wide lens & mic, client reaches at 11 AM, wear black..."
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium placeholder-slate-400 focus:ring-2 focus:ring-orange-400 focus:outline-none"
+                />
+              </div>
+
               {/* Multiple Script Cards Selection for this Client */}
               {clientScriptTasks.length > 1 && (
                 <div className="p-3 bg-orange-50/60 border border-orange-200 rounded-2xl space-y-2">
@@ -1885,6 +2026,19 @@ export default function ProductionHub() {
                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-semibold"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  📝 Note / Instructions for Shooter (શૂટર માટે સૂચના)
+                </label>
+                <textarea
+                  name="shootNote"
+                  rows={2}
+                  defaultValue={showEditShootModal.shootNote || ""}
+                  placeholder="e.g. Bring wide lens & mic, client reaches at 11 AM, wear black..."
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium placeholder-slate-400 focus:ring-2 focus:ring-orange-400 focus:outline-none"
+                />
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
@@ -2253,6 +2407,79 @@ export default function ProductionHub() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: ADMIN EXPLICIT DELETE PERMISSION CONFIRMATION ── */}
+      {deleteConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white border border-red-100 rounded-3xl p-6 w-full max-w-md shadow-2xl">
+            <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-200 text-red-600 flex items-center justify-center text-3xl mx-auto mb-3 shadow-inner">
+              🗑️
+            </div>
+            <h3 className="text-lg font-black text-slate-900 text-center mb-1">
+              Delete Reel Task?
+            </h3>
+            <p className="text-xs text-slate-500 text-center mb-4">
+              આ કાર્ડ ફક્ત <strong>Admin</strong> દ્વારા જ ડિલીટ કરી શકાય છે.
+            </p>
+
+            <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl mb-4 space-y-1 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-400 font-bold">Client:</span>
+                <strong className="text-slate-800">{deleteConfirmModal.client?.businessName || "Client"}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400 font-bold">Reel:</span>
+                <strong className="text-slate-800">Reel #{deleteConfirmModal.reelNumber || 1}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400 font-bold">Title:</span>
+                <strong className="text-slate-800 truncate max-w-[200px]">{deleteConfirmModal.title}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400 font-bold">Current Stage:</span>
+                <span className="px-2 py-0.5 bg-orange-100 text-orange-800 font-bold rounded-lg text-[10px] uppercase">
+                  {deleteConfirmModal.stage}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-red-50 border border-red-200/80 rounded-xl mb-5 text-[11px] text-red-700 font-medium leading-relaxed">
+              ⚠️ <strong>પરમિશન કન્ફર્મેશન:</strong> શું તમે ખરેખર આ રીલ ટાસ્ક કાયમ માટે ડિલીટ કરવા માંગો છો? આ એક્શન પાછી વાળી શકાશે નહીં.
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                disabled={deletingTask}
+                onClick={() => setDeleteConfirmModal(null)}
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Cancel / રદ કરો
+              </button>
+              <button
+                type="button"
+                disabled={deletingTask}
+                onClick={async () => {
+                  try {
+                    setDeletingTask(true);
+                    await deleteProductionTask(deleteConfirmModal._id);
+                    triggerCelebration("Reel Task permanently deleted! 🗑️");
+                    setDeleteConfirmModal(null);
+                    await loadData();
+                  } catch (err) {
+                    alert(err.response?.data?.message || "Failed to delete task");
+                  } finally {
+                    setDeletingTask(false);
+                  }
+                }}
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl text-xs shadow-md shadow-red-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                {deletingTask ? "Deleting..." : "Yes, Delete Task 🗑️"}
+              </button>
+            </div>
           </div>
         </div>
       )}

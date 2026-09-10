@@ -1,26 +1,34 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Box, Typography, Card, CardContent, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Chip, IconButton, Button, Select, MenuItem, FormControl,
   InputLabel, Alert, Snackbar, Tooltip, Grid, Checkbox, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, Divider, Tabs, Tab, InputAdornment
-} from '@mui/material';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import WhatsAppIcon from '@mui/icons-material/WhatsApp';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import HandshakeIcon from '@mui/icons-material/Handshake';
-import VideoCameraBackIcon from '@mui/icons-material/VideoCameraBack';
-import ContentCutIcon from '@mui/icons-material/ContentCut';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import MovieFilterIcon from '@mui/icons-material/MovieFilter';
-import SearchIcon from '@mui/icons-material/Search';
-import AddIcon from '@mui/icons-material/Add';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import StoreIcon from '@mui/icons-material/Store';
-import PhoneIcon from '@mui/icons-material/Phone';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
+} from "@mui/material";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import HandshakeIcon from "@mui/icons-material/Handshake";
+import VideoCameraBackIcon from "@mui/icons-material/VideoCameraBack";
+import ContentCutIcon from "@mui/icons-material/ContentCut";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import MovieFilterIcon from "@mui/icons-material/MovieFilter";
+import SearchIcon from "@mui/icons-material/Search";
+import AddIcon from "@mui/icons-material/Add";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import StoreIcon from "@mui/icons-material/Store";
+import PhoneIcon from "@mui/icons-material/Phone";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import PaymentIcon from "@mui/icons-material/Payment";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import PrintIcon from "@mui/icons-material/Print";
+import HistoryIcon from "@mui/icons-material/History";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+
 import {
   getAgencyPartners,
   getAgencyBillingSummary,
@@ -28,30 +36,76 @@ import {
   updateClientAgencyStatus,
   createAgencyPartner,
   deleteAgencyPartner,
-  updateAgencyPartner
-} from '../api/agencyOsApi';
-import { getClients } from '../api/clientsApi';
+  updateAgencyPartner,
+  getAgencyInvoices,
+  recordAgencyPayment,
+  clearAgencyInvoice,
+  deleteAgencyPayment,
+  deleteAgencyInvoice
+} from "../api/agencyOsApi";
+import { getClients, sendInvoiceWhatsApp } from "../api/clientsApi";
+import { useAuth } from "../context/AuthContext";
+import { printInvoice } from "../utils/printInvoice";
 
 export default function AgencyBillingView() {
-  const [activeTab, setActiveTab] = useState(0); // 0 = Agency Directory, 1 = Monthly Bill Generator
+  const { user } = useAuth();
+  const isManagerOrAdmin = user?.role === "admin" || user?.role === "manager";
+  const [activeTab, setActiveTab] = useState(0); // 0 = Directory, 1 = Bill Generator, 2 = Invoices & Payment Ledger
   const [agencies, setAgencies] = useState([]);
   const [allClients, setAllClients] = useState([]);
-  const [selectedAgencyId, setSelectedAgencyId] = useState('');
+  const [selectedAgencyId, setSelectedAgencyId] = useState("");
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [summaryData, setSummaryData] = useState(null);
   const [selectedTaskIds, setSelectedTaskIds] = useState([]);
 
-  const [toast, setToast] = useState('');
-  const [error, setError] = useState('');
+  const [toast, setToast] = useState("");
+  const [error, setError] = useState("");
 
-  // Invoice Result Modal
+  // Invoices & Ledger States
+  const [invoicesList, setInvoicesList] = useState([]);
+  const [invoicesStats, setInvoicesStats] = useState({
+    totalInvoiced: 0,
+    totalPaid: 0,
+    totalPending: 0,
+    countPending: 0,
+    countPaid: 0,
+    totalInvoices: 0
+  });
+  const [ledgerLoading, setLedgerLoading] = useState(false);
+  const [ledgerAgencyFilter, setLedgerAgencyFilter] = useState("");
+  const [ledgerStatusFilter, setLedgerStatusFilter] = useState("pending"); // Default: Pending Clearance so dues are front & center!
+
+  // Record Payment Modal State
+  const [paymentTarget, setPaymentTarget] = useState(null);
+  const [paymentForm, setPaymentForm] = useState({
+    amount: "",
+    method: "upi",
+    note: "",
+    date: new Date().toISOString().slice(0, 10),
+    collectedBy: "vivek",
+    collectedByCustom: ""
+  });
+  const [paymentSubmitting, setPaymentSubmitting] = useState(false);
+
+  // Clear Payment Confirmation Modal
+  const [clearTarget, setClearTarget] = useState(null);
+  const [clearMethod, setClearMethod] = useState("bank");
+  const [clearNote, setClearNote] = useState("Full payment verified & cleared");
+
+  // Payment History View Modal
+  const [historyTarget, setHistoryTarget] = useState(null);
+
+  // Delete Invoice Confirmation Modal
+  const [deleteInvoiceTarget, setDeleteInvoiceTarget] = useState(null);
+
+  // Invoice Result Modal (from generator)
   const [generatedInvoiceModal, setGeneratedInvoiceModal] = useState(null);
 
   // Convert Client to Agency Modal
@@ -59,31 +113,31 @@ export default function AgencyBillingView() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [editTarget, setEditTarget] = useState(null);
   const [editForm, setEditForm] = useState({
-    businessName: '',
-    ownerName: '',
-    mobile: '',
-    email: '',
-    city: 'Surat',
-    defaultShootRate: '',
-    defaultEditRate: '',
-    defaultFullRate: '',
+    businessName: "",
+    ownerName: "",
+    mobile: "",
+    email: "",
+    city: "Surat",
+    defaultShootRate: "",
+    defaultEditRate: "",
+    defaultFullRate: "",
   });
-  const [clientToConvert, setClientToConvert] = useState('');
+  const [clientToConvert, setClientToConvert] = useState("");
 
   // Create New Agency Partner Modal
   const [showCreateAgencyModal, setShowCreateAgencyModal] = useState(false);
   const [newAgencyForm, setNewAgencyForm] = useState({
-    businessName: '',
-    ownerName: '',
-    mobile: '',
-    email: '',
-    city: 'Surat',
-    defaultShootRate: '',
-    defaultEditRate: '',
-    defaultFullRate: '',
+    businessName: "",
+    ownerName: "",
+    mobile: "",
+    email: "",
+    city: "Surat",
+    defaultShootRate: "",
+    defaultEditRate: "",
+    defaultFullRate: "",
   });
 
-  // Load Agencies & All Clients
+  // ── Load Agencies & Clients ──
   const loadAgencies = useCallback(async () => {
     try {
       const [agRes, cliRes] = await Promise.all([
@@ -101,7 +155,7 @@ export default function AgencyBillingView() {
         setSelectedAgencyId(cliList[0]._id);
       }
     } catch (err) {
-      console.error('loadAgencies error:', err);
+      console.error("loadAgencies error:", err);
     }
   }, [selectedAgencyId]);
 
@@ -109,23 +163,23 @@ export default function AgencyBillingView() {
     loadAgencies();
   }, [loadAgencies]);
 
-  // Load Agency Summary for chosen Month
+  // ── Load Agency Summary for chosen Month ──
   const loadSummary = useCallback(async () => {
     if (!selectedAgencyId) return;
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const res = await getAgencyBillingSummary(selectedAgencyId, {
         month: selectedMonth,
-        statusFilter: statusFilter !== 'all' ? statusFilter : undefined
+        statusFilter: statusFilter !== "all" ? statusFilter : undefined
       });
       setSummaryData(res.data);
       // Auto-select all unbilled tasks
-      const unbilled = (res.data?.tasks || []).filter(t => t.billingStatus === 'unbilled').map(t => t._id);
+      const unbilled = (res.data?.tasks || []).filter(t => t.billingStatus === "unbilled").map(t => t._id);
       setSelectedTaskIds(unbilled);
     } catch (err) {
-      console.error('loadSummary error:', err);
-      setError(err.response?.data?.message || 'Failed to load agency summary');
+      console.error("loadSummary error:", err);
+      setError(err.response?.data?.message || "Failed to load agency summary");
     } finally {
       setLoading(false);
     }
@@ -136,6 +190,30 @@ export default function AgencyBillingView() {
       loadSummary();
     }
   }, [selectedAgencyId, loadSummary]);
+
+  // ── Load Invoices & Payment Ledger ──
+  const loadInvoices = useCallback(async () => {
+    setLedgerLoading(true);
+    try {
+      const params = {};
+      if (ledgerAgencyFilter) params.agencyId = ledgerAgencyFilter;
+      if (ledgerStatusFilter && ledgerStatusFilter !== "all") params.paymentStatus = ledgerStatusFilter;
+
+      const res = await getAgencyInvoices(params);
+      setInvoicesList(res.data?.invoices || []);
+      if (res.data?.stats) {
+        setInvoicesStats(res.data.stats);
+      }
+    } catch (err) {
+      console.error("loadInvoices error:", err);
+    } finally {
+      setLedgerLoading(false);
+    }
+  }, [ledgerAgencyFilter, ledgerStatusFilter]);
+
+  useEffect(() => {
+    loadInvoices();
+  }, [loadInvoices]);
 
   // Handle task selection checkbox
   const toggleTaskSelection = (id) => {
@@ -162,12 +240,12 @@ export default function AgencyBillingView() {
   // Generate Invoice Action
   const handleGenerateInvoice = async () => {
     if (selectedTaskIds.length === 0) {
-      setError('કૃપા કરીને બિલ બનાવવા માટે ઓછામાં ઓછો ૧ વીડિયો પસંદ કરો.');
+      setError("કૃપા કરીને બિલ બનાવવા માટે ઓછામાં ઓછો ૧ વીડિયો પસંદ કરો.");
       return;
     }
 
     try {
-      const monthLabel = new Date(selectedMonth + '-01').toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+      const monthLabel = new Date(selectedMonth + "-01").toLocaleString("en-IN", { month: "long", year: "numeric" });
       const res = await generateAgencyInvoice({
         agencyId: selectedAgencyId,
         month: monthLabel,
@@ -175,27 +253,28 @@ export default function AgencyBillingView() {
       });
 
       setGeneratedInvoiceModal(res.data);
-      setToast('🎉 Agency Invoice Generated Successfully!');
+      setToast("🎉 Agency Invoice Generated Successfully!");
       loadSummary();
       loadAgencies();
+      loadInvoices();
     } catch (err) {
-      console.error('generateInvoice error:', err);
-      setError(err.response?.data?.message || 'Failed to generate invoice');
+      console.error("generateInvoice error:", err);
+      setError(err.response?.data?.message || "Failed to generate invoice");
     }
   };
 
-    // Open Edit Agency Modal
+  // Open Edit Agency Modal
   const handleOpenEditModal = (ag) => {
     setEditTarget(ag);
     setEditForm({
-      businessName: ag.businessName || '',
-      ownerName: ag.ownerName || '',
-      mobile: ag.mobile || '',
-      email: ag.email || '',
-      city: ag.city || 'Surat',
-      defaultShootRate: ag.agencyRates?.defaultShootRate || '',
-      defaultEditRate: ag.agencyRates?.defaultEditRate || '',
-      defaultFullRate: ag.agencyRates?.defaultFullRate || '',
+      businessName: ag.businessName || "",
+      ownerName: ag.ownerName || "",
+      mobile: ag.mobile || "",
+      email: ag.email || "",
+      city: ag.city || "Surat",
+      defaultShootRate: ag.agencyRates?.defaultShootRate || "",
+      defaultEditRate: ag.agencyRates?.defaultEditRate || "",
+      defaultFullRate: ag.agencyRates?.defaultFullRate || "",
     });
   };
 
@@ -217,14 +296,14 @@ export default function AgencyBillingView() {
         }
       });
 
-      setToast(res.data?.message || 'Agency details updated successfully! ✨');
+      setToast(res.data?.message || "Agency details updated successfully! ✨");
       setEditTarget(null);
       await loadAgencies();
       if (selectedAgencyId === editTarget._id) {
         loadSummary();
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update agency');
+      setError(err.response?.data?.message || "Failed to update agency");
     }
   };
 
@@ -233,14 +312,14 @@ export default function AgencyBillingView() {
     if (!deleteTarget) return;
     try {
       const res = await deleteAgencyPartner(deleteTarget._id, { action: actionType });
-      setToast(res.data?.message || 'Action completed!');
+      setToast(res.data?.message || "Action completed!");
       setDeleteTarget(null);
       await loadAgencies();
       if (selectedAgencyId === deleteTarget._id) {
-        setSelectedAgencyId('');
+        setSelectedAgencyId("");
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete agency');
+      setError(err.response?.data?.message || "Failed to delete agency");
     }
   };
 
@@ -248,13 +327,13 @@ export default function AgencyBillingView() {
   const handleConvertClient = async () => {
     if (!clientToConvert) return;
     try {
-      await updateClientAgencyStatus(clientToConvert, { clientType: 'agency' });
-      setToast('Client marked as Agency Partner! 🤝');
+      await updateClientAgencyStatus(clientToConvert, { clientType: "agency" });
+      setToast("Client marked as Agency Partner! 🤝");
       setShowAddAgencyModal(false);
       loadAgencies();
       setSelectedAgencyId(clientToConvert);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update client');
+      setError(err.response?.data?.message || "Failed to update client");
     }
   };
 
@@ -275,32 +354,177 @@ export default function AgencyBillingView() {
         }
       });
 
-      setToast(res.data?.message || 'New Agency added successfully! 🤝');
+      setToast(res.data?.message || "New Agency added successfully! 🤝");
       setShowCreateAgencyModal(false);
       setNewAgencyForm({
-        businessName: '',
-        ownerName: '',
-        mobile: '',
-        email: '',
-        city: 'Surat',
-        defaultShootRate: '',
-        defaultEditRate: '',
-        defaultFullRate: '',
+        businessName: "",
+        ownerName: "",
+        mobile: "",
+        email: "",
+        city: "Surat",
+        defaultShootRate: "",
+        defaultEditRate: "",
+        defaultFullRate: "",
       });
       await loadAgencies();
       if (res.data?.agency?._id) {
         setSelectedAgencyId(res.data.agency._id);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create agency');
+      setError(err.response?.data?.message || "Failed to create agency");
     }
   };
 
   // Copy WhatsApp Message
-  const handleCopyWhatsApp = () => {
-    if (!generatedInvoiceModal?.whatsappMessage) return;
-    navigator.clipboard.writeText(generatedInvoiceModal.whatsappMessage);
-    setToast('WhatsApp message copied to clipboard! 📋');
+  const handleCopyWhatsApp = (msg) => {
+    const text = msg || generatedInvoiceModal?.whatsappMessage;
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setToast("WhatsApp message copied to clipboard! 📋");
+  };
+
+  // Open Record Payment Modal
+  const handleOpenRecordPayment = (inv) => {
+    setPaymentTarget(inv);
+    setPaymentForm({
+      amount: "",
+      method: "upi",
+      note: "",
+      date: new Date().toISOString().slice(0, 10),
+      collectedBy: "vivek",
+      collectedByCustom: ""
+    });
+  };
+
+  // Submit Payment Record
+  const handleSubmitPayment = async (e) => {
+    e.preventDefault();
+    if (!paymentTarget) return;
+
+    const amt = parseFloat(paymentForm.amount);
+    if (isNaN(amt) || amt <= 0) {
+      setError("Please enter a valid payment amount greater than 0.");
+      return;
+    }
+
+    const pending = Number(paymentTarget.pendingAmount) || Math.max(0, paymentTarget.totalAmount - paymentTarget.paidAmount);
+    if (amt > pending + 0.01) {
+      setError(`Amount cannot exceed remaining dues of ₹${pending.toLocaleString("en-IN")}.`);
+      return;
+    }
+
+    setPaymentSubmitting(true);
+    try {
+      const res = await recordAgencyPayment(paymentTarget._id, {
+        amount: amt,
+        method: paymentForm.method,
+        note: paymentForm.note,
+        date: paymentForm.date,
+        collectedBy: paymentForm.collectedBy,
+        collectedByCustom: paymentForm.collectedByCustom
+      });
+
+      setToast(res.data?.message || "Payment recorded successfully! 💰");
+      setPaymentTarget(null);
+      await loadInvoices();
+      loadSummary();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to record payment");
+    } finally {
+      setPaymentSubmitting(false);
+    }
+  };
+
+  // Submit 1-Click Clear Full Payment
+  const handleExecuteClear = async () => {
+    if (!clearTarget) return;
+    try {
+      const res = await clearAgencyInvoice(clearTarget._id, {
+        method: clearMethod,
+        note: clearNote
+      });
+
+      setToast(res.data?.message || "Invoice cleared in full! 🎉");
+      setClearTarget(null);
+      await loadInvoices();
+      loadSummary();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to clear invoice");
+    }
+  };
+
+  // Delete an individual payment entry
+  const handleDeletePaymentEntry = async (invoiceId, payId) => {
+    if (!window.confirm("આ પેમેન્ટ એન્ટ્રી કાઢી નાખવી છે? રકમ પાછી બાકીમાં ઉમેરાઈ જશે.")) return;
+    try {
+      const res = await deleteAgencyPayment(invoiceId, payId);
+      setToast(res.data?.message || "Payment entry removed");
+      if (res.data?.invoice) {
+        setHistoryTarget(res.data.invoice);
+      } else {
+        setHistoryTarget(null);
+      }
+      await loadInvoices();
+      loadSummary();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to delete payment entry");
+    }
+  };
+
+  // Delete Invoice Completely
+  const handleExecuteDeleteInvoice = async () => {
+    if (!deleteInvoiceTarget) return;
+    try {
+      const res = await deleteAgencyInvoice(deleteInvoiceTarget._id);
+      setToast(res.data?.message || "Invoice deleted and tasks restored to unbilled!");
+      setDeleteInvoiceTarget(null);
+      await loadInvoices();
+      loadSummary();
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to delete invoice");
+    }
+  };
+
+  // Send invoice PDF via WhatsApp directly
+  const handleSendInvoiceWhatsApp = async (inv) => {
+    const biz = inv.clientId?.businessName || inv.clientBusiness || inv.agencyId?.businessName || "Client";
+    setToast(`Generating PDF & sending to ${biz} on WhatsApp... 📄📲`);
+    try {
+      const res = await sendInvoiceWhatsApp(inv._id);
+      if (res.data.sent) {
+        setToast(`✅ Invoice PDF delivered to ${biz} (${res.data.phone}) on WhatsApp! 📄`);
+      } else if (res.data.waLink) {
+        setToast("⚠️ WhatsApp Bot is offline. Opening WhatsApp Web with invoice details... 📲");
+        window.open(res.data.waLink, "_blank");
+      } else {
+        setToast(res.data.message || "Processed.");
+      }
+    } catch (err) {
+      setToast(err.response?.data?.message || "Failed to send invoice on WhatsApp.");
+    }
+  };
+
+  // Generate WhatsApp text for an existing invoice
+  const createWhatsAppReminder = (inv) => {
+    const biz = inv.clientId?.businessName || inv.clientBusiness || inv.agencyId?.businessName || "Partner";
+    const owner = inv.clientId?.ownerName || inv.clientName || "";
+    const total = Number(inv.totalAmount || 0).toLocaleString("en-IN");
+    const paid = Number(inv.paidAmount || 0).toLocaleString("en-IN");
+    const pending = Number(inv.pendingAmount || 0).toLocaleString("en-IN");
+
+    const text =
+      `*SocialFlipss — Payment Receipt & Statement* 🧾\n\n` +
+      `Hello ${owner || biz} 👋\n\n` +
+      `Tamaro *Month: ${inv.month || "Billing Period"}* no bill summary:\n\n` +
+      `📄 Invoice No: *${inv.invoiceNumber}*\n` +
+      `💰 Total Bill: *₹${total}*\n` +
+      `✅ Received: *₹${paid}*\n` +
+      `⚠️ *Balance Due / બાકી રકમ: ₹${pending}*\n\n` +
+      `UPI ID: *vivekvaghasiya133-1@oksbi*\n` +
+      `Bank: SBI Bank | A/C: 43591183670 | IFSC: SBIN0064547\n\n` +
+      `Thank you! — Team SocialFlipss 🚀`;
+
+    handleCopyWhatsApp(text);
   };
 
   const currentAgency = summaryData?.agency || agencies.find(a => a._id === selectedAgencyId) || {};
@@ -311,35 +535,52 @@ export default function AgencyBillingView() {
   const filteredAgencies = agencies.filter(ag => {
     const q = searchQuery.toLowerCase();
     return (
-      (ag.businessName || '').toLowerCase().includes(q) ||
-      (ag.ownerName || '').toLowerCase().includes(q) ||
-      (ag.mobile || '').includes(q) ||
-      (ag.city || '').toLowerCase().includes(q)
+      (ag.businessName || "").toLowerCase().includes(q) ||
+      (ag.ownerName || "").toLowerCase().includes(q) ||
+      (ag.mobile || "").includes(q) ||
+      (ag.city || "").toLowerCase().includes(q)
     );
   });
 
   const totalAllUnbilledDues = agencies.reduce((sum, ag) => sum + (ag.unbilledAmount || 0), 0);
   const totalAllReelsProduced = agencies.reduce((sum, ag) => sum + (ag.totalReels || 0), 0);
 
+  // Check if current agency has pending dues in ledger
+  const currentAgencyPendingInvoices = invoicesList.filter(inv => {
+    const aid = inv.agencyId?._id || inv.agencyId || inv.clientId?._id || inv.clientId;
+    return aid === selectedAgencyId && (inv.paymentStatus !== "paid" || Number(inv.pendingAmount) > 0);
+  });
+  const currentAgencyTotalPending = currentAgencyPendingInvoices.reduce((s, i) => s + (Number(i.pendingAmount) || 0), 0);
+
+  if (user && !isManagerOrAdmin) {
+    return (
+      <Box sx={{ p: 6, textAlign: "center" }}>
+        <Alert severity="error" sx={{ maxWidth: 500, mx: "auto", fontWeight: "bold" }}>
+          🔒 Access Denied: Only Admin and Manager can access Agency Billing and Pricing.
+        </Alert>
+      </Box>
+    );
+  }
+
   return (
-    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1400, margin: '0 auto' }}>
+    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1400, margin: "0 auto" }}>
       {/* ── HEADER ── */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5, flexWrap: 'wrap', gap: 2 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5, flexWrap: "wrap", gap: 2 }}>
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="h5" sx={{ fontWeight: 900, color: "#0f172a", display: "flex", alignItems: "center", gap: 1 }}>
             🤝 Agency & B2B Partner Hub
           </Typography>
-          <Typography variant="body2" sx={{ color: '#64748b', mt: 0.5, fontWeight: 500 }}>
-            બધી પાર્ટનર એજન્સીઓનું લિસ્ટ (દા.ત. Vardhate), રેટ્સ, કરેલું કામ અને ૧-ક્લિક મંથલી બિલિંગ.
+          <Typography variant="body2" sx={{ color: "#64748b", mt: 0.5, fontWeight: 500 }}>
+            બધી પાર્ટનર એજન્સીઓનું લિસ્ટ, રેટ્સ, કરેલું કામ, મંથલી બિલિંગ અને બાકી પેમેન્ટ્સ હિસાબ.
           </Typography>
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+        <Box sx={{ display: "flex", gap: 1.5, alignItems: "center", flexWrap: "wrap" }}>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setShowCreateAgencyModal(true)}
-            sx={{ textTransform: 'none', fontWeight: 800, borderRadius: 2.5, bgcolor: '#FF5200', '&:hover': { bgcolor: '#e04800' } }}
+            sx={{ textTransform: "none", fontWeight: 800, borderRadius: 2.5, bgcolor: "#FF5200", "&:hover": { bgcolor: "#e04800" } }}
           >
             + Create New Agency
           </Button>
@@ -348,7 +589,7 @@ export default function AgencyBillingView() {
             variant="outlined"
             startIcon={<HandshakeIcon />}
             onClick={() => setShowAddAgencyModal(true)}
-            sx={{ textTransform: 'none', fontWeight: 800, borderRadius: 2.5, borderColor: '#cbd5e1', color: '#334155' }}
+            sx={{ textTransform: "none", fontWeight: 800, borderRadius: 2.5, borderColor: "#cbd5e1", color: "#334155" }}
           >
             Tag Existing Client
           </Button>
@@ -356,29 +597,29 @@ export default function AgencyBillingView() {
           <Button
             variant="outlined"
             startIcon={<RefreshIcon />}
-            onClick={() => { loadAgencies(); loadSummary(); }}
-            sx={{ textTransform: 'none', fontWeight: 800, borderRadius: 2.5, borderColor: '#cbd5e1', color: '#334155' }}
+            onClick={() => { loadAgencies(); loadSummary(); loadInvoices(); }}
+            sx={{ textTransform: "none", fontWeight: 800, borderRadius: 2.5, borderColor: "#cbd5e1", color: "#334155" }}
           >
             Refresh
           </Button>
         </Box>
       </Box>
 
-      {/* ── MAIN TABS: 1. ALL AGENCIES DIRECTORY | 2. MONTHLY BILL GENERATOR ── */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      {/* ── MAIN TABS: 1. DIRECTORY | 2. BILL GENERATOR | 3. INVOICES & PAYMENT LEDGER ── */}
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
         <Tabs
           value={activeTab}
           onChange={(e, val) => setActiveTab(val)}
           sx={{
-            '& .MuiTab-root': {
+            "& .MuiTab-root": {
               fontWeight: 800,
               fontSize: { xs: 13, sm: 14 },
-              textTransform: 'none',
+              textTransform: "none",
               minHeight: 48,
-              color: '#64748b',
-              '&.Mui-selected': { color: '#FF5200' }
+              color: "#64748b",
+              "&.Mui-selected": { color: "#FF5200" }
             },
-            '& .MuiTabs-indicator': { bgcolor: '#FF5200', height: 3, borderRadius: 3 }
+            "& .MuiTabs-indicator": { bgcolor: "#FF5200", height: 3, borderRadius: 3 }
           }}
         >
           <Tab
@@ -391,6 +632,28 @@ export default function AgencyBillingView() {
             iconPosition="start"
             label="🧾 Monthly Bill Generator (ઇન્વોઇસિંગ)"
           />
+          <Tab
+            icon={<AccountBalanceWalletIcon sx={{ fontSize: 18, mr: 1 }} />}
+            iconPosition="start"
+            label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <span>💰 Invoices & Payment Ledger (બાકી પેમેન્ટ્સ & હિસાબ)</span>
+                {invoicesStats.countPending > 0 ? (
+                  <Chip
+                    size="small"
+                    label={`${invoicesStats.countPending} બાકી`}
+                    sx={{ bgcolor: "#fee2e2", color: "#b91c1c", fontWeight: 900, fontSize: 11, height: 20 }}
+                  />
+                ) : (
+                  <Chip
+                    size="small"
+                    label="✓ All Clear"
+                    sx={{ bgcolor: "#dcfce7", color: "#15803d", fontWeight: 800, fontSize: 11, height: 20 }}
+                  />
+                )}
+              </Box>
+            }
+          />
         </Tabs>
       </Box>
 
@@ -399,42 +662,41 @@ export default function AgencyBillingView() {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === 0 && (
         <Box>
-          {/* Top KPI Cards for all agencies */}
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid item xs={12} sm={4}>
-              <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', p: 2.5, bgcolor: '#f8fafc' }}>
-                <Typography variant="caption" sx={{ fontWeight: 800, color: '#64748b' }}>TOTAL AGENCY PARTNERS</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 900, color: '#0f172a', mt: 0.5 }}>
-                  {agencies.length} <span style={{ fontSize: 14, fontWeight: 700, color: '#64748b' }}>Agencies</span>
+              <Card sx={{ borderRadius: 3, border: "1px solid #e2e8f0", p: 2.5, bgcolor: "#f8fafc" }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, color: "#64748b" }}>TOTAL AGENCY PARTNERS</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 900, color: "#0f172a", mt: 0.5 }}>
+                  {agencies.length} <span style={{ fontSize: 14, fontWeight: 700, color: "#64748b" }}>Agencies</span>
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#94a3b8' }}>Active B2B collaborative clients</Typography>
+                <Typography variant="caption" sx={{ color: "#94a3b8" }}>Active B2B collaborative clients</Typography>
               </Card>
             </Grid>
 
             <Grid item xs={12} sm={4}>
-              <Card sx={{ borderRadius: 3, border: '1px solid #fed7aa', p: 2.5, bgcolor: '#fff7ed' }}>
-                <Typography variant="caption" sx={{ fontWeight: 800, color: '#c2410c' }}>TOTAL REELS DELIVERED</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 900, color: '#9a3412', mt: 0.5 }}>
-                  {totalAllReelsProduced} <span style={{ fontSize: 14, fontWeight: 700, color: '#ea580c' }}>Videos</span>
+              <Card sx={{ borderRadius: 3, border: "1px solid #fed7aa", p: 2.5, bgcolor: "#fff7ed" }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, color: "#c2410c" }}>TOTAL REELS DELIVERED</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 900, color: "#9a3412", mt: 0.5 }}>
+                  {totalAllReelsProduced} <span style={{ fontSize: 14, fontWeight: 700, color: "#ea580c" }}>Videos</span>
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#fb923c' }}>Across all agencies</Typography>
+                <Typography variant="caption" sx={{ color: "#fb923c" }}>Across all agencies</Typography>
               </Card>
             </Grid>
 
             <Grid item xs={12} sm={4}>
-              <Card sx={{ borderRadius: 3, border: '1px solid #bbf7d0', p: 2.5, bgcolor: '#f0fdf4' }}>
-                <Typography variant="caption" sx={{ fontWeight: 800, color: '#15803d' }}>TOTAL UNBILLED OUTSTANDING</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 900, color: '#166534', mt: 0.5 }}>
-                  ₹{totalAllUnbilledDues.toLocaleString('en-IN')}
+              <Card sx={{ borderRadius: 3, border: "1px solid #bbf7d0", p: 2.5, bgcolor: "#f0fdf4" }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, color: "#15803d" }}>TOTAL UNBILLED OUTSTANDING</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 900, color: "#166534", mt: 0.5 }}>
+                  ₹{totalAllUnbilledDues.toLocaleString("en-IN")}
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#4ade80' }}>Ready to generate monthly bills</Typography>
+                <Typography variant="caption" sx={{ color: "#4ade80" }}>Ready to generate monthly bills</Typography>
               </Card>
             </Grid>
           </Grid>
 
           {/* Search bar & Directory Table */}
-          <Card sx={{ borderRadius: 3.5, border: '1px solid #e2e8f0', boxShadow: '0 4px 20px -2px rgba(0,0,0,0.03)' }}>
-            <Box sx={{ p: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, borderBottom: '1px solid #f1f5f9' }}>
+          <Card sx={{ borderRadius: 3.5, border: "1px solid #e2e8f0", boxShadow: "0 4px 20px -2px rgba(0,0,0,0.03)" }}>
+            <Box sx={{ p: 2.5, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2, borderBottom: "1px solid #f1f5f9" }}>
               <TextField
                 size="small"
                 placeholder="Search agency name, owner, phone, city..."
@@ -443,42 +705,42 @@ export default function AgencyBillingView() {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon fontSize="small" sx={{ color: '#94a3b8' }} />
+                      <SearchIcon fontSize="small" sx={{ color: "#94a3b8" }} />
                     </InputAdornment>
                   ),
                 }}
-                sx={{ width: { xs: '100%', sm: 350 }, '& .MuiOutlinedInput-root': { borderRadius: 2.5 } }}
+                sx={{ width: { xs: "100%", sm: 350 }, "& .MuiOutlinedInput-root": { borderRadius: 2.5 } }}
               />
 
-              <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700 }}>
+              <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 700 }}>
                 Showing <b>{filteredAgencies.length}</b> of <b>{agencies.length}</b> agencies
               </Typography>
             </Box>
 
             <TableContainer>
               <Table>
-                <TableHead sx={{ bgcolor: '#f8fafc' }}>
+                <TableHead sx={{ bgcolor: "#f8fafc" }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 800, color: '#475569' }}>Agency Name</TableCell>
-                    <TableCell sx={{ fontWeight: 800, color: '#475569' }}>Contact Person</TableCell>
-                    <TableCell sx={{ fontWeight: 800, color: '#475569' }}>Location</TableCell>
-                    <TableCell sx={{ fontWeight: 800, color: '#475569' }}>Default Rates</TableCell>
-                    <TableCell sx={{ fontWeight: 800, color: '#475569' }} align="center">Total Work</TableCell>
-                    <TableCell sx={{ fontWeight: 800, color: '#475569' }} align="right">Unbilled Dues</TableCell>
-                    <TableCell sx={{ fontWeight: 800, color: '#475569' }} align="center">Actions</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }}>Agency Name</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }}>Contact Person</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }}>Location</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }}>Default Rates</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }} align="center">Total Work</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }} align="right">Unbilled Dues</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }} align="center">Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {filteredAgencies.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} align="center" sx={{ py: 8, color: '#94a3b8' }}>
-                        <StoreIcon sx={{ fontSize: 48, color: '#cbd5e1', mb: 1, display: 'block', margin: '0 auto' }} />
+                      <TableCell colSpan={7} align="center" sx={{ py: 8, color: "#94a3b8" }}>
+                        <StoreIcon sx={{ fontSize: 48, color: "#cbd5e1", mb: 1, display: "block", margin: "0 auto" }} />
                         <Typography variant="body2" sx={{ fontWeight: 700 }}>કોઈ એજન્સી પાર્ટનર મળ્યા નથી.</Typography>
                         <Button
                           variant="contained"
                           startIcon={<AddIcon />}
                           onClick={() => setShowCreateAgencyModal(true)}
-                          sx={{ mt: 2, bgcolor: '#FF5200', textTransform: 'none', fontWeight: 800, borderRadius: 2 }}
+                          sx={{ mt: 2, bgcolor: "#FF5200", textTransform: "none", fontWeight: 800, borderRadius: 2 }}
                         >
                           + Add First Agency (દા.ત. Vardhate)
                         </Button>
@@ -486,65 +748,65 @@ export default function AgencyBillingView() {
                     </TableRow>
                   ) : (
                     filteredAgencies.map((ag) => (
-                      <TableRow key={ag._id} hover sx={{ transition: 'all 0.2s' }}>
+                      <TableRow key={ag._id} hover sx={{ transition: "all 0.2s" }}>
                         <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                             <Box sx={{
-                              width: 38, height: 38, borderRadius: 2.5, bgcolor: '#fff7ed',
-                              border: '1px solid #fed7aa', display: 'flex', alignItems: 'center',
-                              justifyContent: 'center', fontSize: 18, fontWeight: 900, color: '#c2410c'
+                              width: 38, height: 38, borderRadius: 2.5, bgcolor: "#fff7ed",
+                              border: "1px solid #fed7aa", display: "flex", alignItems: "center",
+                              justifyContent: "center", fontSize: 18, fontWeight: 900, color: "#c2410c"
                             }}>
                               🤝
                             </Box>
                             <Box>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 900, color: '#0f172a' }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 900, color: "#0f172a" }}>
                                 {ag.businessName}
                               </Typography>
                               <Chip
                                 size="small"
                                 label="Agency Partner (B2B)"
-                                sx={{ fontSize: 9, height: 16, fontWeight: 800, bgcolor: '#ede9fe', color: '#6d28d9' }}
+                                sx={{ fontSize: 9, height: 16, fontWeight: 800, bgcolor: "#ede9fe", color: "#6d28d9" }}
                               />
                             </Box>
                           </Box>
                         </TableCell>
 
                         <TableCell>
-                          <Typography variant="body2" sx={{ fontWeight: 700, color: '#1e293b' }}>
-                            {ag.ownerName || 'N/A'}
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: "#1e293b" }}>
+                            {ag.ownerName || "N/A"}
                           </Typography>
                           {ag.mobile && (
-                            <Typography variant="caption" sx={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Typography variant="caption" sx={{ color: "#64748b", display: "flex", alignItems: "center", gap: 0.5 }}>
                               <PhoneIcon sx={{ fontSize: 12 }} /> {ag.mobile}
                             </Typography>
                           )}
                         </TableCell>
 
                         <TableCell>
-                          <Typography variant="body2" sx={{ color: '#475569', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <LocationOnIcon sx={{ fontSize: 14, color: '#94a3b8' }} /> {ag.city || 'Surat'}
+                          <Typography variant="body2" sx={{ color: "#475569", display: "flex", alignItems: "center", gap: 0.5 }}>
+                            <LocationOnIcon sx={{ fontSize: 14, color: "#94a3b8" }} /> {ag.city || "Surat"}
                           </Typography>
                         </TableCell>
 
                         <TableCell>
-                          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                          <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
                             <Chip
                               size="small"
                               label={`🎥 ₹${ag.agencyRates?.defaultShootRate || 0}`}
                               title="Default Shoot Rate"
-                              sx={{ fontSize: 10, fontWeight: 700, bgcolor: '#eff6ff', color: '#1d4ed8' }}
+                              sx={{ fontSize: 10, fontWeight: 700, bgcolor: "#eff6ff", color: "#1d4ed8" }}
                             />
                             <Chip
                               size="small"
                               label={`✂️ ₹${ag.agencyRates?.defaultEditRate || 0}`}
                               title="Default Edit Rate"
-                              sx={{ fontSize: 10, fontWeight: 700, bgcolor: '#faf5ff', color: '#7e22ce' }}
+                              sx={{ fontSize: 10, fontWeight: 700, bgcolor: "#faf5ff", color: "#7e22ce" }}
                             />
                             <Chip
                               size="small"
                               label={`🎬 ₹${ag.agencyRates?.defaultFullRate || 0}`}
                               title="Default Shoot+Edit Rate"
-                              sx={{ fontSize: 10, fontWeight: 700, bgcolor: '#fff7ed', color: '#c2410c' }}
+                              sx={{ fontSize: 10, fontWeight: 700, bgcolor: "#fff7ed", color: "#c2410c" }}
                             />
                           </Box>
                         </TableCell>
@@ -553,33 +815,33 @@ export default function AgencyBillingView() {
                           <Chip
                             size="small"
                             label={`${ag.totalReels || 0} Videos`}
-                            sx={{ fontWeight: 800, bgcolor: '#f1f5f9', color: '#334155' }}
+                            sx={{ fontWeight: 800, bgcolor: "#f1f5f9", color: "#334155" }}
                           />
                         </TableCell>
 
                         <TableCell align="right">
-                          <Typography variant="subtitle2" sx={{ fontWeight: 900, color: ag.unbilledAmount > 0 ? '#166534' : '#64748b' }}>
-                            ₹{(ag.unbilledAmount || 0).toLocaleString('en-IN')}
+                          <Typography variant="subtitle2" sx={{ fontWeight: 900, color: ag.unbilledAmount > 0 ? "#166534" : "#64748b" }}>
+                            ₹{(ag.unbilledAmount || 0).toLocaleString("en-IN")}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: ag.unbilledReels > 0 ? '#ea580c' : '#94a3b8', fontWeight: 700 }}>
+                          <Typography variant="caption" sx={{ color: ag.unbilledReels > 0 ? "#ea580c" : "#94a3b8", fontWeight: 700 }}>
                             {ag.unbilledReels || 0} unbilled reels
                           </Typography>
                         </TableCell>
 
                         <TableCell align="center">
-                          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', alignItems: 'center' }}>
+                          <Box sx={{ display: "flex", gap: 1, justifyContent: "center", alignItems: "center" }}>
                             <Button
                               variant="contained"
                               size="small"
                               endIcon={<ArrowForwardIcon />}
                               onClick={() => handleOpenAgencyBilling(ag._id)}
                               sx={{
-                                textTransform: 'none',
+                                textTransform: "none",
                                 fontWeight: 800,
                                 borderRadius: 2,
                                 fontSize: 11,
-                                bgcolor: '#FF5200',
-                                '&:hover': { bgcolor: '#e04800' }
+                                bgcolor: "#FF5200",
+                                "&:hover": { bgcolor: "#e04800" }
                               }}
                             >
                               Open Bill
@@ -589,9 +851,9 @@ export default function AgencyBillingView() {
                               <IconButton
                                 size="small"
                                 onClick={() => handleOpenEditModal(ag)}
-                                sx={{ border: '1px solid #e2e8f0', bgcolor: '#f8fafc', '&:hover': { bgcolor: '#f1f5f9' }, p: 0.8 }}
+                                sx={{ border: "1px solid #e2e8f0", bgcolor: "#f8fafc", "&:hover": { bgcolor: "#f1f5f9" }, p: 0.8 }}
                               >
-                                <EditIcon sx={{ fontSize: 16, color: '#334155' }} />
+                                <EditIcon sx={{ fontSize: 16, color: "#334155" }} />
                               </IconButton>
                             </Tooltip>
 
@@ -600,7 +862,7 @@ export default function AgencyBillingView() {
                                 size="small"
                                 color="error"
                                 onClick={() => setDeleteTarget(ag)}
-                                sx={{ border: '1px solid #fee2e2', bgcolor: '#fef2f2', '&:hover': { bgcolor: '#fee2e2' }, p: 0.8 }}
+                                sx={{ border: "1px solid #fee2e2", bgcolor: "#fef2f2", "&:hover": { bgcolor: "#fee2e2" }, p: 0.8 }}
                               >
                                 <DeleteIcon sx={{ fontSize: 16 }} />
                               </IconButton>
@@ -622,8 +884,32 @@ export default function AgencyBillingView() {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === 1 && (
         <Box>
+          {/* Previous Pending Invoices Alert if any */}
+          {currentAgencyTotalPending > 0 && (
+            <Alert
+              severity="warning"
+              icon={<ErrorOutlineIcon />}
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={() => {
+                    setLedgerAgencyFilter(selectedAgencyId);
+                    setActiveTab(2);
+                  }}
+                  sx={{ fontWeight: 800, textTransform: "none" }}
+                >
+                  View Dues & Ledger ➔
+                </Button>
+              }
+              sx={{ mb: 2.5, borderRadius: 2.5, fontWeight: 700 }}
+            >
+              ⚠️ આ એજન્સી ({currentAgency.businessName}) માટે <b>₹{currentAgencyTotalPending.toLocaleString("en-IN")}</b> ના જૂના બિલ હજી પેન્ડિંગ (બાકી) છે!
+            </Alert>
+          )}
+
           {/* ── FILTER CONTROLS ── */}
-          <Card sx={{ borderRadius: 3.5, border: '1px solid #e2e8f0', boxShadow: '0 4px 20px -2px rgba(0,0,0,0.03)', mb: 3 }}>
+          <Card sx={{ borderRadius: 3.5, border: "1px solid #e2e8f0", boxShadow: "0 4px 20px -2px rgba(0,0,0,0.03)", mb: 3 }}>
             <CardContent sx={{ p: 2.5 }}>
               <Grid container spacing={2} alignItems="center">
                 {/* Agency Selector */}
@@ -641,7 +927,7 @@ export default function AgencyBillingView() {
                       )}
                       {agencies.map(ag => (
                         <MenuItem key={ag._id} value={ag._id}>
-                          🤝 {ag.businessName} {ag.ownerName ? `(${ag.ownerName})` : ''}
+                          🤝 {ag.businessName} {ag.ownerName ? `(${ag.ownerName})` : ""}
                         </MenuItem>
                       ))}
                       {allClients.filter(c => !agencies.some(a => a._id === c._id)).map(c => (
@@ -680,6 +966,7 @@ export default function AgencyBillingView() {
                       <MenuItem value="all">All Reels / Tasks</MenuItem>
                       <MenuItem value="unbilled">⏳ Unbilled Only</MenuItem>
                       <MenuItem value="billed">✓ Already Billed</MenuItem>
+                      <MenuItem value="paid">✅ Fully Paid</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -696,9 +983,9 @@ export default function AgencyBillingView() {
                       py: 1,
                       borderRadius: 2.5,
                       fontWeight: 900,
-                      textTransform: 'none',
-                      bgcolor: '#FF5200',
-                      '&:hover': { bgcolor: '#e04800' }
+                      textTransform: "none",
+                      bgcolor: "#FF5200",
+                      "&:hover": { bgcolor: "#e04800" }
                     }}
                   >
                     Generate Bill ({selectedTaskIds.length})
@@ -711,114 +998,114 @@ export default function AgencyBillingView() {
           {/* ── SUMMARY KPI STATS ── */}
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid item xs={6} sm={3} md={2.4}>
-              <Card sx={{ borderRadius: 3, border: '1px solid #e2e8f0', p: 2, bgcolor: '#f8fafc' }}>
-                <Typography variant="caption" sx={{ fontWeight: 800, color: '#64748b' }}>TOTAL VIDEOS</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 900, color: '#0f172a', mt: 0.5 }}>
+              <Card sx={{ borderRadius: 3, border: "1px solid #e2e8f0", p: 2, bgcolor: "#f8fafc" }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, color: "#64748b" }}>TOTAL VIDEOS</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 900, color: "#0f172a", mt: 0.5 }}>
                   {stats.totalTasks}
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#94a3b8' }}>For this period</Typography>
+                <Typography variant="caption" sx={{ color: "#94a3b8" }}>For this period</Typography>
               </Card>
             </Grid>
 
             <Grid item xs={6} sm={3} md={2.4}>
-              <Card sx={{ borderRadius: 3, border: '1px solid #bfdbfe', p: 2, bgcolor: '#eff6ff' }}>
-                <Typography variant="caption" sx={{ fontWeight: 800, color: '#1d4ed8', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Card sx={{ borderRadius: 3, border: "1px solid #bfdbfe", p: 2, bgcolor: "#eff6ff" }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, color: "#1d4ed8", display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <VideoCameraBackIcon fontSize="inherit" /> ONLY SHOOTING
                 </Typography>
-                <Typography variant="h4" sx={{ fontWeight: 900, color: '#1e40af', mt: 0.5 }}>
+                <Typography variant="h4" sx={{ fontWeight: 900, color: "#1e40af", mt: 0.5 }}>
                   {stats.totalShootCount} <span style={{ fontSize: 13, fontWeight: 700 }}>Reels</span>
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#60a5fa' }}>Shooting only</Typography>
+                <Typography variant="caption" sx={{ color: "#60a5fa" }}>Shooting only</Typography>
               </Card>
             </Grid>
 
             <Grid item xs={6} sm={3} md={2.4}>
-              <Card sx={{ borderRadius: 3, border: '1px solid #e9d5ff', p: 2, bgcolor: '#faf5ff' }}>
-                <Typography variant="caption" sx={{ fontWeight: 800, color: '#7e22ce', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Card sx={{ borderRadius: 3, border: "1px solid #e9d5ff", p: 2, bgcolor: "#faf5ff" }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, color: "#7e22ce", display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <ContentCutIcon fontSize="inherit" /> ONLY EDITING
                 </Typography>
-                <Typography variant="h4" sx={{ fontWeight: 900, color: '#6b21a8', mt: 0.5 }}>
+                <Typography variant="h4" sx={{ fontWeight: 900, color: "#6b21a8", mt: 0.5 }}>
                   {stats.totalEditCount} <span style={{ fontSize: 13, fontWeight: 700 }}>Reels</span>
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#c084fc' }}>Editing only</Typography>
+                <Typography variant="caption" sx={{ color: "#c084fc" }}>Editing only</Typography>
               </Card>
             </Grid>
 
             <Grid item xs={6} sm={3} md={2.4}>
-              <Card sx={{ borderRadius: 3, border: '1px solid #fed7aa', p: 2, bgcolor: '#fff7ed' }}>
-                <Typography variant="caption" sx={{ fontWeight: 800, color: '#c2410c', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Card sx={{ borderRadius: 3, border: "1px solid #fed7aa", p: 2, bgcolor: "#fff7ed" }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, color: "#c2410c", display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <MovieFilterIcon fontSize="inherit" /> SHOOT + EDIT
                 </Typography>
-                <Typography variant="h4" sx={{ fontWeight: 900, color: '#9a3412', mt: 0.5 }}>
+                <Typography variant="h4" sx={{ fontWeight: 900, color: "#9a3412", mt: 0.5 }}>
                   {stats.totalFullCount} <span style={{ fontSize: 13, fontWeight: 700 }}>Reels</span>
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#fb923c' }}>Full package</Typography>
+                <Typography variant="caption" sx={{ color: "#fb923c" }}>Full package</Typography>
               </Card>
             </Grid>
 
             <Grid item xs={12} sm={12} md={2.4}>
-              <Card sx={{ borderRadius: 3, border: '1px solid #bbf7d0', p: 2, bgcolor: '#f0fdf4' }}>
-                <Typography variant="caption" sx={{ fontWeight: 800, color: '#15803d' }}>UNBILLED PENDING</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 900, color: '#166534', mt: 0.5 }}>
-                  ₹{stats.unbilledAmount.toLocaleString('en-IN')}
+              <Card sx={{ borderRadius: 3, border: "1px solid #bbf7d0", p: 2, bgcolor: "#f0fdf4" }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, color: "#15803d" }}>UNBILLED PENDING</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 900, color: "#166534", mt: 0.5 }}>
+                  ₹{stats.unbilledAmount.toLocaleString("en-IN")}
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#4ade80' }}>Total: ₹{stats.totalAmount.toLocaleString('en-IN')}</Typography>
+                <Typography variant="caption" sx={{ color: "#4ade80" }}>Total: ₹{stats.totalAmount.toLocaleString("en-IN")}</Typography>
               </Card>
             </Grid>
           </Grid>
 
           {/* ── TASKS BREAKDOWN TABLE ── */}
-          <Card sx={{ borderRadius: 3.5, border: '1px solid #e2e8f0', boxShadow: '0 4px 20px -2px rgba(0,0,0,0.03)' }}>
-            <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Card sx={{ borderRadius: 3.5, border: "1px solid #e2e8f0", boxShadow: "0 4px 20px -2px rgba(0,0,0,0.03)" }}>
+            <Box sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Checkbox
                   checked={tasks.length > 0 && selectedTaskIds.length === tasks.length}
                   indeterminate={selectedTaskIds.length > 0 && selectedTaskIds.length < tasks.length}
                   onChange={handleSelectAll}
                 />
-                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#1e293b' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: "#1e293b" }}>
                   Select All Videos ({selectedTaskIds.length}/{tasks.length} selected for bill)
                 </Typography>
               </Box>
 
-              <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b' }}>
-                Agency: <b style={{ color: '#0f172a' }}>{currentAgency.businessName || 'Loading...'}</b>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: "#64748b" }}>
+                Agency: <b style={{ color: "#0f172a" }}>{currentAgency.businessName || "Loading..."}</b>
               </Typography>
             </Box>
 
             <TableContainer>
               <Table size="small">
-                <TableHead sx={{ bgcolor: '#f8fafc' }}>
+                <TableHead sx={{ bgcolor: "#f8fafc" }}>
                   <TableRow>
                     <TableCell padding="checkbox"></TableCell>
-                    <TableCell sx={{ fontWeight: 800, color: '#475569' }}>Reel #</TableCell>
-                    <TableCell sx={{ fontWeight: 800, color: '#475569' }}>Title / Concept</TableCell>
-                    <TableCell sx={{ fontWeight: 800, color: '#475569' }}>Service Scope</TableCell>
-                    <TableCell sx={{ fontWeight: 800, color: '#475569' }}>Stage</TableCell>
-                    <TableCell sx={{ fontWeight: 800, color: '#475569' }}>Personnel</TableCell>
-                    <TableCell sx={{ fontWeight: 800, color: '#475569' }} align="right">Rate (₹)</TableCell>
-                    <TableCell sx={{ fontWeight: 800, color: '#475569' }} align="center">Billing Status</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }}>Reel #</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }}>Title / Concept</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }}>Service Scope</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }}>Stage</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }}>Personnel</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }} align="right">Rate (₹)</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }} align="center">Billing Status</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {tasks.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} align="center" sx={{ py: 6, color: '#94a3b8' }}>
+                      <TableCell colSpan={8} align="center" sx={{ py: 6, color: "#94a3b8" }}>
                         આ મહિનામાં આ એજન્સી માટે કોઈ વીડિયો ટાસ્ક મળ્યા નથી.
                       </TableCell>
                     </TableRow>
                   ) : (
                     tasks.map((task) => {
                       const isSelected = selectedTaskIds.includes(task._id);
-                      const isShoot = task.serviceType === 'only_shooting';
-                      const isEdit = task.serviceType === 'only_editing';
+                      const isShoot = task.serviceType === "only_shooting";
+                      const isEdit = task.serviceType === "only_editing";
 
                       return (
                         <TableRow
                           key={task._id}
                           hover
                           selected={isSelected}
-                          sx={{ '&.Mui-selected': { bgcolor: '#fff7ed' } }}
+                          sx={{ "&.Mui-selected": { bgcolor: "#fff7ed" } }}
                         >
                           <TableCell padding="checkbox">
                             <Checkbox
@@ -826,13 +1113,13 @@ export default function AgencyBillingView() {
                               onChange={() => toggleTaskSelection(task._id)}
                             />
                           </TableCell>
-                          <TableCell sx={{ fontWeight: 900, color: '#0f172a', fontMono: true }}>
+                          <TableCell sx={{ fontWeight: 900, color: "#0f172a", fontMono: true }}>
                             #{task.reelNumber || 1}
                           </TableCell>
-                          <TableCell sx={{ fontWeight: 700, color: '#1e293b' }}>
+                          <TableCell sx={{ fontWeight: 700, color: "#1e293b" }}>
                             {task.title}
                             {task.goal && (
-                              <span style={{ fontSize: 10, color: '#64748b', marginLeft: 6 }}>
+                              <span style={{ fontSize: 10, color: "#64748b", marginLeft: 6 }}>
                                 ({task.goal})
                               </span>
                             )}
@@ -842,45 +1129,52 @@ export default function AgencyBillingView() {
                               <Chip
                                 size="small"
                                 label="✂️ Only Editing"
-                                sx={{ fontSize: 10, fontWeight: 800, bgcolor: '#f3e8ff', color: '#7e22ce', border: '1px solid #d8b4fe' }}
+                                sx={{ fontSize: 10, fontWeight: 800, bgcolor: "#f3e8ff", color: "#7e22ce", border: "1px solid #d8b4fe" }}
                               />
                             )}
                             {isShoot && (
                               <Chip
                                 size="small"
                                 label="🎥 Only Shooting"
-                                sx={{ fontSize: 10, fontWeight: 800, bgcolor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe' }}
+                                sx={{ fontSize: 10, fontWeight: 800, bgcolor: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}
                               />
                             )}
                             {!isShoot && !isEdit && (
                               <Chip
                                 size="small"
                                 label="🎬 Shoot + Edit"
-                                sx={{ fontSize: 10, fontWeight: 800, bgcolor: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa' }}
+                                sx={{ fontSize: 10, fontWeight: 800, bgcolor: "#fff7ed", color: "#c2410c", border: "1px solid #fed7aa" }}
                               />
                             )}
                           </TableCell>
                           <TableCell>
                             <Chip
                               size="small"
-                              label={task.stage ? task.stage.toUpperCase() : 'COMPLETED'}
-                              sx={{ fontSize: 9, fontWeight: 800, bgcolor: '#f1f5f9', color: '#334155' }}
+                              label={task.stage ? task.stage.toUpperCase() : "COMPLETED"}
+                              sx={{ fontSize: 9, fontWeight: 800, bgcolor: "#f1f5f9", color: "#334155" }}
                             />
                           </TableCell>
-                          <TableCell sx={{ fontSize: 11, color: '#475569' }}>
+                          <TableCell sx={{ fontSize: 11, color: "#475569" }}>
                             {task.shooter && <span>🎥 {task.shooter.name} </span>}
                             {task.editor && <span>🎬 {task.editor.name}</span>}
-                            {!task.shooter && !task.editor && <span style={{ color: '#94a3b8' }}>-</span>}
+                            {!task.shooter && !task.editor && <span style={{ color: "#94a3b8" }}>-</span>}
                           </TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 900, color: '#0f172a', fontSize: 13 }}>
-                            ₹{(task.videoPrice || 0).toLocaleString('en-IN')}
+                          <TableCell align="right" sx={{ fontWeight: 900, color: "#0f172a", fontSize: 13 }}>
+                            ₹{(task.videoPrice || 0).toLocaleString("en-IN")}
                           </TableCell>
                           <TableCell align="center">
-                            {task.billingStatus === 'billed' ? (
+                            {task.billingStatus === "paid" ? (
+                              <Chip
+                                size="small"
+                                label="✅ Paid"
+                                color="success"
+                                sx={{ fontSize: 9, fontWeight: 800, height: 20 }}
+                              />
+                            ) : task.billingStatus === "billed" ? (
                               <Chip
                                 size="small"
                                 label="✓ Billed"
-                                color="success"
+                                color="info"
                                 sx={{ fontSize: 9, fontWeight: 800, height: 20 }}
                               />
                             ) : (
@@ -903,6 +1197,1028 @@ export default function AgencyBillingView() {
         </Box>
       )}
 
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* TAB 2: INVOICES & PAYMENT LEDGER (બાકી પેમેન્ટ્સ અને હિસાબ)              */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {activeTab === 2 && (
+        <Box>
+          {/* ── KPI STATS CARDS FOR INVOICES ── */}
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ borderRadius: 3, border: "1px solid #e2e8f0", p: 2.5, bgcolor: "#f8fafc" }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, color: "#64748b" }}>TOTAL AGENCY INVOICED</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 900, color: "#0f172a", mt: 0.5 }}>
+                  ₹{invoicesStats.totalInvoiced.toLocaleString("en-IN")}
+                </Typography>
+                <Typography variant="caption" sx={{ color: "#94a3b8" }}>{invoicesStats.totalInvoices} Invoices Generated</Typography>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ borderRadius: 3, border: "1px solid #bbf7d0", p: 2.5, bgcolor: "#f0fdf4" }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, color: "#15803d" }}>TOTAL RECEIVED / PAID</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 900, color: "#166534", mt: 0.5 }}>
+                  ₹{invoicesStats.totalPaid.toLocaleString("en-IN")}
+                </Typography>
+                <Typography variant="caption" sx={{ color: "#4ade80" }}>{invoicesStats.countPaid} Invoices 100% Cleared</Typography>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{
+                borderRadius: 3,
+                border: "2px solid #f87171",
+                p: 2.5,
+                bgcolor: "#fef2f2",
+                boxShadow: "0 4px 14px rgba(239, 68, 68, 0.12)"
+              }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <Typography variant="caption" sx={{ fontWeight: 900, color: "#b91c1c" }}>⚠️ PENDING BALANCE DUE (બાકી રકમ)</Typography>
+                  <Chip label="Awaiting Payment" size="small" sx={{ bgcolor: "#fee2e2", color: "#991b1b", fontWeight: 800, fontSize: 10, height: 18 }} />
+                </Box>
+                <Typography variant="h4" sx={{ fontWeight: 900, color: "#dc2626", mt: 0.5 }}>
+                  ₹{invoicesStats.totalPending.toLocaleString("en-IN")}
+                </Typography>
+                <Typography variant="caption" sx={{ color: "#ef4444", fontWeight: 700 }}>
+                  જ્યાં સુધી તમે ક્લિયર ન કહો ત્યાં સુધી અહીં જ રહેશે!
+                </Typography>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ borderRadius: 3, border: "1px solid #fed7aa", p: 2.5, bgcolor: "#fff7ed" }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, color: "#c2410c" }}>PENDING CLEARANCE COUNT</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 900, color: "#9a3412", mt: 0.5 }}>
+                  {invoicesStats.countPending} <span style={{ fontSize: 14, fontWeight: 700 }}>Bills</span>
+                </Typography>
+                <Typography variant="caption" sx={{ color: "#fb923c" }}>Requires payment records</Typography>
+              </Card>
+            </Grid>
+          </Grid>
+
+          {/* ── FILTER BAR ── */}
+          <Card sx={{ borderRadius: 3.5, border: "1px solid #e2e8f0", mb: 3, p: 2 }}>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item xs={12} sm={5}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Filter By Agency</InputLabel>
+                  <Select
+                    value={ledgerAgencyFilter}
+                    label="Filter By Agency"
+                    onChange={(e) => setLedgerAgencyFilter(e.target.value)}
+                    sx={{ borderRadius: 2.5, fontWeight: 700 }}
+                  >
+                    <MenuItem value="">🤝 All Agencies (બધી એજન્સીઓ)</MenuItem>
+                    {agencies.map(ag => (
+                      <MenuItem key={ag._id} value={ag._id}>
+                        {ag.businessName} {ag.ownerName ? `(${ag.ownerName})` : ""}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} sm={5}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Payment Clearance Status</InputLabel>
+                  <Select
+                    value={ledgerStatusFilter}
+                    label="Payment Clearance Status"
+                    onChange={(e) => setLedgerStatusFilter(e.target.value)}
+                    sx={{ borderRadius: 2.5, fontWeight: 700 }}
+                  >
+                    <MenuItem value="pending">
+                      ⏳ Pending Clearance Only (બાકી વાળા બિલ)
+                    </MenuItem>
+                    <MenuItem value="all">
+                      📋 All Invoices (બધા ઇન્વોઇસ)
+                    </MenuItem>
+                    <MenuItem value="partial">
+                      🔄 Partial Paid Only (અડધા જમા થયેલા)
+                    </MenuItem>
+                    <MenuItem value="paid">
+                      ✅ 100% Cleared / Paid (ચૂકવાઈ ગયેલા)
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} sm={2}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<RefreshIcon />}
+                  onClick={loadInvoices}
+                  sx={{ py: 1, borderRadius: 2.5, fontWeight: 800, textTransform: "none" }}
+                >
+                  Reload
+                </Button>
+              </Grid>
+            </Grid>
+          </Card>
+
+          {/* ── INVOICES TABLE ── */}
+          <Card sx={{ borderRadius: 3.5, border: "1px solid #e2e8f0", boxShadow: "0 4px 20px -2px rgba(0,0,0,0.03)" }}>
+            <TableContainer>
+              <Table size="small">
+                <TableHead sx={{ bgcolor: "#f8fafc" }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }}>Invoice #</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }}>Agency / Client</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }}>Billing Month</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }} align="right">Total Bill (₹)</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }} align="right">Paid (₹)</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }} align="right">Balance Due / બાકી (₹)</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }} align="center">Payment Status</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }} align="center">Payment History</TableCell>
+                    <TableCell sx={{ fontWeight: 800, color: "#475569" }} align="center">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {invoicesList.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} align="center" sx={{ py: 8, color: "#94a3b8" }}>
+                        <ReceiptLongIcon sx={{ fontSize: 48, color: "#cbd5e1", mb: 1, display: "block", margin: "0 auto" }} />
+                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                          {ledgerStatusFilter === "pending"
+                            ? "🎉 કોઈ બાકી પેમેન્ટ નથી! બધા બિલ ક્લિયર થઈ ગયા છે."
+                            : "કોઈ ઇન્વોઇસ મળ્યા નથી."}
+                        </Typography>
+                        {ledgerStatusFilter === "pending" && (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => setLedgerStatusFilter("all")}
+                            sx={{ mt: 1.5, textTransform: "none", fontWeight: 700, borderRadius: 2 }}
+                          >
+                            View All Invoices
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    invoicesList.map((inv) => {
+                      const isPending = inv.paymentStatus !== "paid" || Number(inv.pendingAmount) > 0;
+                      const hasPayments = Array.isArray(inv.payments) && inv.payments.length > 0;
+                      const biz = inv.clientId?.businessName || inv.clientBusiness || inv.agencyId?.businessName || "Agency Partner";
+                      const owner = inv.clientId?.ownerName || inv.clientName || inv.agencyId?.ownerName || "";
+                      const phone = inv.clientId?.mobile || inv.clientMobile || inv.agencyId?.mobile || "";
+
+                      return (
+                        <TableRow
+                          key={inv._id}
+                          hover
+                          sx={{
+                            bgcolor: isPending ? "#fffdfa" : "inherit",
+                            borderLeft: isPending ? "4px solid #ef4444" : "4px solid #22c55e",
+                            transition: "all 0.2s"
+                          }}
+                        >
+                          <TableCell sx={{ fontWeight: 900, fontFamily: "monospace", color: "#1d4ed8", fontSize: 13 }}>
+                            {inv.invoiceNumber}
+                          </TableCell>
+
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontWeight: 800, color: "#0f172a" }}>
+                              {biz}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: "#64748b", display: "flex", alignItems: "center", gap: 0.5 }}>
+                              {owner} {phone ? `• ${phone}` : ""}
+                            </Typography>
+                          </TableCell>
+
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontWeight: 600, color: "#334155" }}>
+                              {inv.month || new Date(inv.issueDate).toLocaleString("en-IN", { month: "short", year: "numeric" })}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: "#94a3b8" }}>
+                              Due: {inv.dueDate ? new Date(inv.dueDate).toLocaleDateString("en-IN") : "-"}
+                            </Typography>
+                          </TableCell>
+
+                          <TableCell align="right" sx={{ fontWeight: 900, color: "#0f172a", fontSize: 13.5 }}>
+                            ₹{Number(inv.totalAmount || 0).toLocaleString("en-IN")}
+                          </TableCell>
+
+                          <TableCell align="right" sx={{ fontWeight: 800, color: "#16a34a", fontSize: 13 }}>
+                            ₹{Number(inv.paidAmount || 0).toLocaleString("en-IN")}
+                          </TableCell>
+
+                          <TableCell align="right">
+                            {Number(inv.pendingAmount) > 0 ? (
+                              <Box sx={{
+                                display: "inline-block",
+                                bgcolor: "#fee2e2",
+                                color: "#b91c1c",
+                                px: 1.2,
+                                py: 0.4,
+                                borderRadius: 1.5,
+                                fontWeight: 900,
+                                fontSize: 13,
+                                border: "1px solid #fca5a5"
+                              }}>
+                                ₹{Number(inv.pendingAmount).toLocaleString("en-IN")} DUE
+                              </Box>
+                            ) : (
+                              <Chip size="small" label="₹0 (Clear)" color="success" sx={{ fontWeight: 800, height: 22 }} />
+                            )}
+                          </TableCell>
+
+                          <TableCell align="center">
+                            {inv.paymentStatus === "paid" ? (
+                              <Chip
+                                icon={<CheckCircleIcon sx={{ fontSize: "14px !important" }} />}
+                                label="100% Cleared"
+                                color="success"
+                                sx={{ fontWeight: 900, height: 24, fontSize: 11 }}
+                              />
+                            ) : inv.paymentStatus === "partial" ? (
+                              <Chip
+                                icon={<AccessTimeIcon sx={{ fontSize: "14px !important" }} />}
+                                label="Partial Paid"
+                                color="info"
+                                sx={{ fontWeight: 900, height: 24, fontSize: 11 }}
+                              />
+                            ) : (
+                              <Chip
+                                icon={<ErrorOutlineIcon sx={{ fontSize: "14px !important" }} />}
+                                label="Pending Clearance"
+                                color="error"
+                                sx={{ fontWeight: 900, height: 24, fontSize: 11 }}
+                              />
+                            )}
+                          </TableCell>
+
+                          <TableCell align="center">
+                            {hasPayments ? (
+                              <Button
+                                size="small"
+                                variant="text"
+                                startIcon={<HistoryIcon />}
+                                onClick={() => setHistoryTarget(inv)}
+                                sx={{ textTransform: "none", fontWeight: 700, fontSize: 11, color: "#475569" }}
+                              >
+                                {inv.payments.length} {inv.payments.length === 1 ? "Record" : "Records"}
+                              </Button>
+                            ) : (
+                              <Typography variant="caption" sx={{ color: "#94a3b8" }}>No payments yet</Typography>
+                            )}
+                          </TableCell>
+
+                          <TableCell align="center">
+                            <Box sx={{ display: "flex", gap: 0.8, justifyContent: "center", alignItems: "center" }}>
+                              {/* Add Payment Record Button */}
+                              {isPending && (
+                                <Tooltip title="Add Payment Record (દા.ત. ₹500 આવ્યાનો રેકોર્ડ)">
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    startIcon={<PaymentIcon sx={{ fontSize: 14 }} />}
+                                    onClick={() => handleOpenRecordPayment(inv)}
+                                    sx={{
+                                      textTransform: "none",
+                                      fontWeight: 800,
+                                      fontSize: 11,
+                                      borderRadius: 2,
+                                      bgcolor: "#16a34a",
+                                      "&:hover": { bgcolor: "#15803d" },
+                                      px: 1.2,
+                                      py: 0.4
+                                    }}
+                                  >
+                                    Add Payment
+                                  </Button>
+                                </Tooltip>
+                              )}
+
+                              {/* 1-Click Mark Clear Button */}
+                              {isPending && (
+                                <Tooltip title="1-Click Mark 100% Cleared (આખું પેમેન્ટ ક્લિયર કરો)">
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="success"
+                                    onClick={() => setClearTarget(inv)}
+                                    sx={{
+                                      textTransform: "none",
+                                      fontWeight: 800,
+                                      fontSize: 11,
+                                      borderRadius: 2,
+                                      px: 1,
+                                      py: 0.4
+                                    }}
+                                  >
+                                    ✓ Clear All
+                                  </Button>
+                                </Tooltip>
+                              )}
+
+                              {/* Print Official Tax Invoice Button (Exact same design as client invoice) */}
+                              <Tooltip title="Print Official Tax Invoice (સેમ ક્લાયન્ટ બિલ ડિઝાઇન)">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => printInvoice(inv)}
+                                  sx={{ border: "1px solid #e2e8f0", bgcolor: "#f8fafc", "&:hover": { bgcolor: "#eff6ff", color: "#1d4ed8" } }}
+                                >
+                                  <PrintIcon sx={{ fontSize: 16 }} />
+                                </IconButton>
+                              </Tooltip>
+
+                              {/* WhatsApp Send Invoice PDF Button */}
+                              <Tooltip title="Send Official Invoice PDF to Client WhatsApp (સીધી PDF મોકલો)">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleSendInvoiceWhatsApp(inv)}
+                                  sx={{ border: "1px solid #86efac", bgcolor: "#f0fdf4", color: "#16a34a", "&:hover": { bgcolor: "#dcfce7", color: "#15803d" } }}
+                                >
+                                  <WhatsAppIcon sx={{ fontSize: 16 }} />
+                                </IconButton>
+                              </Tooltip>
+
+                              {/* Delete Invoice Button (Admin only) */}
+                              {user?.role === "admin" && (
+                                <Tooltip title="Delete Invoice & Restore Videos to Unbilled">
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={() => setDeleteInvoiceTarget(inv)}
+                                    sx={{ border: "1px solid #fee2e2", bgcolor: "#fef2f2", "&:hover": { bgcolor: "#fee2e2" } }}
+                                  >
+                                    <DeleteIcon sx={{ fontSize: 16 }} />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Card>
+        </Box>
+      )}
+
+      {/* ── MODAL: RECORD PAYMENT (દા.ત. ₹1000 માંથી ₹500 આવ્યાનો રેકોર્ડ) ── */}
+      <Dialog
+        open={Boolean(paymentTarget)}
+        onClose={() => setPaymentTarget(null)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3.5 } }}
+      >
+        <form onSubmit={handleSubmitPayment}>
+          <DialogTitle sx={{ fontWeight: 900, color: "#0f172a", display: "flex", alignItems: "center", gap: 1 }}>
+            <PaymentIcon sx={{ color: "#16a34a" }} /> Record Payment (પેમેન્ટ એન્ટ્રી ઉમેરો)
+          </DialogTitle>
+          <DialogContent dividers>
+            {paymentTarget && (
+              <Box>
+                {/* Agency & Balance Summary Card */}
+                <Box sx={{ p: 2, bgcolor: "#f8fafc", borderRadius: 2.5, border: "1px solid #e2e8f0", mb: 2.5 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 900, color: "#0f172a" }}>
+                    {paymentTarget.clientId?.businessName || paymentTarget.clientBusiness || "Agency Partner"}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "#64748b", display: "block", mb: 1 }}>
+                    Invoice: <b style={{ fontFamily: "monospace", color: "#1d4ed8" }}>{paymentTarget.invoiceNumber}</b> ({paymentTarget.month})
+                  </Typography>
+
+                  <Divider sx={{ my: 1 }} />
+
+                  <Grid container spacing={1}>
+                    <Grid item xs={4}>
+                      <Typography variant="caption" sx={{ color: "#64748b", display: "block" }}>Total Bill</Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 900, color: "#0f172a" }}>
+                        ₹{Number(paymentTarget.totalAmount || 0).toLocaleString("en-IN")}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Typography variant="caption" sx={{ color: "#64748b", display: "block" }}>Already Paid</Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800, color: "#16a34a" }}>
+                        ₹{Number(paymentTarget.paidAmount || 0).toLocaleString("en-IN")}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Typography variant="caption" sx={{ color: "#b91c1c", fontWeight: 800, display: "block" }}>Remaining Due</Typography>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 900, color: "#dc2626" }}>
+                        ₹{Number(paymentTarget.pendingAmount || 0).toLocaleString("en-IN")}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Box>
+
+                {/* Amount Field with Quick Buttons */}
+                <Box sx={{ mb: 2 }}>
+                  <TextField
+                    fullWidth
+                    required
+                    autoFocus
+                    type="number"
+                    size="small"
+                    label="Payment Amount Received (₹)"
+                    placeholder="e.g. 500"
+                    value={paymentForm.amount}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+                    }}
+                    helperText={`Maximum payable: ₹${Number(paymentTarget.pendingAmount || 0).toLocaleString("en-IN")}`}
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+                  />
+
+                  {/* Quick percentage helper chips */}
+                  <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
+                    <Chip
+                      size="small"
+                      label="25%"
+                      clickable
+                      onClick={() => setPaymentForm({ ...paymentForm, amount: Math.round(Number(paymentTarget.pendingAmount || 0) * 0.25) })}
+                      sx={{ fontWeight: 700, fontSize: 11 }}
+                    />
+                    <Chip
+                      size="small"
+                      label="50% (Half)"
+                      clickable
+                      onClick={() => setPaymentForm({ ...paymentForm, amount: Math.round(Number(paymentTarget.pendingAmount || 0) * 0.50) })}
+                      sx={{ fontWeight: 700, fontSize: 11 }}
+                    />
+                    <Chip
+                      size="small"
+                      label={`Full Due (₹${Number(paymentTarget.pendingAmount || 0).toLocaleString("en-IN")})`}
+                      clickable
+                      onClick={() => setPaymentForm({ ...paymentForm, amount: paymentTarget.pendingAmount })}
+                      sx={{ fontWeight: 800, fontSize: 11, bgcolor: "#fee2e2", color: "#b91c1c" }}
+                    />
+                  </Box>
+                </Box>
+
+                {/* Payment Method */}
+                <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                  <InputLabel>Payment Mode (કેવી રીતે આવ્યા?)</InputLabel>
+                  <Select
+                    value={paymentForm.method}
+                    label="Payment Mode (કેવી રીતે આવ્યા?)"
+                    onChange={(e) => setPaymentForm({ ...paymentForm, method: e.target.value })}
+                    sx={{ borderRadius: 2 }}
+                  >
+                    <MenuItem value="upi">📲 UPI (GPay / PhonePe / Paytm)</MenuItem>
+                    <MenuItem value="bank">🏦 Bank Transfer (IMPS / NEFT / RTGS)</MenuItem>
+                    <MenuItem value="cash">💵 Cash (રોકડા)</MenuItem>
+                    <MenuItem value="cheque">📜 Cheque</MenuItem>
+                    <MenuItem value="other">Other</MenuItem>
+                  </Select>
+                </FormControl>
+
+                {/* Received By & Date */}
+                <Grid container spacing={1.5} sx={{ mb: 2 }}>
+                  <Grid item xs={6}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Received By</InputLabel>
+                      <Select
+                        value={paymentForm.collectedBy}
+                        label="Received By"
+                        onChange={(e) => setPaymentForm({ ...paymentForm, collectedBy: e.target.value })}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        <MenuItem value="vivek">Vivek Vaghasiya</MenuItem>
+                        <MenuItem value="manager">Manager / Office</MenuItem>
+                        <MenuItem value="other">Other / Custom</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  <Grid item xs={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      type="date"
+                      label="Payment Date"
+                      value={paymentForm.date}
+                      onChange={(e) => setPaymentForm({ ...paymentForm, date: e.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      sx={{ borderRadius: 2 }}
+                    />
+                  </Grid>
+                </Grid>
+
+                {/* Note Field */}
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Note / Reference (ઓપ્શનલ)"
+                  placeholder="e.g. Received via GPay txn #12345"
+                  value={paymentForm.note}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, note: e.target.value })}
+                  sx={{ borderRadius: 2 }}
+                />
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setPaymentTarget(null)} sx={{ fontWeight: 700 }}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={paymentSubmitting}
+              sx={{ fontWeight: 800, bgcolor: "#16a34a", "&:hover": { bgcolor: "#15803d" } }}
+            >
+              {paymentSubmitting ? "Saving..." : "Save Payment Record 💰"}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      {/* ── MODAL: 1-CLICK MARK AS 100% CLEAR CONFIRMATION ── */}
+      <Dialog
+        open={Boolean(clearTarget)}
+        onClose={() => setClearTarget(null)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3.5 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 900, color: "#15803d", display: "flex", alignItems: "center", gap: 1 }}>
+          <CheckCircleIcon color="success" /> Mark Payment as 100% Clear
+        </DialogTitle>
+        <DialogContent dividers>
+          {clearTarget && (
+            <Box>
+              <Typography variant="body2" sx={{ color: "#334155", mb: 2, fontWeight: 600 }}>
+                શું તમે આ ઇન્વોઇસનું તમામ બાકી પેમેન્ટ ક્લિયર કરવા માંગો છો?
+              </Typography>
+
+              <Box sx={{ p: 2, bgcolor: "#f0fdf4", borderRadius: 2.5, border: "1px solid #bbf7d0", mb: 2 }}>
+                <Typography variant="caption" sx={{ color: "#166534", fontWeight: 700 }}>
+                  Agency: <b>{clearTarget.clientBusiness}</b>
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 900, color: "#15803d", mt: 0.5 }}>
+                  ₹{Number(clearTarget.pendingAmount || 0).toLocaleString("en-IN")}
+                </Typography>
+                <Typography variant="caption" sx={{ color: "#16a34a" }}>
+                  This remaining amount will be marked as paid and the invoice status will become <b>100% Cleared</b>.
+                </Typography>
+              </Box>
+
+              <FormControl fullWidth size="small" sx={{ mb: 1.5 }}>
+                <InputLabel>Clearance Mode</InputLabel>
+                <Select
+                  value={clearMethod}
+                  label="Clearance Mode"
+                  onChange={(e) => setClearMethod(e.target.value)}
+                >
+                  <MenuItem value="bank">Bank Transfer</MenuItem>
+                  <MenuItem value="upi">UPI / GPay</MenuItem>
+                  <MenuItem value="cash">Cash</MenuItem>
+                  <MenuItem value="cheque">Cheque</MenuItem>
+                </Select>
+              </FormControl>
+
+              <TextField
+                fullWidth
+                size="small"
+                label="Clearance Note"
+                value={clearNote}
+                onChange={(e) => setClearNote(e.target.value)}
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setClearTarget(null)}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleExecuteClear}
+            sx={{ fontWeight: 800 }}
+          >
+            Confirm & Clear 100% 🎉
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── MODAL: PAYMENT HISTORY DETAILS ── */}
+      <Dialog
+        open={Boolean(historyTarget)}
+        onClose={() => setHistoryTarget(null)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3.5 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 900, color: "#0f172a", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span>📜 Payment History & Records</span>
+          <Chip label={historyTarget?.invoiceNumber || ""} color="primary" sx={{ fontWeight: 800 }} />
+        </DialogTitle>
+        <DialogContent dividers>
+          {historyTarget && (
+            <Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 900 }}>{historyTarget.clientBusiness}</Typography>
+                  <Typography variant="caption" sx={{ color: "#64748b" }}>Billing Month: {historyTarget.month}</Typography>
+                </Box>
+                <Box sx={{ textAlign: "right" }}>
+                  <Typography variant="caption" sx={{ color: "#64748b" }}>Total Bill / Remaining:</Typography>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 900 }}>
+                    ₹{Number(historyTarget.totalAmount).toLocaleString("en-IN")} / <span style={{ color: "#dc2626" }}>₹{Number(historyTarget.pendingAmount).toLocaleString("en-IN")} Due</span>
+                  </Typography>
+                </Box>
+              </Box>
+
+              <TableContainer sx={{ border: "1px solid #e2e8f0", borderRadius: 2 }}>
+                <Table size="small">
+                  <TableHead sx={{ bgcolor: "#f8fafc" }}>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 800 }}>Date</TableCell>
+                      <TableCell sx={{ fontWeight: 800 }}>Amount (₹)</TableCell>
+                      <TableCell sx={{ fontWeight: 800 }}>Method</TableCell>
+                      <TableCell sx={{ fontWeight: 800 }}>Received By / Note</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 800 }}>Action</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {(historyTarget.payments || []).map((pay) => (
+                      <TableRow key={pay._id}>
+                        <TableCell sx={{ fontSize: 12 }}>
+                          {new Date(pay.date).toLocaleDateString("en-IN")}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 900, color: "#16a34a" }}>
+                          ₹{Number(pay.amount).toLocaleString("en-IN")}
+                        </TableCell>
+                        <TableCell>
+                          <Chip size="small" label={(pay.method || "upi").toUpperCase()} sx={{ fontSize: 10, fontWeight: 700 }} />
+                        </TableCell>
+                        <TableCell sx={{ fontSize: 11, color: "#475569" }}>
+                          <b>{pay.collectedBy || "Vivek"}</b>: {pay.note || "No note"}
+                        </TableCell>
+                        <TableCell align="center">
+                          {user?.role === "admin" && (
+                            <Tooltip title="Delete this payment entry (રદ કરો)">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => handleDeletePaymentEntry(historyTarget._id, pay._id)}
+                              >
+                                <DeleteIcon sx={{ fontSize: 15 }} />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setHistoryTarget(null)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── MODAL: DELETE INVOICE CONFIRMATION ── */}
+      <Dialog
+        open={Boolean(deleteInvoiceTarget)}
+        onClose={() => setDeleteInvoiceTarget(null)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3.5 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 900, color: "#dc2626", display: "flex", alignItems: "center", gap: 1 }}>
+          <DeleteIcon /> Delete Invoice ({deleteInvoiceTarget?.invoiceNumber})
+        </DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" sx={{ color: "#334155", mb: 1.5, fontWeight: 600 }}>
+            શું તમે ખરેખર આ બિલ ડિલીટ કરવા માંગો છો?
+          </Typography>
+          <Typography variant="caption" sx={{ color: "#64748b", display: "block", lineHeight: 1.6 }}>
+            • આ ઇન્વોઇસ ડિલીટ કરવાથી તેમાંથી લિંક થયેલા બધા વીડિયો આપોઆપ પાછા <b>"⏳ Unbilled"</b> સ્ટેટસમાં આવી જશે.<br />
+            • તમે ફરીથી નવું બિલ બનાવી શકશો.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setDeleteInvoiceTarget(null)}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleExecuteDeleteInvoice}
+            sx={{ fontWeight: 800 }}
+          >
+            Confirm Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── MODAL: GENERATED INVOICE PREVIEW ── */}
+      <Dialog
+        open={Boolean(generatedInvoiceModal)}
+        onClose={() => setGeneratedInvoiceModal(null)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3.5 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 900, color: "#0f172a", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span>🧾 Agency Invoice Generated!</span>
+          <Chip label={generatedInvoiceModal?.invoice?.invoiceNumber || ""} color="primary" sx={{ fontWeight: 800 }} />
+        </DialogTitle>
+        <DialogContent dividers>
+          {generatedInvoiceModal?.invoice && (
+            <Box sx={{ spaceY: 2 }}>
+              <Grid container spacing={2} sx={{ mb: 2 }}>
+                <Grid item xs={6}>
+                  <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 700 }}>AGENCY / CLIENT:</Typography>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 900, color: "#0f172a" }}>
+                    {generatedInvoiceModal.invoice.clientBusiness}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "#475569" }}>
+                    Contact: {generatedInvoiceModal.invoice.clientName} ({generatedInvoiceModal.invoice.clientMobile})
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={6} align="right">
+                  <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 700 }}>BILLING MONTH & DUE DATE:</Typography>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 900, color: "#0f172a" }}>
+                    {generatedInvoiceModal.invoice.month}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: "#dc2626", fontWeight: 700 }}>
+                    Due: {new Date(generatedInvoiceModal.invoice.dueDate).toLocaleDateString("en-IN")}
+                  </Typography>
+                </Grid>
+              </Grid>
+
+              {/* Items Table */}
+              <TableContainer sx={{ border: "1px solid #e2e8f0", borderRadius: 2, mb: 2 }}>
+                <Table size="small">
+                  <TableHead sx={{ bgcolor: "#f8fafc" }}>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 800 }}>Item Description</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 800 }}>Qty</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 800 }}>Rate (₹)</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 800 }}>Amount (₹)</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {generatedInvoiceModal.invoice.items.map((it, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell sx={{ fontWeight: 600 }}>{it.description}</TableCell>
+                        <TableCell align="right">{it.quantity}</TableCell>
+                        <TableCell align="right">₹{it.rate.toLocaleString("en-IN")}</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 800 }}>₹{it.amount.toLocaleString("en-IN")}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              {/* Total Summary */}
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                <Box sx={{ p: 1.5, bgcolor: "#fee2e2", border: "1px solid #fca5a5", borderRadius: 2 }}>
+                  <Typography variant="caption" sx={{ color: "#b91c1c", fontWeight: 800 }}>
+                    📌 જ્યાં સુધી તમે પેમેન્ટ ક્લિયર ન કહો ત્યાં સુધી આ બિલ "Invoices & Payment Ledger" ટેબમાં બાકી તરીકે દેખાતું રહેશે!
+                  </Typography>
+                </Box>
+
+                <Box sx={{ width: 250 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+                    <Typography variant="body2" sx={{ color: "#64748b" }}>Subtotal:</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>₹{generatedInvoiceModal.invoice.subtotal.toLocaleString("en-IN")}</Typography>
+                  </Box>
+                  <Divider sx={{ my: 1 }} />
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 900, color: "#0f172a" }}>Grand Total:</Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 900, color: "#16a34a" }}>
+                      ₹{generatedInvoiceModal.invoice.totalAmount.toLocaleString("en-IN")}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* WhatsApp Box */}
+              <Box sx={{ p: 2, bgcolor: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 2 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: "#166534", mb: 1, display: "flex", alignItems: "center", gap: 1 }}>
+                  <WhatsAppIcon color="success" fontSize="small" /> WhatsApp Bill Summary Message:
+                </Typography>
+                <Typography variant="caption" sx={{ whiteSpace: "pre-wrap", fontFamily: "monospace", display: "block", bgcolor: "white", p: 1.5, borderRadius: 1.5, border: "1px solid #dcfce7" }}>
+                  {generatedInvoiceModal.whatsappMessage}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2, justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            {/* Print Tax Invoice Button (Exact same design as client invoices) */}
+            <Button
+              variant="contained"
+              startIcon={<PrintIcon />}
+              onClick={() => printInvoice(generatedInvoiceModal.invoice)}
+              sx={{ textTransform: "none", fontWeight: 800, bgcolor: "#7c3aed", "&:hover": { bgcolor: "#6d28d9" } }}
+            >
+              🖨️ Print Tax Invoice (Same Client Design)
+            </Button>
+
+            <Button
+              variant="outlined"
+              startIcon={<ContentCopyIcon />}
+              onClick={() => handleCopyWhatsApp()}
+              sx={{ textTransform: "none", fontWeight: 800 }}
+            >
+              Copy WhatsApp
+            </Button>
+          </Box>
+
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => {
+                const inv = generatedInvoiceModal.invoice;
+                setGeneratedInvoiceModal(null);
+                handleOpenRecordPayment(inv);
+              }}
+              sx={{ textTransform: "none", fontWeight: 800 }}
+            >
+              ➕ Record Advance Payment
+            </Button>
+
+            <Button
+              variant="contained"
+              onClick={() => {
+                setGeneratedInvoiceModal(null);
+                setActiveTab(2); // Go to Payment Ledger
+              }}
+              sx={{ textTransform: "none", fontWeight: 800, bgcolor: "#FF5200", "&:hover": { bgcolor: "#e04800" } }}
+            >
+              View Invoices & Ledger ➔
+            </Button>
+          </Box>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── MODAL: CONVERT CLIENT TO AGENCY ── */}
+      <Dialog
+        open={showAddAgencyModal}
+        onClose={() => setShowAddAgencyModal(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 800 }}>🤝 Tag Client as Agency Partner</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" sx={{ color: "#64748b", mb: 2 }}>
+            નીચેના લિસ્ટમાંથી કોઈપણ ક્લાયન્ટને <b>Agency Partner (B2B)</b> તરીકે ટેગ કરો (દા.ત. Vardhate Agency):
+          </Typography>
+          <FormControl fullWidth size="small">
+            <InputLabel>Select Client</InputLabel>
+            <Select
+              value={clientToConvert}
+              label="Select Client"
+              onChange={(e) => setClientToConvert(e.target.value)}
+            >
+              {allClients.map(c => (
+                <MenuItem key={c._id} value={c._id}>
+                  {c.businessName} {c.clientType === "agency" ? "✓ (Already Agency)" : ""}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setShowAddAgencyModal(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleConvertClient} sx={{ bgcolor: "#FF5200" }}>
+            Confirm & Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── MODAL: EDIT AGENCY PARTNER DETAILS & RATES ── */}
+      <Dialog
+        open={Boolean(editTarget)}
+        onClose={() => setEditTarget(null)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3.5 } }}
+      >
+        <form onSubmit={handleSaveEdit}>
+          <DialogTitle sx={{ fontWeight: 900, color: "#0f172a", display: "flex", alignItems: "center", gap: 1 }}>
+            <EditIcon sx={{ color: "#FF5200" }} /> Edit Agency Details & Rates (એજન્સી વિગતો અને ભાવ બદલો)
+          </DialogTitle>
+          <DialogContent dividers>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  required
+                  size="small"
+                  label="Agency / Business Name"
+                  value={editForm.businessName}
+                  onChange={(e) => setEditForm({ ...editForm, businessName: e.target.value })}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  required
+                  size="small"
+                  label="Contact Person / Owner Name"
+                  value={editForm.ownerName}
+                  onChange={(e) => setEditForm({ ...editForm, ownerName: e.target.value })}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  required
+                  size="small"
+                  label="Mobile Number (WhatsApp)"
+                  value={editForm.mobile}
+                  onChange={(e) => setEditForm({ ...editForm, mobile: e.target.value })}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Email (Optional)"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="City"
+                  value={editForm.city}
+                  onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Divider sx={{ my: 1 }}>
+                  <Chip label="Default Agreed Rates / નક્કી કરેલા ડિફોલ્ટ ભાવ" size="small" sx={{ fontSize: 11, fontWeight: 700 }} />
+                </Divider>
+              </Grid>
+
+              <Grid item xs={4}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="number"
+                  label="Only Shoot Rate (₹)"
+                  placeholder="e.g. 1000"
+                  value={editForm.defaultShootRate}
+                  onChange={(e) => setEditForm({ ...editForm, defaultShootRate: e.target.value })}
+                />
+              </Grid>
+
+              <Grid item xs={4}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="number"
+                  label="Only Edit Rate (₹)"
+                  placeholder="e.g. 600"
+                  value={editForm.defaultEditRate}
+                  onChange={(e) => setEditForm({ ...editForm, defaultEditRate: e.target.value })}
+                />
+              </Grid>
+
+              <Grid item xs={4}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="number"
+                  label="Full Package Rate (₹)"
+                  placeholder="e.g. 1500"
+                  value={editForm.defaultFullRate}
+                  onChange={(e) => setEditForm({ ...editForm, defaultFullRate: e.target.value })}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setEditTarget(null)} sx={{ fontWeight: 700 }}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{ fontWeight: 800, bgcolor: "#FF5200", "&:hover": { bgcolor: "#e04800" } }}
+            >
+              Save Changes ✨
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
       {/* ── MODAL: CREATE BRAND NEW AGENCY PARTNER ── */}
       <Dialog
         open={showCreateAgencyModal}
@@ -912,7 +2228,7 @@ export default function AgencyBillingView() {
         PaperProps={{ sx: { borderRadius: 3.5 } }}
       >
         <form onSubmit={handleCreateAgency}>
-          <DialogTitle sx={{ fontWeight: 900, color: '#0f172a' }}>
+          <DialogTitle sx={{ fontWeight: 900, color: "#0f172a" }}>
             🤝 Add New Agency Partner (નવી એજન્સી ઉમેરો)
           </DialogTitle>
           <DialogContent dividers>
@@ -1024,280 +2340,9 @@ export default function AgencyBillingView() {
             <Button
               type="submit"
               variant="contained"
-              sx={{ fontWeight: 800, bgcolor: '#FF5200', '&:hover': { bgcolor: '#e04800' } }}
+              sx={{ fontWeight: 800, bgcolor: "#FF5200", "&:hover": { bgcolor: "#e04800" } }}
             >
               Save Agency Partner 🤝
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
-
-      {/* ── MODAL: GENERATED INVOICE PREVIEW ── */}
-      <Dialog
-        open={Boolean(generatedInvoiceModal)}
-        onClose={() => setGeneratedInvoiceModal(null)}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3.5 } }}
-      >
-        <DialogTitle sx={{ fontWeight: 900, color: '#0f172a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>🧾 Agency Invoice Generated!</span>
-          <Chip label={generatedInvoiceModal?.invoice?.invoiceNumber || ''} color="primary" sx={{ fontWeight: 800 }} />
-        </DialogTitle>
-        <DialogContent dividers>
-          {generatedInvoiceModal?.invoice && (
-            <Box sx={{ spaceY: 2 }}>
-              <Grid container spacing={2} sx={{ mb: 2 }}>
-                <Grid item xs={6}>
-                  <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700 }}>AGENCY / CLIENT:</Typography>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 900, color: '#0f172a' }}>
-                    {generatedInvoiceModal.invoice.clientBusiness}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#475569' }}>
-                    Contact: {generatedInvoiceModal.invoice.clientName} ({generatedInvoiceModal.invoice.clientMobile})
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={6} align="right">
-                  <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700 }}>BILLING MONTH & DUE DATE:</Typography>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 900, color: '#0f172a' }}>
-                    {generatedInvoiceModal.invoice.month}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#dc2626', fontWeight: 700 }}>
-                    Due: {new Date(generatedInvoiceModal.invoice.dueDate).toLocaleDateString('en-IN')}
-                  </Typography>
-                </Grid>
-              </Grid>
-
-              {/* Items Table */}
-              <TableContainer sx={{ border: '1px solid #e2e8f0', borderRadius: 2, mb: 2 }}>
-                <Table size="small">
-                  <TableHead sx={{ bgcolor: '#f8fafc' }}>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 800 }}>Item Description</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 800 }}>Qty</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 800 }}>Rate (₹)</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 800 }}>Amount (₹)</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {generatedInvoiceModal.invoice.items.map((it, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell sx={{ fontWeight: 600 }}>{it.description}</TableCell>
-                        <TableCell align="right">{it.quantity}</TableCell>
-                        <TableCell align="right">₹{it.rate.toLocaleString('en-IN')}</TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 800 }}>₹{it.amount.toLocaleString('en-IN')}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-
-              {/* Total Summary */}
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                <Box sx={{ width: 250 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                    <Typography variant="body2" sx={{ color: '#64748b' }}>Subtotal:</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>₹{generatedInvoiceModal.invoice.subtotal.toLocaleString('en-IN')}</Typography>
-                  </Box>
-                  <Divider sx={{ my: 1 }} />
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 900, color: '#0f172a' }}>Grand Total:</Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 900, color: '#16a34a' }}>
-                      ₹{generatedInvoiceModal.invoice.totalAmount.toLocaleString('en-IN')}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-
-              {/* WhatsApp Box */}
-              <Box sx={{ p: 2, bgcolor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 2 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#166534', mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <WhatsAppIcon color="success" fontSize="small" /> WhatsApp Bill Summary Message:
-                </Typography>
-                <Typography variant="caption" sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', display: 'block', bgcolor: 'white', p: 1.5, borderRadius: 1.5, border: '1px solid #dcfce7' }}>
-                  {generatedInvoiceModal.whatsappMessage}
-                </Typography>
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 2, justifyContent: 'space-between' }}>
-          <Button
-            variant="outlined"
-            startIcon={<ContentCopyIcon />}
-            onClick={handleCopyWhatsApp}
-            sx={{ textTransform: 'none', fontWeight: 800 }}
-          >
-            Copy WhatsApp Message
-          </Button>
-
-          <Button
-            variant="contained"
-            onClick={() => setGeneratedInvoiceModal(null)}
-            sx={{ textTransform: 'none', fontWeight: 800, bgcolor: '#FF5200', '&:hover': { bgcolor: '#e04800' } }}
-          >
-            Done / Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* ── MODAL: CONVERT CLIENT TO AGENCY ── */}
-      <Dialog
-        open={showAddAgencyModal}
-        onClose={() => setShowAddAgencyModal(false)}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
-      >
-        <DialogTitle sx={{ fontWeight: 800 }}>🤝 Tag Client as Agency Partner</DialogTitle>
-        <DialogContent dividers>
-          <Typography variant="body2" sx={{ color: '#64748b', mb: 2 }}>
-            નીચેના લિસ્ટમાંથી કોઈપણ ક્લાયન્ટને <b>Agency Partner (B2B)</b> તરીકે ટેગ કરો (દા.ત. Vardhate Agency):
-          </Typography>
-          <FormControl fullWidth size="small">
-            <InputLabel>Select Client</InputLabel>
-            <Select
-              value={clientToConvert}
-              label="Select Client"
-              onChange={(e) => setClientToConvert(e.target.value)}
-            >
-              {allClients.map(c => (
-                <MenuItem key={c._id} value={c._id}>
-                  {c.businessName} {c.clientType === 'agency' ? '✓ (Already Agency)' : ''}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setShowAddAgencyModal(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleConvertClient} sx={{ bgcolor: '#FF5200' }}>
-            Confirm & Save
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* ── MODAL: EDIT AGENCY PARTNER DETAILS & RATES ── */}
-      <Dialog
-        open={Boolean(editTarget)}
-        onClose={() => setEditTarget(null)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3.5 } }}
-      >
-        <form onSubmit={handleSaveEdit}>
-          <DialogTitle sx={{ fontWeight: 900, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <EditIcon sx={{ color: '#FF5200' }} /> Edit Agency Details & Rates (એજન્સી વિગતો અને ભાવ બદલો)
-          </DialogTitle>
-          <DialogContent dividers>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  required
-                  size="small"
-                  label="Agency / Business Name"
-                  value={editForm.businessName}
-                  onChange={(e) => setEditForm({ ...editForm, businessName: e.target.value })}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required
-                  size="small"
-                  label="Contact Person / Owner Name"
-                  value={editForm.ownerName}
-                  onChange={(e) => setEditForm({ ...editForm, ownerName: e.target.value })}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required
-                  size="small"
-                  label="Mobile Number (WhatsApp)"
-                  value={editForm.mobile}
-                  onChange={(e) => setEditForm({ ...editForm, mobile: e.target.value })}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Email (Optional)"
-                  value={editForm.email}
-                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                />
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="City"
-                  value={editForm.city}
-                  onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <Divider sx={{ my: 1 }}>
-                  <Chip label="Default Agreed Rates / નક્કી કરેલા ડિફોલ્ટ ભાવ" size="small" sx={{ fontSize: 11, fontWeight: 700 }} />
-                </Divider>
-              </Grid>
-
-              <Grid item xs={4}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="number"
-                  label="Only Shoot Rate (₹)"
-                  placeholder="e.g. 1000"
-                  value={editForm.defaultShootRate}
-                  onChange={(e) => setEditForm({ ...editForm, defaultShootRate: e.target.value })}
-                />
-              </Grid>
-
-              <Grid item xs={4}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="number"
-                  label="Only Edit Rate (₹)"
-                  placeholder="e.g. 600"
-                  value={editForm.defaultEditRate}
-                  onChange={(e) => setEditForm({ ...editForm, defaultEditRate: e.target.value })}
-                />
-              </Grid>
-
-              <Grid item xs={4}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="number"
-                  label="Full Package Rate (₹)"
-                  placeholder="e.g. 1500"
-                  value={editForm.defaultFullRate}
-                  onChange={(e) => setEditForm({ ...editForm, defaultFullRate: e.target.value })}
-                />
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions sx={{ p: 2 }}>
-            <Button onClick={() => setEditTarget(null)} sx={{ fontWeight: 700 }}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              sx={{ fontWeight: 800, bgcolor: '#FF5200', '&:hover': { bgcolor: '#e04800' } }}
-            >
-              Save Changes ✨
             </Button>
           </DialogActions>
         </form>
@@ -1311,34 +2356,34 @@ export default function AgencyBillingView() {
         fullWidth
         PaperProps={{ sx: { borderRadius: 3.5 } }}
       >
-        <DialogTitle sx={{ fontWeight: 900, color: '#dc2626', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <DialogTitle sx={{ fontWeight: 900, color: "#dc2626", display: "flex", alignItems: "center", gap: 1 }}>
           <DeleteIcon /> Delete Agency Partner
         </DialogTitle>
         <DialogContent dividers>
-          <Typography variant="body2" sx={{ color: '#334155', mb: 1.5, fontWeight: 600 }}>
+          <Typography variant="body2" sx={{ color: "#334155", mb: 1.5, fontWeight: 600 }}>
             તમે <strong>"{deleteTarget?.businessName}"</strong> ને કેવી રીતે દૂર કરવા માંગો છો?
           </Typography>
 
-          <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2.5, border: '1px solid #e2e8f0', mb: 2 }}>
-            <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mb: 0.5 }}>
-              Contact: <b>{deleteTarget?.ownerName}</b> ({deleteTarget?.mobile || 'No phone'})
+          <Box sx={{ p: 2, bgcolor: "#f8fafc", borderRadius: 2.5, border: "1px solid #e2e8f0", mb: 2 }}>
+            <Typography variant="caption" sx={{ color: "#64748b", display: "block", mb: 0.5 }}>
+              Contact: <b>{deleteTarget?.ownerName}</b> ({deleteTarget?.mobile || "No phone"})
             </Typography>
-            <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
-              Total Reels: <b>{deleteTarget?.totalReels || 0}</b> | Unbilled Dues: <b>₹{(deleteTarget?.unbilledAmount || 0).toLocaleString('en-IN')}</b>
+            <Typography variant="caption" sx={{ color: "#64748b", display: "block" }}>
+              Total Reels: <b>{deleteTarget?.totalReels || 0}</b> | Unbilled Dues: <b>₹{(deleteTarget?.unbilledAmount || 0).toLocaleString("en-IN")}</b>
             </Typography>
           </Box>
 
-          <Typography variant="caption" sx={{ color: '#64748b', display: 'block', lineHeight: 1.6 }}>
+          <Typography variant="caption" sx={{ color: "#64748b", display: "block", lineHeight: 1.6 }}>
             • <b>Remove Tag Only:</b> ક્લાયન્ટ ડેટાબેઝમાં રહેશે, ફક્ત એજન્સી લિસ્ટમાંથી હટીને સામાન્ય ક્લાયન્ટ બનશે.<br />
             • <b>Delete Permanently:</b> આ એજન્સી સિસ્ટમમાંથી કાયમ માટે ડિલીટ થઈ જશે.
           </Typography>
         </DialogContent>
-        <DialogActions sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <DialogActions sx={{ p: 2, display: "flex", flexDirection: "column", gap: 1 }}>
           <Button
             fullWidth
             variant="outlined"
-            onClick={() => handleExecuteDelete('untag')}
-            sx={{ textTransform: 'none', fontWeight: 800, borderRadius: 2, borderColor: '#cbd5e1', color: '#475569' }}
+            onClick={() => handleExecuteDelete("untag")}
+            sx={{ textTransform: "none", fontWeight: 800, borderRadius: 2, borderColor: "#cbd5e1", color: "#475569" }}
           >
             🏷️ Remove Tag Only (માત્ર એજન્સી ટેગ હટાવો)
           </Button>
@@ -1347,8 +2392,8 @@ export default function AgencyBillingView() {
             fullWidth
             variant="contained"
             color="error"
-            onClick={() => handleExecuteDelete('delete')}
-            sx={{ textTransform: 'none', fontWeight: 800, borderRadius: 2 }}
+            onClick={() => handleExecuteDelete("delete")}
+            sx={{ textTransform: "none", fontWeight: 800, borderRadius: 2 }}
           >
             🗑️ Delete Permanently (કાયમ માટે ડિલીટ કરો)
           </Button>
@@ -1356,7 +2401,7 @@ export default function AgencyBillingView() {
           <Button
             fullWidth
             onClick={() => setDeleteTarget(null)}
-            sx={{ textTransform: 'none', color: '#64748b', fontWeight: 700 }}
+            sx={{ textTransform: "none", color: "#64748b", fontWeight: 700 }}
           >
             Cancel
           </Button>
@@ -1364,14 +2409,14 @@ export default function AgencyBillingView() {
       </Dialog>
 
       {/* ── TOAST NOTIFICATIONS ── */}
-      <Snackbar open={Boolean(toast)} autoHideDuration={4000} onClose={() => setToast('')}>
-        <Alert severity="success" onClose={() => setToast('')} sx={{ fontWeight: 700, borderRadius: 2.5 }}>
+      <Snackbar open={Boolean(toast)} autoHideDuration={4000} onClose={() => setToast("")}>
+        <Alert severity="success" onClose={() => setToast("")} sx={{ fontWeight: 700, borderRadius: 2.5 }}>
           {toast}
         </Alert>
       </Snackbar>
 
-      <Snackbar open={Boolean(error)} autoHideDuration={5000} onClose={() => setError('')}>
-        <Alert severity="error" onClose={() => setError('')} sx={{ fontWeight: 700, borderRadius: 2.5 }}>
+      <Snackbar open={Boolean(error)} autoHideDuration={5000} onClose={() => setError("")}>
+        <Alert severity="error" onClose={() => setError("")} sx={{ fontWeight: 700, borderRadius: 2.5 }}>
           {error}
         </Alert>
       </Snackbar>

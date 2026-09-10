@@ -58,7 +58,7 @@ export default function ContentCalendar() {
   const [selectedDay, setSelectedDay] = useState(now.getDate());
 
   useEffect(() => {
-    getClients({ limit: 100 }).then(r => setClients(r.data?.clients || [])).catch(() => {});
+    getClients({ status: "active", limit: 300 }).then(r => setClients((r.data?.clients || []).filter(c => c.status === "active"))).catch(() => {});
   }, []);
 
   useEffect(() => {

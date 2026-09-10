@@ -29,6 +29,7 @@ import {
   updateProductionTask,
   deleteProductionTask,
 } from "../api/agencyOsApi";
+import { useAuth } from "../context/AuthContext";
 
 const STAGES = [
   { key: "idea",            label: "💡 Idea",             color: "#4b5563", bg: "#f3f4f6", border: "#e5e7eb" },
@@ -85,7 +86,9 @@ function PipelineTaskCard({
   onMoveStage,
   onDragStart,
   onDragEnd,
-  dragging
+  dragging,
+  isManagerOrAdmin,
+  isAdmin
 }) {
   const navigate = useNavigate();
   const goalStyle = GOAL_COLORS[task.goal] || GOAL_COLORS.Authority;
@@ -166,25 +169,27 @@ function PipelineTaskCard({
           {task.serviceType === 'only_editing' && (
             <Chip
               size="small"
-              label={`✂️ Only Editing${task.videoPrice ? ` • ₹${task.videoPrice}` : ''}`}
+              label={`✂️ Only Editing${isManagerOrAdmin && task.videoPrice ? ` • ₹${task.videoPrice}` : ''}`}
               sx={{ fontSize: 9, height: 18, fontWeight: 800, bgcolor: '#f3e8ff', color: '#7e22ce', border: '1px solid #d8b4fe' }}
             />
           )}
           {task.serviceType === 'only_shooting' && (
             <Chip
               size="small"
-              label={`🎥 Only Shooting${task.videoPrice ? ` • ₹${task.videoPrice}` : ''}`}
+              label={`🎥 Only Shooting${isManagerOrAdmin && task.videoPrice ? ` • ₹${task.videoPrice}` : ''}`}
               sx={{ fontSize: 9, height: 18, fontWeight: 800, bgcolor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe' }}
             />
           )}
-          {(!task.serviceType || task.serviceType === 'full') && task.videoPrice > 0 && (
-            <Chip
-              size="small"
-              label={`🎬 Shoot+Edit • ₹${task.videoPrice}`}
-              sx={{ fontSize: 9, height: 18, fontWeight: 800, bgcolor: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa' }}
-            />
+          {(!task.serviceType || task.serviceType === 'full') && (
+            isManagerOrAdmin && task.videoPrice > 0 ? (
+              <Chip
+                size="small"
+                label={`🎬 Shoot+Edit • ₹${task.videoPrice}`}
+                sx={{ fontSize: 9, height: 18, fontWeight: 800, bgcolor: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa' }}
+              />
+            ) : null
           )}
-          {task.billingStatus === 'billed' && (
+          {isManagerOrAdmin && task.billingStatus === 'billed' && (
             <Chip
               size="small"
               label="✓ Billed"
@@ -318,31 +323,53 @@ function PipelineTaskCard({
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           {/* Stage Shift Buttons */}
           <Box sx={{ display: "flex", gap: 0.3 }}>
-            <Tooltip title={stageIndex > 0 ? `Move back to ${STAGES[stageIndex - 1]?.label}` : ""}>
-              <span>
-                <IconButton
-                  size="small"
-                  disabled={stageIndex <= 0}
-                  onClick={() => onMoveStage(task, STAGES[stageIndex - 1].key)}
-                  sx={{ p: 0.25, width: 22, height: 22 }}
-                >
-                  <ArrowBackIosIcon sx={{ fontSize: 10 }} />
-                </IconButton>
-              </span>
-            </Tooltip>
+            {/* Previous Stage */}
+            {(() => {
+              let prevKey = null;
+              if (task.serviceType === "only_shooting" && task.stage === "posted") prevKey = "shoot";
+              else if (task.serviceType === "only_editing" && task.stage === "edit") prevKey = "script";
+              else if (stageIndex > 0) prevKey = STAGES[stageIndex - 1].key;
+              const prevLabel = STAGES.find(s => s.key === prevKey)?.label || "";
 
-            <Tooltip title={stageIndex < STAGES.length - 1 ? `Advance to ${STAGES[stageIndex + 1]?.label}` : ""}>
-              <span>
-                <IconButton
-                  size="small"
-                  disabled={stageIndex >= STAGES.length - 1}
-                  onClick={() => onMoveStage(task, STAGES[stageIndex + 1].key)}
-                  sx={{ p: 0.25, width: 22, height: 22 }}
-                >
-                  <ArrowForwardIosIcon sx={{ fontSize: 10 }} />
-                </IconButton>
-              </span>
-            </Tooltip>
+              return (
+                <Tooltip title={prevKey ? `Move back to ${prevLabel}` : ""}>
+                  <span>
+                    <IconButton
+                      size="small"
+                      disabled={!prevKey}
+                      onClick={() => onMoveStage(task, prevKey)}
+                      sx={{ p: 0.25, width: 22, height: 22 }}
+                    >
+                      <ArrowBackIosIcon sx={{ fontSize: 10 }} />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              );
+            })()}
+
+            {/* Next Stage */}
+            {(() => {
+              let nextKey = null;
+              if (task.serviceType === "only_shooting" && task.stage === "shoot") nextKey = "posted";
+              else if (task.serviceType === "only_editing" && task.stage === "script") nextKey = "edit";
+              else if (stageIndex < STAGES.length - 1) nextKey = STAGES[stageIndex + 1].key;
+              const nextLabel = STAGES.find(s => s.key === nextKey)?.label || "";
+
+              return (
+                <Tooltip title={nextKey ? `Advance to ${nextLabel}` : ""}>
+                  <span>
+                    <IconButton
+                      size="small"
+                      disabled={!nextKey}
+                      onClick={() => onMoveStage(task, nextKey)}
+                      sx={{ p: 0.25, width: 22, height: 22 }}
+                    >
+                      <ArrowForwardIosIcon sx={{ fontSize: 10 }} />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              );
+            })()}
           </Box>
 
           {/* Edit, Delete, Open in Hub */}
@@ -367,16 +394,18 @@ function PipelineTaskCard({
               </IconButton>
             </Tooltip>
 
-            <Tooltip title="Delete Task">
-              <IconButton
-                size="small"
-                color="error"
-                onClick={() => onDelete(task._id)}
-                sx={{ p: 0.3 }}
-              >
-                <DeleteIcon sx={{ fontSize: 13 }} />
-              </IconButton>
-            </Tooltip>
+            {isAdmin && (
+              <Tooltip title="Delete Task (Admin Only)">
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => onDelete(task._id)}
+                  sx={{ p: 0.3 }}
+                >
+                  <DeleteIcon sx={{ fontSize: 13 }} />
+                </IconButton>
+              </Tooltip>
+            )}
           </Box>
         </Box>
       </CardContent>
@@ -386,6 +415,9 @@ function PipelineTaskCard({
 
 // ── MAIN CONTENT PIPELINE PAGE ──
 export default function ContentPipelinePage() {
+  const { user } = useAuth();
+  const isManagerOrAdmin = user?.role === "admin" || user?.role === "manager";
+  const isAdmin = user?.role === "admin";
   const [tasks, setTasks] = useState([]);
   const [clients, setClients] = useState([]);
   const [users, setUsers] = useState([]);
@@ -414,7 +446,7 @@ export default function ContentPipelinePage() {
       const [prodRes, legacyRes, cliRes, usrRes] = await Promise.allSettled([
         getProductionTasks(selectedClient !== "all" ? { clientId: selectedClient } : {}),
         api.get("/content", { params: { type: "reel", limit: 300 } }),
-        getClients({ limit: 300, all: "true" }),
+        getClients({ status: "active", limit: 300, all: "true" }),
         api.get("/auth/users"),
       ]);
 
@@ -443,7 +475,7 @@ export default function ContentPipelinePage() {
       setTasks(allTasks);
 
       if (cliRes.status === "fulfilled" && cliRes.value.data?.clients) {
-        setClients(cliRes.value.data.clients);
+        setClients(cliRes.value.data.clients.filter(c => c.status === "active"));
       }
       if (usrRes.status === "fulfilled" && usrRes.value.data) {
         setUsers(Array.isArray(usrRes.value.data) ? usrRes.value.data : (usrRes.value.data.users || []));
@@ -644,16 +676,22 @@ export default function ContentPipelinePage() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this Reel Task?")) return;
+    if (!isAdmin) {
+      alert("🔒 Access Denied: Only Admin can delete Reel Tasks.");
+      return;
+    }
+    const target = tasks.find(t => t._id === id);
+    const title = target?.title || "this reel";
+    if (!window.confirm(`⚠️ પરમિશન કન્ફર્મેશન:\n\nશું તમે ખરેખર Reel ("${title}") કાયમ માટે ડિલીટ કરવા માંગો છો?\n\nઆ એક્શન પાછી વાળી શકાશે નહીં. ફક્ત Admin જ ડિલીટ કરી શકે છે.`)) return;
+
     try {
-      const target = tasks.find(t => t._id === id);
       if (target?.isLegacy) {
         await api.delete(`/content/${id}`);
       } else {
         await deleteProductionTask(id);
       }
       setTasks(prev => prev.filter(t => t._id !== id));
-      setToast("Task deleted successfully.");
+      setToast("Task deleted successfully by Admin.");
     } catch (err) {
       setError(err.response?.data?.message || "Delete failed.");
     }
@@ -842,6 +880,8 @@ export default function ContentPipelinePage() {
                       onDragStart={handleDragStart}
                       onDragEnd={handleDragEnd}
                       dragging={draggingItem?._id === item._id}
+                      isManagerOrAdmin={isManagerOrAdmin}
+                      isAdmin={isAdmin}
                     />
                   ))
                 )}
@@ -987,19 +1027,21 @@ export default function ContentPipelinePage() {
               </Box>
             </Grid>
 
-            {/* Video Price / Rate */}
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                size="small"
-                type="number"
-                label="Video Rate / Price (₹)"
-                placeholder="e.g. 600"
-                value={form.videoPrice}
-                onChange={e => handleFormField('videoPrice', e.target.value)}
-                helperText="Custom price for this reel (Agency Billing)"
-              />
-            </Grid>
+            {/* Video Price / Rate - Only Admin & Manager */}
+            {isManagerOrAdmin && (
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="number"
+                  label="Video Rate / Price (₹)"
+                  placeholder="e.g. 600"
+                  value={form.videoPrice}
+                  onChange={e => handleFormField('videoPrice', e.target.value)}
+                  helperText="Custom price for this reel (Agency Billing)"
+                />
+              </Grid>
+            )}
 
             {/* Stage */}
             <Grid item xs={12} sm={4}>

@@ -8,7 +8,8 @@ import {
 import AddIcon        from "@mui/icons-material/Add";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import DeleteIcon     from "@mui/icons-material/Delete";
-import { getInvoices, deleteInvoice, getInvoiceStats } from "../api/clientsApi";
+import WhatsAppIcon   from "@mui/icons-material/WhatsApp";
+import { getInvoices, deleteInvoice, getInvoiceStats, sendInvoiceWhatsApp } from "../api/clientsApi";
 import { useAuth } from "../context/AuthContext";
 
 const PAY_COLOR  = { pending:"warning", partial:"info", paid:"success" };
@@ -26,6 +27,28 @@ export default function InvoicesPage() {
   const [statusFilter, setStatus] = useState("");
   const [toast, setToast]       = useState("");
   const [page, setPage]         = useState(1);
+  const [sendingId, setSendingId] = useState(null);
+
+  const handleSendWhatsApp = async (inv) => {
+    const clientName = inv.clientId?.businessName || inv.clientBusiness || "Client";
+    setSendingId(inv._id);
+    setToast(`Generating PDF & sending to ${clientName} on WhatsApp... 📄📲`);
+    try {
+      const res = await sendInvoiceWhatsApp(inv._id);
+      if (res.data.sent) {
+        setToast(`✅ Invoice PDF delivered to ${clientName} (${res.data.phone}) on WhatsApp! 📄`);
+      } else if (res.data.waLink) {
+        setToast("⚠️ WhatsApp Bot is offline. Opening WhatsApp Web with invoice details... 📲");
+        window.open(res.data.waLink, "_blank");
+      } else {
+        setToast(res.data.message || "Invoice processed.");
+      }
+    } catch (err) {
+      setToast(err.response?.data?.message || "Failed to send invoice on WhatsApp.");
+    } finally {
+      setSendingId(null);
+    }
+  };
 
   const loadStats = useCallback(() => {
     if (isAdmin) {
@@ -135,6 +158,21 @@ export default function InvoicesPage() {
                       <IconButton size="small" onClick={() => navigate(`/admin/invoices/${inv._id}`)}>
                         <VisibilityIcon fontSize="small" />
                       </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Send Invoice PDF via WhatsApp">
+                      <span>
+                        <IconButton
+                          size="small"
+                          disabled={sendingId === inv._id}
+                          sx={{
+                            color: "#25D366",
+                            "&:hover": { color: "#128C7E", bgcolor: "rgba(37, 211, 102, 0.12)" },
+                          }}
+                          onClick={() => handleSendWhatsApp(inv)}
+                        >
+                          <WhatsAppIcon fontSize="small" />
+                        </IconButton>
+                      </span>
                     </Tooltip>
                     {isAdmin && (
                       <Tooltip title="Delete">

@@ -63,3 +63,10 @@ export const updateClientAgencyStatus = (id, data) => api.put(`/agency-billing/a
 export const deleteAgencyPartner = (id, params) => api.delete(`/agency-billing/agencies/${id}`, { params });
 
 export const updateAgencyPartner = (id, data) => api.put(`/agency-billing/agencies/${id}`, data);
+
+// ── AGENCY INVOICES & PAYMENT LEDGER APIs ──
+export const getAgencyInvoices = (params) => api.get("/agency-billing/invoices", { params });
+export const recordAgencyPayment = (id, data) => api.post("/agency-billing/invoices/" + id + "/payment", data);
+export const clearAgencyInvoice = (id, data) => api.put("/agency-billing/invoices/" + id + "/clear", data || {});
+export const deleteAgencyPayment = (invoiceId, payId) => api.delete("/agency-billing/invoices/" + invoiceId + "/payment/" + payId);
+export const deleteAgencyInvoice = (id) => api.delete("/agency-billing/invoices/" + id);

@@ -16,7 +16,7 @@ import PersonAddIcon   from "@mui/icons-material/PersonAdd";
 import { getStaff, createStaff, updateStaff, deactivateStaff } from "../api/hrApi";
 import { getUsers, createUser, updateUser } from "../api/leadsApi";
 
-const DEPARTMENTS = ["Content", "SEO", "Design", "Video Production", "Ads / PPC", "Management", "Other"];
+const DEPARTMENTS = ["Content Writing", "Shooting", "Editing", "QC", "Manager", "Other"];
 const EMPTY = { name: "", email: "", mobile: "", position: "", department: "", joiningDate: "", salary: "" };
 
 const FRONTEND_URL = process.env.REACT_APP_FRONTEND_URL || window.location.origin;
@@ -433,7 +433,7 @@ export default function StaffPage() {
               <FormControl fullWidth size="small">
                 <InputLabel>Department</InputLabel>
                 <Select value={form.department} label="Department" onChange={(e) => setForm({ ...form, department: e.target.value })}>
-                  {DEPARTMENTS.map((d) => <MenuItem key={d} value={d}>{d}</MenuItem>)}
+                  {Array.from(new Set([...DEPARTMENTS, ...(form.department ? [form.department] : [])])).map((d) => <MenuItem key={d} value={d}>{d}</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
